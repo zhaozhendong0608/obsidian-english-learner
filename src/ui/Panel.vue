@@ -652,7 +652,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
-import { Notice } from 'obsidian';
+import { Notice, MarkdownView } from 'obsidian';
 // @ts-ignore
 import createHyphenator from 'hyphen';
 // @ts-ignore
@@ -2145,10 +2145,10 @@ export default defineComponent({
 
         const formatted = formatTime(time);
         
-        // 获取当前活动编辑器
-        const activeLeaf = plugin.app.workspace.activeLeaf;
-        if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === 'markdown') {
-            const editor = (activeLeaf.view as any).editor;
+        // 使用 getActiveViewOfType(MarkdownView) 安全获取处于激活或最近聚焦的 Markdown 编辑器
+        const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+        if (markdownView) {
+            const editor = markdownView.editor;
             if (editor) {
                 // 构造 obsidian:// 协议跳转链接
                 const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(currentVideoUrl.value)}&t=${Math.floor(time)}`;

@@ -26326,9 +26326,9 @@ var Panel_default = defineComponent({
     }
     function importSelection() {
       try {
-        const { MarkdownView: MarkdownView2 } = require("obsidian");
+        const { MarkdownView: MarkdownView3 } = require("obsidian");
         let selection = "";
-        const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView2);
+        const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView3);
         if (activeView && activeView.editor) {
           selection = activeView.editor.getSelection();
         }
@@ -27099,9 +27099,9 @@ var Panel_default = defineComponent({
         return;
       }
       const formatted = formatTime(time);
-      const activeLeaf = plugin.app.workspace.activeLeaf;
-      if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === "markdown") {
-        const editor = activeLeaf.view.editor;
+      const markdownView = plugin.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+      if (markdownView) {
+        const editor = markdownView.editor;
         if (editor) {
           const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(currentVideoUrl.value)}&t=${Math.floor(time)}`;
           const timestampText = `[\u{1F3AC} ${formatted}](${uri})`;
@@ -28756,7 +28756,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-3b12452c";
+Panel_default.__scopeId = "data-v-3f1baddd";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
