@@ -577,24 +577,39 @@
       </div>
 
       <!-- 视频播放区域 -->
-      <div v-if="activeVideoSrc" class="lang-learner-panel-section" style="margin-bottom: 12px; text-align: center; background: #000; border-radius: 8px; padding: 4px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);">
+      <div v-if="mediaType !== 'none'" class="lang-learner-panel-section" style="margin-bottom: 12px; text-align: center; background: #000; border-radius: 8px; padding: 4px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);">
+        <!-- HTML5 播放器 -->
         <video 
+          v-if="mediaType === 'html5'"
           ref="mediaVideoRef" 
           :src="activeVideoSrc" 
           controls 
           @timeupdate="onVideoTimeUpdate"
           style="width: 100%; max-height: 240px; display: block; border-radius: 4px;"
         ></video>
+
+        <!-- YouTube 嵌入容器 -->
+        <div v-else-if="mediaType === 'youtube'" id="youtube-player-container" style="width: 100%; height: 200px; display: block; border-radius: 4px; background: #000;">
+          <div id="youtube-player-el"></div>
+        </div>
+
+        <!-- Bilibili 嵌入网页 -->
+        <iframe 
+          v-else-if="mediaType === 'bilibili'"
+          :src="activeVideoSrc" 
+          style="width: 100%; height: 200px; border: none; border-radius: 4px;" 
+          allowfullscreen
+        ></iframe>
       </div>
 
       <!-- 视频控制与快捷操作 -->
-      <div v-if="activeVideoSrc" class="lang-learner-panel-section" style="padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 12px; background: var(--background-secondary);">
+      <div v-if="mediaType !== 'none'" class="lang-learner-panel-section" style="padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 12px; background: var(--background-secondary);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 0.9em; font-weight: 600; color: var(--text-accent); display: flex; align-items: center; gap: 4px;">
             🕒 进度: {{ formatTime(currentVideoTime) }}
           </span>
-          <!-- 速度调节 -->
-          <div style="display: flex; gap: 4px; align-items: center;">
+          <!-- 速度调节 (仅 HTML5 和 YouTube 支持) -->
+          <div v-if="mediaType === 'html5' || mediaType === 'youtube'" style="display: flex; gap: 4px; align-items: center;">
             <span style="font-size: 0.8em; color: var(--text-muted); margin-right: 4px;">倍速:</span>
             <button 
               v-for="rate in [0.8, 1.0, 1.25, 1.5]" 
@@ -609,7 +624,13 @@
           </div>
         </div>
 
+        <!-- B站提示信息 -->
+        <div v-if="mediaType === 'bilibili'" style="font-size: 0.75em; color: var(--text-warning); margin-bottom: 4px; line-height: 1.3;">
+          ⚠️ 提示：B站内嵌页存在跨域限制，无法抓取当前进度或使用自动跳转，建议使用库内媒体或 YouTube 链接。
+        </div>
+
         <button 
+          v-if="mediaType === 'html5' || mediaType === 'youtube'"
           @click="insertVideoTimestamp" 
           class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
           style="font-size: 0.95em; padding: 10px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 6px; border-radius: 6px; transition: transform 0.1s ease;"
@@ -621,7 +642,7 @@
       <div v-else class="lang-learner-empty-hint" style="padding: 50px 0; text-align: center; background: var(--background-secondary); border-radius: 8px; border: 1px dashed var(--background-modifier-border);">
         <div style="font-size: 3em; margin-bottom: 12px; filter: grayscale(0.2);">🎬</div>
         <p style="margin: 0 0 6px 0; font-weight: 600; font-size: 1.05em; color: var(--text-normal);">暂无载入媒体</p>
-        <p style="font-size: 0.85em; color: var(--text-muted); margin: 0; padding: 0 16px;">请在上方下拉列表中选择库内音视频，或输入网络直链载入播放</p>
+        <p style="font-size: 0.85em; color: var(--text-muted); margin: 0; padding: 0 16px;">请在上方下拉列表中选择库内音视频，或输入网络直链 / YouTube / B站视频链接载入播放</p>
       </div>
     </div>
 
@@ -1420,6 +1441,7 @@ export default defineComponent({
     });
 
     onUnmounted(() => {
+        stopYtTimer();
         eventBus.off('lang-learner:word-changed', handleWordChanged);
         eventBus.off('lang-learner:word-selected', handleWordSelected);
         eventBus.off('lang-learner:analyze-sentence');
@@ -1919,12 +1941,17 @@ export default defineComponent({
 
     // ========== 视频播放/视频戳笔记 (Media Extended) ==========
     const currentVideoUrl = ref(''); // 输入的 URL 或选中的本地路径
-    const activeVideoSrc = ref('');  // 最终给 <video> src 的解析 URL (本地文件使用 getResourcePath)
+    const activeVideoSrc = ref('');  // 最终给 <video>/<iframe> src 的解析 URL (本地文件使用 getResourcePath)
     const mediaFiles = ref<{ path: string, name: string }[]>([]);
     const selectedMediaFile = ref('');
     const mediaVideoRef = ref<HTMLVideoElement | null>(null);
     const mediaPlaybackRate = ref(1.0);
     const currentVideoTime = ref(0);
+    const mediaType = ref<'html5' | 'youtube' | 'bilibili' | 'none'>('none');
+    const pendingSeekTime = ref<number | null>(null);
+
+    let ytPlayer: any = null;
+    let ytTimer: any = null;
 
     // 格式化时间为 mm:ss 或 hh:mm:ss
     function formatTime(seconds: number): string {
@@ -1937,6 +1964,107 @@ export default defineComponent({
             return `${pad(h)}:${pad(m)}:${pad(s)}`;
         }
         return `${pad(m)}:${pad(s)}`;
+    }
+
+    // 解析 YouTube 视频链接和起始时间
+    function parseYouTubeUrl(url: string): { videoId: string | null, start: number } {
+        let videoId: string | null = null;
+        let start = 0;
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname.includes('youtube.com')) {
+                if (urlObj.pathname === '/watch') {
+                    videoId = urlObj.searchParams.get('v');
+                } else if (urlObj.pathname.startsWith('/embed/')) {
+                    videoId = urlObj.pathname.split('/')[2];
+                }
+                const t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+                if (t) {
+                    start = parseInt(t.replace('s', ''), 10) || 0;
+                }
+            } else if (urlObj.hostname === 'youtu.be') {
+                videoId = urlObj.pathname.substring(1);
+                const t = urlObj.searchParams.get('t');
+                if (t) {
+                    start = parseInt(t.replace('s', ''), 10) || 0;
+                }
+            }
+        } catch (e) {
+            console.error('解析 YouTube URL 失败:', e);
+        }
+        return { videoId, start };
+    }
+
+    // 解析 Bilibili 链接的 BV 号
+    function parseBilibiliUrl(url: string): string | null {
+        try {
+            const match = url.match(/(BV[a-zA-Z0-9]{10})/i);
+            if (match) {
+                return match[1];
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // 启动 YouTube 进度轮询定时器
+    function startYtTimer() {
+        stopYtTimer();
+        ytTimer = setInterval(() => {
+            if (mediaType.value === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+                currentVideoTime.value = ytPlayer.getCurrentTime();
+            }
+        }, 250);
+    }
+
+    // 停止 YouTube 定时器
+    function stopYtTimer() {
+        if (ytTimer) {
+            clearInterval(ytTimer);
+            ytTimer = null;
+        }
+    }
+
+    // 初始化 YouTube 播放器
+    function initYouTubePlayer(videoId: string, startSeconds: number) {
+        const init = () => {
+            const el = document.getElementById('youtube-player-el');
+            if (!el) {
+                setTimeout(init, 50); // 元素未挂载时延迟重试
+                return;
+            }
+            ytPlayer = new (window as any).YT.Player('youtube-player-el', {
+                height: '200',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'playsinline': 1,
+                    'start': startSeconds,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': (event: any) => {
+                        event.target.setPlaybackRate(mediaPlaybackRate.value);
+                        if (pendingSeekTime.value !== null) {
+                            event.target.seekTo(pendingSeekTime.value, true);
+                            event.target.playVideo();
+                            pendingSeekTime.value = null;
+                        }
+                    }
+                }
+            });
+        };
+
+        if (!(window as any).YT) {
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+            (window as any).onYouTubeIframeAPIReady = () => {
+                init();
+            };
+        } else {
+            setTimeout(init, 50);
+        }
     }
 
     // 扫描 Vault 媒体文件
@@ -1958,16 +2086,41 @@ export default defineComponent({
         if (!targetUrlOrPath) return;
         currentVideoUrl.value = targetUrlOrPath;
 
-        // 如果是本地 Vault 路径，则使用 getResourcePath 获取可播放的本地服务 URL
-        if (!targetUrlOrPath.startsWith('http://') && !targetUrlOrPath.startsWith('https://') && !targetUrlOrPath.startsWith('app://')) {
-            const file = plugin.app.vault.getAbstractFileByPath(targetUrlOrPath);
-            if (file) {
-                activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
+        const isYt = targetUrlOrPath.includes('youtube.com') || targetUrlOrPath.includes('youtu.be');
+        const isBili = targetUrlOrPath.includes('bilibili.com');
+
+        if (isYt) {
+            mediaType.value = 'youtube';
+            const { videoId, start } = parseYouTubeUrl(targetUrlOrPath);
+            if (videoId) {
+                initYouTubePlayer(videoId, start);
+                startYtTimer();
             } else {
-                new Notice('找不到指定的库内媒体文件');
+                new Notice('无法解析该 YouTube 视频 ID');
+            }
+        } else if (isBili) {
+            mediaType.value = 'bilibili';
+            stopYtTimer();
+            const bvid = parseBilibiliUrl(targetUrlOrPath);
+            if (bvid) {
+                activeVideoSrc.value = `https://player.bilibili.com/player.html?bvid=${bvid}&page=1`;
+            } else {
+                new Notice('无法解析该 Bilibili 视频 BV 号');
             }
         } else {
-            activeVideoSrc.value = targetUrlOrPath;
+            mediaType.value = 'html5';
+            stopYtTimer();
+            // 如果是本地 Vault 路径，则使用 getResourcePath 获取可播放的本地服务 URL
+            if (!targetUrlOrPath.startsWith('http://') && !targetUrlOrPath.startsWith('https://') && !targetUrlOrPath.startsWith('app://')) {
+                const file = plugin.app.vault.getAbstractFileByPath(targetUrlOrPath);
+                if (file) {
+                    activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
+                } else {
+                    new Notice('找不到指定的库内媒体文件');
+                }
+            } else {
+                activeVideoSrc.value = targetUrlOrPath;
+            }
         }
     }
 
@@ -1980,9 +2133,16 @@ export default defineComponent({
 
     // 插入视频戳
     function insertVideoTimestamp() {
-        if (!mediaVideoRef.value) return;
-        
-        const time = mediaVideoRef.value.currentTime;
+        let time = 0;
+        if (mediaType.value === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+            time = ytPlayer.getCurrentTime();
+        } else if (mediaType.value === 'html5' && mediaVideoRef.value) {
+            time = mediaVideoRef.value.currentTime;
+        } else {
+            new Notice('当前播放源无法获取时间进度');
+            return;
+        }
+
         const formatted = formatTime(time);
         
         // 获取当前活动编辑器
@@ -2006,14 +2166,16 @@ export default defineComponent({
     // 调整播放速度
     function setPlaybackRate(rate: number) {
         mediaPlaybackRate.value = rate;
-        if (mediaVideoRef.value) {
+        if (mediaType.value === 'youtube' && ytPlayer && typeof ytPlayer.setPlaybackRate === 'function') {
+            ytPlayer.setPlaybackRate(rate);
+        } else if (mediaType.value === 'html5' && mediaVideoRef.value) {
             mediaVideoRef.value.playbackRate = rate;
         }
     }
 
     // 监听时间更新
     function onVideoTimeUpdate() {
-        if (mediaVideoRef.value) {
+        if (mediaType.value === 'html5' && mediaVideoRef.value) {
             currentVideoTime.value = mediaVideoRef.value.currentTime;
         }
     }
@@ -2021,14 +2183,20 @@ export default defineComponent({
     // 响应跳转事件
     function handlePlayMediaEvent(urlOrPath: string, timestamp: number) {
         mainTab.value = 'media';
-        loadMediaSource(urlOrPath);
+        const isYt = urlOrPath.includes('youtube.com') || urlOrPath.includes('youtu.be');
         
-        setTimeout(() => {
-            if (mediaVideoRef.value) {
-                mediaVideoRef.value.currentTime = timestamp;
-                mediaVideoRef.value.play().catch(e => console.log('自动播放安全受限:', e));
-            }
-        }, 500);
+        if (isYt) {
+            pendingSeekTime.value = timestamp;
+            loadMediaSource(urlOrPath);
+        } else {
+            loadMediaSource(urlOrPath);
+            setTimeout(() => {
+                if (mediaVideoRef.value) {
+                    mediaVideoRef.value.currentTime = timestamp;
+                    mediaVideoRef.value.play().catch(e => console.log('自动播放安全受限:', e));
+                }
+            }, 500);
+        }
     }
 
     return {
@@ -2098,7 +2266,8 @@ export default defineComponent({
       handleSelectLocalMedia,
       insertVideoTimestamp,
       setPlaybackRate,
-      onVideoTimeUpdate
+      onVideoTimeUpdate,
+      mediaType
     };
   }
 });

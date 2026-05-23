@@ -26507,6 +26507,7 @@ var Panel_default = defineComponent({
       }
     });
     onUnmounted(() => {
+      stopYtTimer();
       eventBus.off("lang-learner:word-changed", handleWordChanged);
       eventBus.off("lang-learner:word-selected", handleWordSelected);
       eventBus.off("lang-learner:analyze-sentence");
@@ -26925,6 +26926,10 @@ var Panel_default = defineComponent({
     const mediaVideoRef = ref(null);
     const mediaPlaybackRate = ref(1);
     const currentVideoTime = ref(0);
+    const mediaType = ref("none");
+    const pendingSeekTime = ref(null);
+    let ytPlayer = null;
+    let ytTimer = null;
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0)
         return "00:00";
@@ -26936,6 +26941,97 @@ var Panel_default = defineComponent({
         return `${pad(h2)}:${pad(m)}:${pad(s)}`;
       }
       return `${pad(m)}:${pad(s)}`;
+    }
+    function parseYouTubeUrl(url) {
+      let videoId = null;
+      let start = 0;
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes("youtube.com")) {
+          if (urlObj.pathname === "/watch") {
+            videoId = urlObj.searchParams.get("v");
+          } else if (urlObj.pathname.startsWith("/embed/")) {
+            videoId = urlObj.pathname.split("/")[2];
+          }
+          const t = urlObj.searchParams.get("t") || urlObj.searchParams.get("start");
+          if (t) {
+            start = parseInt(t.replace("s", ""), 10) || 0;
+          }
+        } else if (urlObj.hostname === "youtu.be") {
+          videoId = urlObj.pathname.substring(1);
+          const t = urlObj.searchParams.get("t");
+          if (t) {
+            start = parseInt(t.replace("s", ""), 10) || 0;
+          }
+        }
+      } catch (e) {
+        console.error("\u89E3\u6790 YouTube URL \u5931\u8D25:", e);
+      }
+      return { videoId, start };
+    }
+    function parseBilibiliUrl(url) {
+      try {
+        const match = url.match(/(BV[a-zA-Z0-9]{10})/i);
+        if (match) {
+          return match[1];
+        }
+      } catch (e) {
+      }
+      return null;
+    }
+    function startYtTimer() {
+      stopYtTimer();
+      ytTimer = setInterval(() => {
+        if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.getCurrentTime === "function") {
+          currentVideoTime.value = ytPlayer.getCurrentTime();
+        }
+      }, 250);
+    }
+    function stopYtTimer() {
+      if (ytTimer) {
+        clearInterval(ytTimer);
+        ytTimer = null;
+      }
+    }
+    function initYouTubePlayer(videoId, startSeconds) {
+      const init = () => {
+        const el = document.getElementById("youtube-player-el");
+        if (!el) {
+          setTimeout(init, 50);
+          return;
+        }
+        ytPlayer = new window.YT.Player("youtube-player-el", {
+          height: "200",
+          width: "100%",
+          videoId,
+          playerVars: {
+            "playsinline": 1,
+            "start": startSeconds,
+            "origin": window.location.origin
+          },
+          events: {
+            "onReady": (event) => {
+              event.target.setPlaybackRate(mediaPlaybackRate.value);
+              if (pendingSeekTime.value !== null) {
+                event.target.seekTo(pendingSeekTime.value, true);
+                event.target.playVideo();
+                pendingSeekTime.value = null;
+              }
+            }
+          }
+        });
+      };
+      if (!window.YT) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+        window.onYouTubeIframeAPIReady = () => {
+          init();
+        };
+      } else {
+        setTimeout(init, 50);
+      }
     }
     function scanMediaFiles() {
       try {
@@ -26952,15 +27048,39 @@ var Panel_default = defineComponent({
       if (!targetUrlOrPath)
         return;
       currentVideoUrl.value = targetUrlOrPath;
-      if (!targetUrlOrPath.startsWith("http://") && !targetUrlOrPath.startsWith("https://") && !targetUrlOrPath.startsWith("app://")) {
-        const file = plugin.app.vault.getAbstractFileByPath(targetUrlOrPath);
-        if (file) {
-          activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
+      const isYt = targetUrlOrPath.includes("youtube.com") || targetUrlOrPath.includes("youtu.be");
+      const isBili = targetUrlOrPath.includes("bilibili.com");
+      if (isYt) {
+        mediaType.value = "youtube";
+        const { videoId, start } = parseYouTubeUrl(targetUrlOrPath);
+        if (videoId) {
+          initYouTubePlayer(videoId, start);
+          startYtTimer();
         } else {
-          new import_obsidian2.Notice("\u627E\u4E0D\u5230\u6307\u5B9A\u7684\u5E93\u5185\u5A92\u4F53\u6587\u4EF6");
+          new import_obsidian2.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 YouTube \u89C6\u9891 ID");
+        }
+      } else if (isBili) {
+        mediaType.value = "bilibili";
+        stopYtTimer();
+        const bvid = parseBilibiliUrl(targetUrlOrPath);
+        if (bvid) {
+          activeVideoSrc.value = `https://player.bilibili.com/player.html?bvid=${bvid}&page=1`;
+        } else {
+          new import_obsidian2.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 Bilibili \u89C6\u9891 BV \u53F7");
         }
       } else {
-        activeVideoSrc.value = targetUrlOrPath;
+        mediaType.value = "html5";
+        stopYtTimer();
+        if (!targetUrlOrPath.startsWith("http://") && !targetUrlOrPath.startsWith("https://") && !targetUrlOrPath.startsWith("app://")) {
+          const file = plugin.app.vault.getAbstractFileByPath(targetUrlOrPath);
+          if (file) {
+            activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
+          } else {
+            new import_obsidian2.Notice("\u627E\u4E0D\u5230\u6307\u5B9A\u7684\u5E93\u5185\u5A92\u4F53\u6587\u4EF6");
+          }
+        } else {
+          activeVideoSrc.value = targetUrlOrPath;
+        }
       }
     }
     function handleSelectLocalMedia() {
@@ -26969,9 +27089,15 @@ var Panel_default = defineComponent({
       }
     }
     function insertVideoTimestamp() {
-      if (!mediaVideoRef.value)
+      let time = 0;
+      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.getCurrentTime === "function") {
+        time = ytPlayer.getCurrentTime();
+      } else if (mediaType.value === "html5" && mediaVideoRef.value) {
+        time = mediaVideoRef.value.currentTime;
+      } else {
+        new import_obsidian2.Notice("\u5F53\u524D\u64AD\u653E\u6E90\u65E0\u6CD5\u83B7\u53D6\u65F6\u95F4\u8FDB\u5EA6");
         return;
-      const time = mediaVideoRef.value.currentTime;
+      }
       const formatted = formatTime(time);
       const activeLeaf = plugin.app.workspace.activeLeaf;
       if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === "markdown") {
@@ -26990,24 +27116,32 @@ var Panel_default = defineComponent({
     }
     function setPlaybackRate(rate) {
       mediaPlaybackRate.value = rate;
-      if (mediaVideoRef.value) {
+      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
+        ytPlayer.setPlaybackRate(rate);
+      } else if (mediaType.value === "html5" && mediaVideoRef.value) {
         mediaVideoRef.value.playbackRate = rate;
       }
     }
     function onVideoTimeUpdate() {
-      if (mediaVideoRef.value) {
+      if (mediaType.value === "html5" && mediaVideoRef.value) {
         currentVideoTime.value = mediaVideoRef.value.currentTime;
       }
     }
     function handlePlayMediaEvent(urlOrPath, timestamp) {
       mainTab.value = "media";
-      loadMediaSource(urlOrPath);
-      setTimeout(() => {
-        if (mediaVideoRef.value) {
-          mediaVideoRef.value.currentTime = timestamp;
-          mediaVideoRef.value.play().catch((e) => console.log("\u81EA\u52A8\u64AD\u653E\u5B89\u5168\u53D7\u9650:", e));
-        }
-      }, 500);
+      const isYt = urlOrPath.includes("youtube.com") || urlOrPath.includes("youtu.be");
+      if (isYt) {
+        pendingSeekTime.value = timestamp;
+        loadMediaSource(urlOrPath);
+      } else {
+        loadMediaSource(urlOrPath);
+        setTimeout(() => {
+          if (mediaVideoRef.value) {
+            mediaVideoRef.value.currentTime = timestamp;
+            mediaVideoRef.value.play().catch((e) => console.log("\u81EA\u52A8\u64AD\u653E\u5B89\u5168\u53D7\u9650:", e));
+          }
+        }, 500);
+      }
     }
     return {
       speak,
@@ -27076,7 +27210,8 @@ var Panel_default = defineComponent({
       handleSelectLocalMedia,
       insertVideoTimestamp,
       setPlaybackRate,
-      onVideoTimeUpdate
+      onVideoTimeUpdate,
+      mediaType
     };
   }
 });
@@ -27346,14 +27481,27 @@ var _hoisted_116 = {
 var _hoisted_117 = ["src"];
 var _hoisted_118 = {
   key: 1,
+  id: "youtube-player-container",
+  style: { "width": "100%", "height": "200px", "display": "block", "border-radius": "4px", "background": "#000" }
+};
+var _hoisted_119 = ["src"];
+var _hoisted_120 = {
+  key: 1,
   class: "lang-learner-panel-section",
   style: { "padding": "12px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "display": "flex", "flex-direction": "column", "gap": "12px", "background": "var(--background-secondary)" }
 };
-var _hoisted_119 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center" } };
-var _hoisted_120 = { style: { "font-size": "0.9em", "font-weight": "600", "color": "var(--text-accent)", "display": "flex", "align-items": "center", "gap": "4px" } };
-var _hoisted_121 = { style: { "display": "flex", "gap": "4px", "align-items": "center" } };
-var _hoisted_122 = ["onClick"];
+var _hoisted_121 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center" } };
+var _hoisted_122 = { style: { "font-size": "0.9em", "font-weight": "600", "color": "var(--text-accent)", "display": "flex", "align-items": "center", "gap": "4px" } };
 var _hoisted_123 = {
+  key: 0,
+  style: { "display": "flex", "gap": "4px", "align-items": "center" }
+};
+var _hoisted_124 = ["onClick"];
+var _hoisted_125 = {
+  key: 0,
+  style: { "font-size": "0.75em", "color": "var(--text-warning)", "margin-bottom": "4px", "line-height": "1.3" }
+};
+var _hoisted_126 = {
   key: 2,
   class: "lang-learner-empty-hint",
   style: { "padding": "50px 0", "text-align": "center", "background": "var(--background-secondary)", "border-radius": "8px", "border": "1px dashed var(--background-modifier-border)" }
@@ -28419,7 +28567,7 @@ function render(_ctx, _cache) {
       "div",
       _hoisted_109,
       [
-        _cache[82] || (_cache[82] = createBaseVNode(
+        _cache[83] || (_cache[83] = createBaseVNode(
           "div",
           { class: "lang-learner-panel-dashboard" },
           [
@@ -28510,26 +28658,40 @@ function render(_ctx, _cache) {
             ])
           ])
         ]),
-        _ctx.activeVideoSrc ? (openBlock(), createElementBlock("div", _hoisted_116, [
-          createBaseVNode("video", {
+        _ctx.mediaType !== "none" ? (openBlock(), createElementBlock("div", _hoisted_116, [
+          _ctx.mediaType === "html5" ? (openBlock(), createElementBlock("video", {
+            key: 0,
             ref: "mediaVideoRef",
             src: _ctx.activeVideoSrc,
             controls: "",
             onTimeupdate: _cache[44] || (_cache[44] = (...args) => _ctx.onVideoTimeUpdate && _ctx.onVideoTimeUpdate(...args)),
             style: { "width": "100%", "max-height": "240px", "display": "block", "border-radius": "4px" }
-          }, null, 40, _hoisted_117)
+          }, null, 40, _hoisted_117)) : _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_118, [..._cache[80] || (_cache[80] = [
+            createBaseVNode(
+              "div",
+              { id: "youtube-player-el" },
+              null,
+              -1
+              /* CACHED */
+            )
+          ])])) : _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("iframe", {
+            key: 2,
+            src: _ctx.activeVideoSrc,
+            style: { "width": "100%", "height": "200px", "border": "none", "border-radius": "4px" },
+            allowfullscreen: ""
+          }, null, 8, _hoisted_119)) : createCommentVNode("v-if", true)
         ])) : createCommentVNode("v-if", true),
-        _ctx.activeVideoSrc ? (openBlock(), createElementBlock("div", _hoisted_118, [
-          createBaseVNode("div", _hoisted_119, [
+        _ctx.mediaType !== "none" ? (openBlock(), createElementBlock("div", _hoisted_120, [
+          createBaseVNode("div", _hoisted_121, [
             createBaseVNode(
               "span",
-              _hoisted_120,
+              _hoisted_122,
               " \u{1F552} \u8FDB\u5EA6: " + toDisplayString(_ctx.formatTime(_ctx.currentVideoTime)),
               1
               /* TEXT */
             ),
-            createBaseVNode("div", _hoisted_121, [
-              _cache[80] || (_cache[80] = createBaseVNode(
+            _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_123, [
+              _cache[81] || (_cache[81] = createBaseVNode(
                 "span",
                 { style: { "font-size": "0.8em", "color": "var(--text-muted)", "margin-right": "4px" } },
                 "\u500D\u901F:",
@@ -28545,19 +28707,21 @@ function render(_ctx, _cache) {
                     onClick: ($event) => _ctx.setPlaybackRate(rate),
                     class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.mediaPlaybackRate === rate }]),
                     style: { "padding": "2px 6px", "font-size": "0.75em", "font-weight": "500" }
-                  }, toDisplayString(rate) + "x ", 11, _hoisted_122);
+                  }, toDisplayString(rate) + "x ", 11, _hoisted_124);
                 }),
                 64
                 /* STABLE_FRAGMENT */
               ))
-            ])
+            ])) : createCommentVNode("v-if", true)
           ]),
-          createBaseVNode("button", {
+          _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("div", _hoisted_125, " \u26A0\uFE0F \u63D0\u793A\uFF1AB\u7AD9\u5185\u5D4C\u9875\u5B58\u5728\u8DE8\u57DF\u9650\u5236\uFF0C\u65E0\u6CD5\u6293\u53D6\u5F53\u524D\u8FDB\u5EA6\u6216\u4F7F\u7528\u81EA\u52A8\u8DF3\u8F6C\uFF0C\u5EFA\u8BAE\u4F7F\u7528\u5E93\u5185\u5A92\u4F53\u6216 YouTube \u94FE\u63A5\u3002 ")) : createCommentVNode("v-if", true),
+          _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
+            key: 1,
             onClick: _cache[45] || (_cache[45] = (...args) => _ctx.insertVideoTimestamp && _ctx.insertVideoTimestamp(...args)),
             class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
             style: { "font-size": "0.95em", "padding": "10px", "font-weight": "600", "display": "flex", "justify-content": "center", "align-items": "center", "gap": "6px", "border-radius": "6px", "transition": "transform 0.1s ease" }
-          }, " \u{1F4CC} \u63D2\u5165\u89C6\u9891\u65F6\u95F4\u6233 ")
-        ])) : (openBlock(), createElementBlock("div", _hoisted_123, [..._cache[81] || (_cache[81] = [
+          }, " \u{1F4CC} \u63D2\u5165\u89C6\u9891\u65F6\u95F4\u6233 ")) : createCommentVNode("v-if", true)
+        ])) : (openBlock(), createElementBlock("div", _hoisted_126, [..._cache[82] || (_cache[82] = [
           createBaseVNode(
             "div",
             { style: { "font-size": "3em", "margin-bottom": "12px", "filter": "grayscale(0.2)" } },
@@ -28575,7 +28739,7 @@ function render(_ctx, _cache) {
           createBaseVNode(
             "p",
             { style: { "font-size": "0.85em", "color": "var(--text-muted)", "margin": "0", "padding": "0 16px" } },
-            "\u8BF7\u5728\u4E0A\u65B9\u4E0B\u62C9\u5217\u8868\u4E2D\u9009\u62E9\u5E93\u5185\u97F3\u89C6\u9891\uFF0C\u6216\u8F93\u5165\u7F51\u7EDC\u76F4\u94FE\u8F7D\u5165\u64AD\u653E",
+            "\u8BF7\u5728\u4E0A\u65B9\u4E0B\u62C9\u5217\u8868\u4E2D\u9009\u62E9\u5E93\u5185\u97F3\u89C6\u9891\uFF0C\u6216\u8F93\u5165\u7F51\u7EDC\u76F4\u94FE / YouTube / B\u7AD9\u89C6\u9891\u94FE\u63A5\u8F7D\u5165\u64AD\u653E",
             -1
             /* CACHED */
           )
@@ -28592,7 +28756,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-638d119f";
+Panel_default.__scopeId = "data-v-3b12452c";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
