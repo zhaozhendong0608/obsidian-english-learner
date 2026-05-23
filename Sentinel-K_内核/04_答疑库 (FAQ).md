@@ -63,3 +63,11 @@
   2. 彻底的解决方案：使用 Obsidian 官方底座提供的底层网络桥接接口——`requestUrl`（相当于在 Node.js 主进程/ Capacitor 原生进程发起请求，完美规避前端沙盒 CORS 策略）。
   3. **兼顾单元测试**：为了防止导入 `obsidian` 后导致 Vitest 单元测试运行抛出“无法加载模块”的报错，在代码中可以通过检测全局变量 `window.app`，并在 Obsidian 沙盒内动态加载 `require('obsidian').requestUrl` ；而在非 Obsidian 环境（测试脚本中）自动降级退避回退为标准全局 `fetch` 请求。
 
+## 9. 双引擎在线真人发音播放 500 报错与防盗链规避
+- **问题**: 在线真人发音播放时控制台抛出 `NotSupportedError: Failed to load because no supported source was found`，或者使用 `requestUrl` 时返回 `Request failed, status 500`。
+- **场景**: 在 Obsidian 沙盒内请求并播放有道等第三方 dictvoice 在线发音流时。
+- **对策**:
+  1. **规避 500 错误（GET contentType 冲突）**：在标准的 HTTP RFC 中，GET 请求不应包含 Content-Type 标头（因为 GET 无 body）。在调用 `obsidian.requestUrl` 发送 GET 请求时，**千万不要设置 `contentType` 属性**，否则部分服务器（如有道后台）解析请求头失败会直接返回 500 响应。
+  2. **防盗链与 CORS 规避**：第三方接口会对来自沙盒内部（`app://obsidian.md`）的请求实施跨域或防盗链拦截，重定向回 HTML 网页而非原本的 MP3 音频流，导致 `<audio>` 播放非媒体流时发生 `NotSupportedError` 错误。此时应使用 `obsidian.requestUrl` 下载二进制 `ArrayBuffer`，在本地将其封装为 `Blob` 并利用 `URL.createObjectURL` 映射为本地 Blob URL 交付 `Audio` 对象播放。播放完毕或报错后应及时 Revoke 以防内存泄露。
+  3. **链式 Failover 容错降级**：在线发音对长句或频控极其脆弱。必须实现多源责任链发音分发路由（有道真人发音 -> 谷歌高清真人 TTS -> 本地系统离线合成），发生异常时自动且秒级在 `try-catch` 中转移发音任务，保障系统级的高可用性。
+

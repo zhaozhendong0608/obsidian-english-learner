@@ -59,17 +59,19 @@
   - 抓取生词所在整句，建立指向原型 Lemma 的双链，基于 Front Matter 模板自动生成独立 MD 单词卡片。
 - **冷启动估算**:
   - 二分查找算法（$\log_2 N$ 复杂度，一共约 20 个测试词）快速确定用户词汇量水位，批量标记水位线下词汇为 `KNOWN`。
+- **双引擎语音合成发音 (Hybrid TTS)**:
+  - 运行时提供在线真人发音（以有道和谷歌为备用源，利用宿主 `requestUrl` 绕过 CORS 与 Referer 拦截下载 ArrayBuffer 并通过 Blob URL 播放）与本地系统原生离线发音双引擎智能路由切换，支持美音/英音，具备全局打断隔离与 localStorage 配置持久化。
 
 ---
 
 ## 3. 当前里程碑 (Current Milestone)
-- **阶段**: S3-Bone 至 S6-Muscle (核心算法、数据层与表现层均已跑通)
+- **阶段**: S3-Bone 至 S6-Muscle (核心算法、数据层、表现层与混合发音模块均已跑通)
 - **重点**:
   - 完成 Tokenizer 与 Lemmatizer 算法引擎（带 K-TEST 鲁棒性验证）。
   - 完成 Memory-First 的影子词库 `VocabularyManager`，实现并发写锁与原子覆写保护。
   - 完成 DOM 渲染拦截（`registerMarkdownPostProcessor`），使用 `TreeWalker` 安全过滤标签，实现防嵌套包裹。
-  - 跑通基于 jsdom 的前端渲染单测，全量测试用例（32 个）全部绿灯。
-  - **下一步计划**：进入 Vue 3 侧边栏与交互控制 (F5 & N2 & F8) 阶段。
+  - **完成了双引擎混合真人发音系统 (Hybrid TTS)**，集成有道 + 谷歌在线双源及本地系统离线发音高可用路由链。
+  - 跑通全量 33 个单元测试用例，在并发高压测试环境下全部绿灯通过。
 
 ---
 
