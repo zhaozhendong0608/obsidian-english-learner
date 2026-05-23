@@ -74,11 +74,19 @@
           >
             <span class="lang-learner-wl-word">{{ item.word }}</span>
             <span class="lang-learner-wl-trans">{{ item.trans || '—' }}</span>
-            <button
-              class="lang-learner-btn-icon"
-              :title="item.status === 'UNKNOWN' ? '标为学习中' : '标为已掌握'"
-              @click.stop="quickAdvance(item)"
-            >{{ item.status === 'UNKNOWN' ? '📌' : '✅' }}</button>
+            <div class="lang-learner-wordlist-actions" style="display: flex; align-items: center; gap: 6px;">
+              <button
+                class="lang-learner-btn-voice-mini"
+                title="发音"
+                @click.stop="speak(item.word)"
+                style="background: transparent; border: none; cursor: pointer; font-size: 0.9em; padding: 2px 4px; opacity: 0.8;"
+              >🔊</button>
+              <button
+                class="lang-learner-btn-icon"
+                :title="item.status === 'UNKNOWN' ? '标为学习中' : '标为已掌握'"
+                @click.stop="quickAdvance(item)"
+              >{{ item.status === 'UNKNOWN' ? '📌' : '✅' }}</button>
+            </div>
           </div>
           <p v-if="currentTabList.length === 0" class="lang-learner-empty-hint">暂无数据</p>
         </div>
@@ -129,6 +137,60 @@
 
     <!-- Tab 3: 整句分析 -->
     <div v-show="mainTab === 'sentence'" class="lang-learner-tab-content">
+      <!-- 语音发音配置区 -->
+      <div class="lang-learner-panel-section lang-learner-voice-settings-section" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border);">
+        <div 
+          class="lang-learner-voice-settings-header" 
+          @click="showVoiceConfig = !showVoiceConfig"
+          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
+        >
+          <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">⚙️ 发音配置 (美音/英音)</span>
+          <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼ 收起' : '▶ 展开' }}</span>
+        </div>
+        <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+          <!-- 发音人选择 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+            <select 
+              v-model="voiceSettings.voiceName" 
+              @change="saveVoiceSettings"
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+            >
+              <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                {{ voice.name }} ({{ voice.lang }})
+              </option>
+              <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
+            </select>
+          </div>
+          <!-- 语速调节 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
+            <input 
+              type="range" 
+              v-model.number="voiceSettings.rate" 
+              min="0.5" 
+              max="1.8" 
+              step="0.1" 
+              @change="saveVoiceSettings"
+              style="width: 60%; cursor: pointer;"
+            />
+          </div>
+          <!-- 音调调节 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">音调 (调节扁平度): {{ voiceSettings.pitch.toFixed(1) }}</label>
+            <input 
+              type="range" 
+              v-model.number="voiceSettings.pitch" 
+              min="0.5" 
+              max="1.5" 
+              step="0.1" 
+              @change="saveVoiceSettings"
+              style="width: 60%; cursor: pointer;"
+            />
+          </div>
+        </div>
+      </div>
+
       <div class="lang-learner-panel-section">
         <h4 class="lang-learner-section-title">🔍 输入待分析句子</h4>
         <textarea
@@ -153,7 +215,18 @@
         
         <!-- 翻译 -->
         <div class="lang-learner-result-box">
-          <div class="lang-learner-box-title">🌐 机器翻译</div>
+          <div class="lang-learner-box-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🌐 机器翻译</span>
+            <button 
+              v-if="sentenceInput.trim()"
+              class="lang-learner-btn-voice-sentence" 
+              title="朗读整句" 
+              @click="speak(sentenceInput)"
+              style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+            >
+              🔊
+            </button>
+          </div>
           <p v-if="isTranslating" class="lang-learner-loading-text">正在翻译中...</p>
           <p v-else class="lang-learner-translation-text">{{ sentenceTranslation || '暂无翻译结果' }}</p>
         </div>
@@ -202,7 +275,13 @@
                 {{ item.word }} <small v-if="item.isPhrase" style="opacity: 0.6; font-size: 0.7em;">(短语)</small>
               </span>
               <span class="lang-learner-wl-trans">{{ item.trans || '—' }}</span>
-              <div class="lang-learner-sentence-word-status-btns">
+              <div class="lang-learner-sentence-word-status-btns" style="display: flex; align-items: center; gap: 4px;">
+                <button
+                  class="lang-learner-btn-voice-mini"
+                  title="发音"
+                  @click.stop="speak(item.word)"
+                  style="background: transparent; border: none; cursor: pointer; font-size: 0.9em; padding: 2px 4px; opacity: 0.8;"
+                >🔊</button>
                 <button
                   class="lang-learner-btn-status-mini"
                   :class="{ active: item.status === 'UNKNOWN' }"
@@ -230,7 +309,17 @@
     <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
       <h4 class="lang-learner-section-title">📝 单词详情</h4>
       <div class="lang-learner-word-info-card">
-        <div class="lang-learner-word-lemma">{{ selectedWord.word }}</div>
+        <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="lang-learner-word-lemma">{{ selectedWord.word }}</span>
+          <button 
+            class="lang-learner-btn-voice-word" 
+            title="朗读单词" 
+            @click="speak(selectedWord.word)"
+            style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+          >
+            🔊
+          </button>
+        </div>
         <div v-if="selectedWord.phonetic" class="lang-learner-word-phonetic">/{{ selectedWord.phonetic }}/</div>
         <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
       </div>
@@ -789,15 +878,107 @@ export default defineComponent({
             sentenceInput.value = sentence;
             analyzeInputSentence();
         });
+
+        loadVoiceSettings();
+        updateVoices();
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = updateVoices;
+        }
     });
 
     onUnmounted(() => {
         eventBus.off('lang-learner:word-changed', handleWordChanged);
         eventBus.off('lang-learner:word-selected', handleWordSelected);
         eventBus.off('lang-learner:analyze-sentence');
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = null;
+        }
     });
 
+    const availableVoices = ref<SpeechSynthesisVoice[]>([]);
+    const showVoiceConfig = ref(false);
+    const voiceSettings = ref({
+        voiceName: '',
+        rate: 0.9,
+        pitch: 1.0
+    });
+
+    function loadVoiceSettings() {
+        try {
+            const stored = localStorage.getItem('lang-learner-voice-settings');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed) {
+                    if (parsed.voiceName !== undefined) voiceSettings.value.voiceName = parsed.voiceName;
+                    if (parsed.rate !== undefined) voiceSettings.value.rate = parsed.rate;
+                    if (parsed.pitch !== undefined) voiceSettings.value.pitch = parsed.pitch;
+                }
+            }
+        } catch (e) {
+            console.error('载入发音配置失败:', e);
+        }
+    }
+
+    function saveVoiceSettings() {
+        localStorage.setItem('lang-learner-voice-settings', JSON.stringify(voiceSettings.value));
+    }
+
+    function updateVoices() {
+        if (typeof window === 'undefined' || !window.speechSynthesis) return;
+        const allVoices = window.speechSynthesis.getVoices();
+        // 过滤出英文发音人
+        availableVoices.value = allVoices.filter(v => v.lang.toLowerCase().startsWith('en'));
+        
+        // 默认选择 Siri 或 Samantha 或是第一个英文发音人
+        if (!voiceSettings.value.voiceName && availableVoices.value.length > 0) {
+            const siriOrSamantha = availableVoices.value.find(v => v.name.toLowerCase().includes('siri') || v.name.toLowerCase().includes('samantha'));
+            if (siriOrSamantha) {
+                voiceSettings.value.voiceName = siriOrSamantha.name;
+            } else {
+                voiceSettings.value.voiceName = availableVoices.value[0].name;
+            }
+            saveVoiceSettings();
+        }
+    }
+
+    /**
+     * 语音朗读单词或整句 (Web Speech API)
+     * @param text 待播放的文本
+     */
+    function speak(text: string) {
+        if (!text || !text.trim()) return;
+        try {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                // 停止当前任何正在播放的声音，避免堆叠混杂
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // 应用配置的发音人
+                if (voiceSettings.value.voiceName) {
+                    const matched = availableVoices.value.find(v => v.name === voiceSettings.value.voiceName);
+                    if (matched) {
+                        utterance.voice = matched;
+                    }
+                }
+                
+                utterance.rate = voiceSettings.value.rate;
+                utterance.pitch = voiceSettings.value.pitch;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                new Notice('当前系统不支持语音播放');
+            }
+        } catch (e) {
+            console.error('语音朗读失败:', e);
+        }
+    }
+
     return {
+      speak,
+      availableVoices,
+      showVoiceConfig,
+      voiceSettings,
+      saveVoiceSettings,
       stats,
       activeTab,
       wordListCache,
