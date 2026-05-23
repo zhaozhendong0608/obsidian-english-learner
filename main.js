@@ -21413,7 +21413,7 @@ var Panel_default = defineComponent({
         saveVoiceSettings();
       }
     }
-    function speak(text) {
+    async function speak(text) {
       if (!text || !text.trim())
         return;
       stopAllAudio();
@@ -21421,17 +21421,46 @@ var Panel_default = defineComponent({
         if (voiceSettings.value.engine === "online") {
           const accent = voiceSettings.value.onlineAccent || 2;
           const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+          let hasObsidianRequest = false;
+          let obsidianRequestUrl = null;
+          try {
+            const obs = require("obsidian");
+            if (obs && obs.requestUrl) {
+              obsidianRequestUrl = obs.requestUrl;
+              hasObsidianRequest = true;
+            }
+          } catch (e) {
+          }
+          if (hasObsidianRequest && obsidianRequestUrl) {
+            const response = await obsidianRequestUrl({
+              url,
+              method: "GET",
+              contentType: "audio/mpeg",
+              throw: true
+            });
+            if (response.status === 200 && response.arrayBuffer) {
+              const blob = new Blob([response.arrayBuffer], { type: "audio/mpeg" });
+              const blobUrl = URL.createObjectURL(blob);
+              const audio2 = new Audio(blobUrl);
+              currentAudio = audio2;
+              audio2.onended = () => {
+                URL.revokeObjectURL(blobUrl);
+              };
+              audio2.onerror = () => {
+                URL.revokeObjectURL(blobUrl);
+              };
+              await audio2.play();
+              return;
+            }
+          }
           const audio = new Audio(url);
           currentAudio = audio;
-          audio.play().catch((err) => {
-            console.error("\u5728\u7EBF\u771F\u4EBA\u53D1\u97F3\u64AD\u653E\u5931\u8D25\uFF0C\u5C1D\u8BD5\u56DE\u9000\u7CFB\u7EDF\u79BB\u7EBF\u5408\u6210:", err);
-            playLocalVoice(text);
-          });
+          await audio.play();
         } else {
           playLocalVoice(text);
         }
       } catch (e) {
-        console.error("\u53D1\u97F3\u6A21\u5F0F\u8DEF\u7531\u5F02\u5E38\uFF0C\u964D\u7EA7\u5230\u672C\u5730\u64AD\u653E:", e);
+        console.error("\u5728\u7EBF\u771F\u4EBA\u53D1\u97F3\u64AD\u653E\u5931\u8D25\uFF0C\u5C1D\u8BD5\u56DE\u9000\u7CFB\u7EDF\u79BB\u7EBF\u5408\u6210:", e);
         playLocalVoice(text);
       }
     }
@@ -22428,7 +22457,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-3086043d";
+Panel_default.__scopeId = "data-v-40f83ea6";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts

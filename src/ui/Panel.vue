@@ -995,7 +995,7 @@ export default defineComponent({
      * 语音朗读单词或整句 (在线真人 or 系统离线双引擎)
      * @param text 待播放的文本
      */
-    function speak(text: string) {
+    async function speak(text: string) {
         if (!text || !text.trim()) return;
         
         // 停止当前所有播放的发音（隔离多重点击）
@@ -1005,17 +1005,56 @@ export default defineComponent({
             if (voiceSettings.value.engine === 'online') {
                 const accent = voiceSettings.value.onlineAccent || 2; // 2: 美音, 1: 英音
                 const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+                
+                // 尝试检测 Obsidian 内部的 requestUrl
+                let hasObsidianRequest = false;
+                let obsidianRequestUrl: any = null;
+                try {
+                    const obs = require('obsidian');
+                    if (obs && obs.requestUrl) {
+                        obsidianRequestUrl = obs.requestUrl;
+                        hasObsidianRequest = true;
+                    }
+                } catch (e) {
+                    // 忽略非 Obsidian 环境（如浏览器测试等）的 require 报错
+                }
+
+                if (hasObsidianRequest && obsidianRequestUrl) {
+                    // 使用 Obsidian 的网络客户端获取 ArrayBuffer（绕过沙盒 Referer/CORS 拦截）
+                    const response = await obsidianRequestUrl({
+                        url,
+                        method: 'GET',
+                        contentType: 'audio/mpeg',
+                        throw: true
+                    });
+
+                    if (response.status === 200 && response.arrayBuffer) {
+                        const blob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
+                        const blobUrl = URL.createObjectURL(blob);
+                        const audio = new Audio(blobUrl);
+                        currentAudio = audio;
+
+                        audio.onended = () => {
+                            URL.revokeObjectURL(blobUrl);
+                        };
+                        audio.onerror = () => {
+                            URL.revokeObjectURL(blobUrl);
+                        };
+
+                        await audio.play();
+                        return;
+                    }
+                }
+
+                // 常规降级播放器（多用于开发测试阶段）
                 const audio = new Audio(url);
                 currentAudio = audio;
-                audio.play().catch(err => {
-                    console.error('在线真人发音播放失败，尝试回退系统离线合成:', err);
-                    playLocalVoice(text);
-                });
+                await audio.play();
             } else {
                 playLocalVoice(text);
             }
         } catch (e) {
-            console.error('发音模式路由异常，降级到本地播放:', e);
+            console.error('在线真人发音播放失败，尝试回退系统离线合成:', e);
             playLocalVoice(text);
         }
     }
