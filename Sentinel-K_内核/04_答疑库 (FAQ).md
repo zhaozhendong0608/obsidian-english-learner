@@ -92,5 +92,21 @@
   3. **布局提权（即时呈现）**：对于高频高优先级的“单词详情”面板，必须在 UI 树中将其从列表底部提升至 Tab 按钮的正下方。这样当用户点击文档中的任意单词或利用新增的“全局自主查词”框输入词汇时，详情面板会在第一物理视觉区域瞬间呈现，免去手动翻卷侧边栏的动作，实现无滞后感（零视觉延迟）的学习体验。
   4. **剪贴板安全写入与 Notice 级联**：卡片复制功能直接使用格式化 Markdown 的 `navigator.clipboard.writeText(content)`，并在 Promise 回调中分发 Obsidian 的 `new Notice`，便于外部卡片流转。
 
+## 13. YouTube 视频无法播放及双向时间戳同步失效
+- **问题**: 将 YouTube 视频的链接复制到输入框后，HTML5 `<video>` 播放器无任何反应或报错，且时间戳无法同步与跳转。
+- **场景**: 输入在线流媒体链接时。
+- **方案**:
+  1. HTML5 的 `<video>` 仅支持直接的底层视频编码流文件（如 `.mp4`, `.webm`），它无法解码和加载 YouTube 复杂的网页数据。
+  2. 针对 YouTube 必须使用其官方的 **Iframe Player API** 进行集成渲染。通过监听 `https://www.youtube.com/iframe_api` 脚本的加载，并利用 `new YT.Player` 挂载 DOM 容器。
+  3. 进度双向联动解决方案：由于 Iframe 的安全策略限制，无法在父页面直接读取 Iframe 的 currentTime。需要利用 `YT.Player.getCurrentTime()` 的接口进行定时轮询以同步进度，并通过 `YT.Player.seekTo(seconds, true)` 来响应 Obsidian 笔记中 obsidian:// 链接的跳转播放请求。
+
+## 14. 侧边栏按钮点击夺取焦点导致时间戳无法插入
+- **问题**: 当点击侧边栏的“📌 插入视频时间戳”按钮时，系统总是弹窗提示“请先在主工作区打开并聚焦一个 Markdown 笔记”，即使用户此前已经在笔记中放好了光标。
+- **场景**: 在 Vue 侧边栏进行需要读取或操作当前 Markdown 编辑器的操作时。
+- **方案**:
+  1. 发生该问题是因为在 Obsidian 机制下，用户鼠标点击侧边栏 HTML 按钮的瞬间，系统会自动把 `app.workspace.activeLeaf` 标记为当前的侧边栏面板（其 ViewType 为 `lang-learner-panel` 而非 `markdown`）。
+  2. 原本通过检测 `activeLeaf` 状态的逻辑会因此失效。
+  3. **多路探测安全定位方案**：在辅助方法中利用 `app.workspace.getMostRecentLeaf()` 获取在此之前最近一次被激活的 Leaf。因为侧边栏夺取焦点只发生在一瞬间，该接口可以准确无误地定位回原先的主编辑器。同时利用 `app.workspace.getLeavesOfType('markdown')` 数组进行首选兜底，彻底解决侧边栏交互夺取焦点引发的失效报错。
+
 
 
