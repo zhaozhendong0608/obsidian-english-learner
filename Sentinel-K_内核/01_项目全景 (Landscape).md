@@ -63,11 +63,13 @@
 ---
 
 ## 3. 当前里程碑 (Current Milestone)
-- **阶段**: 项目初始化与沙盒配置
+- **阶段**: S3-Bone 至 S6-Muscle (核心算法、数据层与表现层均已跑通)
 - **重点**:
-  - 完成 `package.json`、`esbuild.config.mjs` 及构建流程。
-  - 编写 `scripts/generate_data.js` 准备高频词与不规则变形词表。
-  - 运行 `npm run dev` 跑通 esbuild 实时监听，并在 `/Users/up_dong/Documents/Obsidian-Dev-Sandbox` 沙盒中激活并开启 `hot-reload`。
+  - 完成 Tokenizer 与 Lemmatizer 算法引擎（带 K-TEST 鲁棒性验证）。
+  - 完成 Memory-First 的影子词库 `VocabularyManager`，实现并发写锁与原子覆写保护。
+  - 完成 DOM 渲染拦截（`registerMarkdownPostProcessor`），使用 `TreeWalker` 安全过滤标签，实现防嵌套包裹。
+  - 跑通基于 jsdom 的前端渲染单测，全量测试用例（32 个）全部绿灯。
+  - **下一步计划**：进入 Vue 3 侧边栏与交互控制 (F5 & N2 & F8) 阶段。
 
 ---
 
