@@ -275,7 +275,8 @@
                   'lang-learner-unknown': token.status === 'UNKNOWN',
                   'lang-learner-learning': token.status === 'LEARNING',
                   'lang-learner-known': token.status === 'KNOWN',
-                  'lang-learner-phrase': token.isPhrase
+                  'lang-learner-phrase': token.isPhrase,
+                  'lang-learner-word-speaking': activeTokenIndex === index
                 }"
                 :data-lemma="token.lemma"
                 :data-trans="token.trans"
@@ -339,7 +340,10 @@
       <h4 class="lang-learner-section-title">📝 单词详情</h4>
       <div class="lang-learner-word-info-card">
         <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <span class="lang-learner-word-lemma">{{ selectedWord.word }}</span>
+          <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
+            <span class="lang-learner-word-lemma">{{ displayWord }}</span>
+            <span v-if="selectedWord.phonetic" class="lang-learner-word-phonetic-inline">/{{ selectedWord.phonetic }}/</span>
+          </div>
           <button 
             class="lang-learner-btn-voice-word" 
             title="朗读单词" 
@@ -349,8 +353,35 @@
             🔊
           </button>
         </div>
-        <div v-if="selectedWord.phonetic" class="lang-learner-word-phonetic">/{{ selectedWord.phonetic }}/</div>
         <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
+        
+        <!-- 词源与记忆法辅助 -->
+        <div v-if="selectedWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
+          <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <span>💡 词源与记忆辅助</span>
+          </div>
+          <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent); white-space: pre-wrap;">
+            {{ selectedWord.etymology }}
+          </div>
+        </div>
+        
+        <!-- 例句联想模块 -->
+        <div class="lang-learner-word-examples-container">
+          <div class="lang-learner-examples-title">
+            💡 例句联想
+          </div>
+          <div v-if="isLoadingExamples" class="lang-learner-examples-loading">
+            正在获取例句...
+          </div>
+          <ul v-else-if="exampleSentences.length > 0" class="lang-learner-example-list">
+            <li v-for="(sentence, idx) in exampleSentences" :key="idx" class="lang-learner-example-item">
+              {{ sentence }}
+            </li>
+          </ul>
+          <div v-else class="lang-learner-examples-empty">
+            暂无相关例句
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -359,11 +390,17 @@
 <script lang="ts">
 import { defineComponent, ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import { Notice } from 'obsidian';
+// @ts-ignore
+import createHyphenator from 'hyphen';
+// @ts-ignore
+import hyphenationPatternsEnUs from 'hyphen/patterns/en-us';
 import { eventBus } from '../event/EventBus';
 import { HIGH_FREQUENCY_WORDS, OFFLINE_DICT } from '../data/static_data';
 import { tokenize } from '../tokenizer/tokenizer';
 import type { VocabularyManager } from '../db/vocabulary';
 import type { WordInfo, WordStatus } from '../types';
+
+const hyphenator = createHyphenator(hyphenationPatternsEnUs);
 
 export default defineComponent({
   name: 'LangLearnerPanel',
@@ -423,10 +460,199 @@ export default defineComponent({
 
     // ========== 单词详情 ==========
     const selectedWord = ref<WordInfo | null>(null);
+    const showSyllableSplit = ref(false);
+    const exampleSentences = ref<string[]>([]);
+    const isLoadingExamples = ref(false);
+    let exampleRequestVersion = 0;
+
+    const displayWord = computed(() => {
+        if (!selectedWord.value) return '';
+        if (showSyllableSplit.value) {
+            const word = selectedWord.value.word;
+            if (word.includes(' ')) {
+                return word.split(' ').map(w => hyphenator(w, { hyphenChar: '·' })).join(' ');
+            }
+            return hyphenator(word, { hyphenChar: '·' });
+        }
+        return selectedWord.value.word;
+    });
+
+    function toggleSyllableSplit() {
+        showSyllableSplit.value = !showSyllableSplit.value;
+    }
+
+    async function searchCurrentDocSentences(word: string): Promise<string[]> {
+        try {
+            const activeFile = plugin.app.workspace.getActiveFile();
+            if (!activeFile) return [];
+            const content = await plugin.app.vault.cachedRead(activeFile);
+            if (!content) return [];
+            
+            const sentences: string[] = [];
+            const paragraphs = content.split(/\n+/);
+            const regex = new RegExp(`\\b${word}\\b`, 'i');
+            
+            for (const para of paragraphs) {
+                if (!regex.test(para)) continue;
+                const segments = para.split(/[.?!。？！]/);
+                for (const seg of segments) {
+                    const cleanSeg = seg.trim();
+                    if (regex.test(cleanSeg)) {
+                        sentences.push(cleanSeg);
+                    }
+                }
+            }
+            return sentences;
+        } catch (e) {
+            console.error('搜索当前文档例句失败:', e);
+            return [];
+        }
+    }
+
+    async function loadLocalCardSentences(word: string): Promise<string[]> {
+        try {
+            const filePath = `LangLearner/Cards/${word}.md`;
+            const exists = await plugin.app.vault.adapter.exists(filePath);
+            if (!exists) return [];
+            
+            const content = await plugin.app.vault.adapter.read(filePath);
+            const lines = content.split('\n');
+            const sentences: string[] = [];
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('>') && trimmed.length > 1) {
+                    sentences.push(trimmed.slice(1).trim());
+                }
+            }
+            return sentences;
+        } catch (e) {
+            console.error('读取本地卡片例句失败:', e);
+            return [];
+        }
+    }
+
+    async function fetchOnlineExamples(word: string): Promise<{ examples: string[], phonetic?: string }> {
+        const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+        try {
+            const obsidian = require('obsidian');
+            let data: any = null;
+            if (obsidian && obsidian.requestUrl) {
+                const res = await obsidian.requestUrl({ url });
+                data = typeof res.json === 'object' ? res.json : JSON.parse(res.text || '[]');
+            } else {
+                const res = await fetch(url);
+                if (res.ok) {
+                    data = await res.json();
+                }
+            }
+            
+            const sentences: string[] = [];
+            let phonetic: string | undefined;
+            if (Array.isArray(data)) {
+                for (const entry of data) {
+                    if (!phonetic && entry.phonetic) {
+                        phonetic = entry.phonetic;
+                    }
+                    if (!phonetic && entry.phonetics) {
+                        for (const ph of entry.phonetics) {
+                            if (ph.text) {
+                                phonetic = ph.text;
+                                break;
+                            }
+                        }
+                    }
+                    if (entry.meanings) {
+                        for (const meaning of entry.meanings) {
+                            if (meaning.definitions) {
+                                for (const def of meaning.definitions) {
+                                    if (def.example) {
+                                        sentences.push(def.example);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return { examples: sentences, phonetic };
+        } catch (e) {
+            console.warn('获取在线例句与音标失败:', e);
+            return { examples: [] };
+        }
+    }
+
+    async function loadExamples(word: string) {
+        const currentVersion = ++exampleRequestVersion;
+        exampleSentences.value = [];
+        isLoadingExamples.value = true;
+
+        try {
+            const cleanWord = word.trim().toLowerCase();
+            // 1. 优先从当前文档搜索例句
+            let sentences = await searchCurrentDocSentences(cleanWord);
+            
+            // 2. 如果不够，从本地卡片中读取
+            if (sentences.length < 3) {
+                const cardSentences = await loadLocalCardSentences(cleanWord);
+                sentences = [...sentences, ...cardSentences];
+            }
+
+            // 3. 去重并过滤空值
+            sentences = Array.from(new Set(sentences.map(s => s.trim()))).filter(Boolean);
+
+            // 4. 判断是否需要在线拉取音标（当前选中词且缺失音标）
+            const needPhonetic = selectedWord.value && selectedWord.value.word === word && !selectedWord.value.phonetic;
+
+            let onlineSentences: string[] = [];
+            let fetchedPhonetic: string | undefined;
+
+            if (sentences.length < 2 || needPhonetic) {
+                const res = await fetchOnlineExamples(cleanWord);
+                onlineSentences = res.examples;
+                fetchedPhonetic = res.phonetic;
+            }
+
+            sentences = [...sentences, ...onlineSentences];
+
+            // 5. 最终过滤和去重，最多展示 3 条
+            const finalSentences = Array.from(new Set(sentences.map(s => s.trim())))
+                .filter(s => s.toLowerCase().includes(cleanWord) || s.length > 5)
+                .slice(0, 3);
+
+            if (currentVersion === exampleRequestVersion) {
+                exampleSentences.value = finalSentences;
+
+                // 如果在线拉取到了音标且当前词仍然缺失音标，则同步更新与持久化保存
+                if (fetchedPhonetic && selectedWord.value && selectedWord.value.word === word) {
+                    const cleanPhonetic = fetchedPhonetic.replace(/^\/|\/$/g, '');
+                    if (cleanPhonetic) {
+                        selectedWord.value.phonetic = cleanPhonetic;
+                        
+                        // 同步写入本地数据库
+                        const currentStatus = vocabManager.get(word);
+                        const info = vocabManager.getInfo(word);
+                        const trans = info?.trans || selectedWord.value.trans || '';
+                        vocabManager.set(word, currentStatus, trans, cleanPhonetic);
+                        
+                        // 广播状态更新以同步至主窗口视图
+                        eventBus.emit('lang-learner:word-changed', word, currentStatus);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('加载例句失败:', err);
+        } finally {
+            if (currentVersion === exampleRequestVersion) {
+                isLoadingExamples.value = false;
+            }
+        }
+    }
 
     /** 选中一个单词以展示详情 */
     function selectWord(info: WordInfo) {
         selectedWord.value = { ...info };
+        showSyllableSplit.value = false;
+        loadExamples(info.word);
     }
 
     /** 修改单词熟悉度状态 */
@@ -434,7 +660,8 @@ export default defineComponent({
         const info = vocabManager.getInfo(word);
         const trans = info?.trans || OFFLINE_DICT[word]?.trans || '';
         const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || '';
-        vocabManager.set(word, newStatus, trans, phonetic);
+        const etymology = info?.etymology;
+        vocabManager.set(word, newStatus, trans, phonetic, etymology);
 
         // 通过 EventBus 广播，驱动 DOM 增量刷新
         eventBus.emit('lang-learner:word-changed', word, newStatus);
@@ -605,6 +832,7 @@ export default defineComponent({
     const sentenceTranslation = ref('');
     const analyzedSentenceTokens = ref<any[]>([]);
     const analyzedWordsList = ref<any[]>([]);
+    const activeTokenIndex = ref<number | null>(null);
 
     /** 分析输入的整句 */
     async function analyzeInputSentence() {
@@ -654,7 +882,9 @@ export default defineComponent({
                     segments.push({
                         type: 'text',
                         text: text.slice(lastIndex, token.start),
-                        lemma: ''
+                        lemma: '',
+                        start: lastIndex,
+                        end: token.start
                     });
                 }
 
@@ -678,7 +908,9 @@ export default defineComponent({
                     isPhrase: token.isPhrase,
                     status,
                     trans,
-                    phonetic
+                    phonetic,
+                    start: token.start,
+                    end: token.end
                 };
                 segments.push(seg);
 
@@ -702,7 +934,9 @@ export default defineComponent({
                 segments.push({
                     type: 'text',
                     text: text.slice(lastIndex),
-                    lemma: ''
+                    lemma: '',
+                    start: lastIndex,
+                    end: text.length
                 });
             }
 
@@ -767,16 +1001,29 @@ export default defineComponent({
         const currentStatus = vocabManager.get(token.lemma);
         const displayPhonetic = token.phonetic ? ` /${token.phonetic}/` : '';
 
-        if (token.trans) {
-            new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: ${token.trans}`, 3500);
+        let trans = token.trans;
+        let phonetic = token.phonetic;
+        let etymology = token.etymology;
+
+        if (trans) {
+            new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: ${trans}`, 3500);
         } else {
             const loadingNotice = new Notice(`📖 ${token.lemma}${displayPhonetic}\n正在从在线词典查询释义...`, 5000);
             try {
-                const onlineTrans = await vocabManager.fetchOnlineTranslation(token.lemma);
+                const result = await vocabManager.fetchOnlineTranslationAndDetails(token.lemma);
                 loadingNotice.hide();
-                if (onlineTrans) {
-                    new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: ${onlineTrans}`, 4500);
-                    token.trans = onlineTrans;
+                if (result && result.trans) {
+                    new Notice(`📖 ${token.lemma}${result.phonetic ? ` /${result.phonetic}/` : ''}\n释义: ${result.trans}`, 4500);
+                    trans = result.trans;
+                    token.trans = result.trans;
+                    if (result.phonetic) {
+                        phonetic = result.phonetic;
+                        token.phonetic = result.phonetic;
+                    }
+                    if (result.etymology) {
+                        etymology = result.etymology;
+                        token.etymology = result.etymology;
+                    }
                 } else {
                     new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: 暂无释义`, 3500);
                 }
@@ -788,10 +1035,13 @@ export default defineComponent({
 
         if (currentStatus !== 'KNOWN') {
             const sentence = sentenceInput.value.trim();
-            updateWordStatusInList(token.lemma, 'LEARNING');
+            // 先写入带有音标和释义的 'LEARNING' 状态数据以防覆盖
+            vocabManager.set(token.lemma, 'LEARNING', trans, phonetic, etymology);
             
             // 广播词汇状态改变，联动 main.ts 触发语境卡片静默追加
             eventBus.emit('lang-learner:word-changed', token.lemma, 'LEARNING', sentence);
+        } else {
+            vocabManager.set(token.lemma, 'KNOWN', trans, phonetic, etymology);
         }
 
         handleWordSelected(token.lemma);
@@ -802,7 +1052,8 @@ export default defineComponent({
         const info = vocabManager.getInfo(word);
         const trans = info?.trans || OFFLINE_DICT[word]?.trans || '';
         const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || '';
-        vocabManager.set(word, newStatus, trans, phonetic);
+        const etymology = info?.etymology;
+        vocabManager.set(word, newStatus, trans, phonetic, etymology);
 
         // 广播事件以触发全屏 DOM 刷新与样式重绘
         eventBus.emit('lang-learner:word-changed', word, newStatus);
@@ -847,6 +1098,8 @@ export default defineComponent({
 
     /** 响应主窗口的单词单击选中事件，更新侧边栏详情 */
     function handleWordSelected(word: string) {
+        showSyllableSplit.value = false;
+        loadExamples(word);
         const info = vocabManager.getInfo(word);
         if (info) {
             selectedWord.value = { ...info };
@@ -879,19 +1132,24 @@ export default defineComponent({
     /** 在线异步查询释义并更新状态与 UI */
     async function fetchOnlineAndUpdate(word: string) {
         try {
-            const onlineTrans = await vocabManager.fetchOnlineTranslation(word);
-            if (onlineTrans) {
-                // 如果用户仍处于当前选中的单词上，实时更新详情释义
+            const result = await vocabManager.fetchOnlineTranslationAndDetails(word);
+            if (result && result.trans) {
+                // 如果用户仍处于当前选中的单词上，实时更新详情释义、音标、词源
                 if (selectedWord.value && selectedWord.value.word === word) {
-                    selectedWord.value.trans = onlineTrans;
+                    selectedWord.value.trans = result.trans;
+                    if (result.phonetic) {
+                        selectedWord.value.phonetic = result.phonetic;
+                    }
+                    if (result.etymology) {
+                        selectedWord.value.etymology = result.etymology;
+                    }
                 }
                 // 更新保存到内存影子词库中，使得高亮和缓存生效
                 const currentStatus = vocabManager.get(word);
-                const info = vocabManager.getInfo(word);
-                vocabManager.set(word, currentStatus, onlineTrans, info?.phonetic);
+                vocabManager.set(word, currentStatus, result.trans, result.phonetic, result.etymology);
             }
         } catch (err) {
-            console.error('在线异步更新释义失败:', err);
+            console.error('在线异步更新释义与详情失败:', err);
         }
     }
 
@@ -935,8 +1193,10 @@ export default defineComponent({
     });
 
     let currentAudio: HTMLAudioElement | null = null;
+    let speakRequestVersion = 0;
 
     function stopAllAudio() {
+        activeTokenIndex.value = null;
         if (currentAudio) {
             try {
                 currentAudio.pause();
@@ -995,7 +1255,7 @@ export default defineComponent({
      * 网络获取并播放音频流，播放成功返回 true，失败抛出异常
      * @param url 音频链接
      */
-    async function fetchAndPlayAudio(url: string): Promise<boolean> {
+    async function fetchAndPlayAudio(url: string, version: number): Promise<boolean> {
         let hasObsidianRequest = false;
         let obsidianRequestUrl: any = null;
         try {
@@ -1017,6 +1277,11 @@ export default defineComponent({
                 },
                 throw: true
             });
+
+            // 异步请求完毕，检查是否在此期间已发起了新的播放，若是则取消当前播放
+            if (version !== speakRequestVersion) {
+                throw new Error('播放已被更新的播放请求取消');
+            }
 
             if (response.status === 200 && response.arrayBuffer) {
                 const blob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
@@ -1043,6 +1308,9 @@ export default defineComponent({
             throw new Error(`网络响应状态错误: ${response.status}`);
         } else {
             // 常规环境 fallback
+            if (version !== speakRequestVersion) {
+                throw new Error('播放已被更新的播放请求取消');
+            }
             const audio = new Audio(url);
             currentAudio = audio;
             return new Promise((resolve, reject) => {
@@ -1060,6 +1328,7 @@ export default defineComponent({
     async function speak(text: string) {
         if (!text || !text.trim()) return;
         
+        const currentVersion = ++speakRequestVersion;
         // 停止当前所有播放的发音（隔离多重点击）
         stopAllAudio();
         
@@ -1067,12 +1336,20 @@ export default defineComponent({
             if (voiceSettings.value.engine === 'online') {
                 const accent = voiceSettings.value.onlineAccent || 2; // 2: 美音, 1: 英音
                 
+                // 如果文本长度过长（超出 180 个字符），在线 API 会因为长度限制导致 400 错误
+                // 此时直接使用本地系统离线发音，完美支持长句且无延迟
+                if (text.trim().length > 180) {
+                    playLocalVoice(text);
+                    return;
+                }
+                
                 // --- 尝试源 1: 有道发音 ---
                 try {
                     const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
-                    await fetchAndPlayAudio(youdaoUrl);
+                    await fetchAndPlayAudio(youdaoUrl, currentVersion);
                     return; // 播放成功，直接退出
                 } catch (err1) {
+                    if (currentVersion !== speakRequestVersion) return;
                     console.warn('有道在线发音源请求异常，自动尝试备用谷歌源:', err1);
                 }
 
@@ -1080,16 +1357,19 @@ export default defineComponent({
                 try {
                     const tl = accent === 2 ? 'en-US' : 'en-GB';
                     const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=tw-ob`;
-                    await fetchAndPlayAudio(googleUrl);
+                    await fetchAndPlayAudio(googleUrl, currentVersion);
                     return; // 播放成功
                 } catch (err2) {
+                    if (currentVersion !== speakRequestVersion) return;
                     console.error('有道与谷歌备用发音源均加载失败，降级回退系统合成:', err2);
                     playLocalVoice(text);
                 }
             } else {
+                if (currentVersion !== speakRequestVersion) return;
                 playLocalVoice(text);
             }
         } catch (e) {
+            if (currentVersion !== speakRequestVersion) return;
             console.error('发音路由链条异常，强制回退本地播放:', e);
             playLocalVoice(text);
         }
@@ -1098,19 +1378,173 @@ export default defineComponent({
     /** 播放本地系统离线发音 */
     function playLocalVoice(text: string) {
         if (typeof window !== 'undefined' && window.speechSynthesis) {
-            const utterance = new SpeechSynthesisUtterance(text);
+            // 首先清空当前正在播放的发音
+            window.speechSynthesis.cancel();
+            activeTokenIndex.value = null;
+
+            interface SpeechSegment {
+                text: string;
+                pauseMs: number;
+                rateMultiplier: number;
+                startOffset: number;
+            }
+
+            const segments: SpeechSegment[] = [];
+
+            // 1. 拆分标点符号（硬断句）
+            const puncRegex = /([,.;:!?，。；：！？]+)/g;
+            const parts = text.split(puncRegex);
             
-            // 应用配置的发音人
-            if (voiceSettings.value.voiceName) {
-                const matched = availableVoices.value.find(v => v.name === voiceSettings.value.voiceName);
-                if (matched) {
-                    utterance.voice = matched;
+            // 句法边界双阈值控制：
+            // Major: 关系代词与从句连词（引导主干结构变化，分割阈值较低，为 18 字符）
+            const structureWords = /\b(because|although|though|however|therefore|nevertheless|if|when|while|before|after|since|until|unless|but|so|that|which|who|whom|whose)\b/i;
+            // Minor: 介词与不定式/比较代词（用于长句中细分意群，分割阈值较高，为 28 字符，防止 join with / go down 等紧密搭配断开）
+            const prepositionWords = /\b(in|on|at|by|for|with|about|of|from|to|as)\b/i;
+            const slowWords = /\b(because|although|though|however|therefore|nevertheless|especially|particularly|refuse|believe|bankrupt|insufficient|opportunity)\b/i;
+
+            let currentOffset = 0;
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (!part) continue;
+                
+                const partLen = part.length;
+                const partStart = currentOffset;
+                currentOffset += partLen;
+
+                if (part.match(/[,.;:!?，。；：！？]+/)) {
+                    // 这是标点符号。把停顿追加到前一个意群分段上
+                    let pauseMs = 350; // 逗号等默认停顿 350ms
+                    if (part.match(/[.!?。！？]/)) {
+                        pauseMs = 700; // 句号等句尾停顿 700ms
+                    }
+                    if (segments.length > 0) {
+                        segments[segments.length - 1].pauseMs = pauseMs;
+                    }
+                } else {
+                    // 这是普通文本。在此进一步按“语法意群”进行细分，保持儿童学英语的自然连读与句法断句感
+                    const words = part.split(/(\s+)/);
+                    let currentGroup = '';
+                    let groupStartOffset = partStart;
+                    let lastWordOffset = partStart;
+
+                    for (let j = 0; j < words.length; j++) {
+                        const word = words[j];
+                        const cleanWord = word.trim().toLowerCase();
+                        const wordLen = word.length;
+                        
+                        const isMajor = structureWords.test(cleanWord);
+                        const isMinor = prepositionWords.test(cleanWord);
+                        const currentLen = currentGroup.trim().length;
+                        
+                        // 双阈值规则判定：主干从句累积 > 18 字符，或介词短语累积 > 28 字符时进行分割
+                        if ((isMajor && currentLen > 18) || (isMinor && currentLen > 28)) {
+                            const groupText = currentGroup.trim();
+                            // 计算语速乘数：含有较难/强调修饰词，慢速 0.88x，过渡短意群 1.05x，正常 1.0x
+                            let rateMultiplier = 1.0;
+                            if (slowWords.test(groupText)) {
+                                rateMultiplier = 0.88;
+                            } else if (groupText.length < 15) {
+                                rateMultiplier = 1.05;
+                            }
+
+                            segments.push({
+                                text: groupText,
+                                pauseMs: 150, // 意群间有 150ms 的自然呼吸/换气时间
+                                rateMultiplier,
+                                startOffset: groupStartOffset
+                            });
+
+                            currentGroup = word;
+                            groupStartOffset = lastWordOffset;
+                        } else {
+                            currentGroup += word;
+                        }
+                        lastWordOffset += wordLen;
+                    }
+
+                    if (currentGroup.trim()) {
+                        const groupText = currentGroup.trim();
+                        let rateMultiplier = 1.0;
+                        if (slowWords.test(groupText)) {
+                            rateMultiplier = 0.88;
+                        } else if (groupText.length < 15) {
+                            rateMultiplier = 1.05;
+                        }
+                        segments.push({
+                            text: groupText,
+                            pauseMs: 0,
+                            rateMultiplier,
+                            startOffset: groupStartOffset
+                        });
+                    }
                 }
             }
+
+            if (segments.length === 0) return;
+
+            let currentIndex = 0;
+            const currentSession = speakRequestVersion; // 绑定当前会话版本号
+
+            function playNext() {
+                if (currentIndex >= segments.length) {
+                    activeTokenIndex.value = null; // 播放完毕清空高亮
+                    return;
+                }
+                if (currentSession !== speakRequestVersion) return; // 被新播放请求截断
+                
+                const segment = segments[currentIndex];
+                const utterance = new SpeechSynthesisUtterance(segment.text);
+                
+                // 应用选定的发音人
+                if (voiceSettings.value.voiceName) {
+                    const matched = availableVoices.value.find(v => v.name === voiceSettings.value.voiceName);
+                    if (matched) utterance.voice = matched;
+                }
+                
+                // 自适应句型语速控制：基础语速 * 意群语速乘数
+                utterance.rate = voiceSettings.value.rate * segment.rateMultiplier;
+                utterance.pitch = voiceSettings.value.pitch;
+                
+                // 监听 boundary 事件高亮对应单词/短语
+                utterance.onboundary = (event) => {
+                    if (currentSession !== speakRequestVersion) return;
+                    if (event.name !== 'word') return;
+                    
+                    // 计算在此意群相对于整句的绝对字符偏移量
+                    const absoluteCharIndex = segment.startOffset + event.charIndex;
+                    
+                    // 查找对应的 token index
+                    const tokenIndex = analyzedSentenceTokens.value.findIndex(token => {
+                        return absoluteCharIndex >= token.start && absoluteCharIndex < token.end;
+                    });
+                    
+                    if (tokenIndex !== -1) {
+                        activeTokenIndex.value = tokenIndex;
+                    }
+                };
+
+                utterance.onend = () => {
+                    if (currentSession !== speakRequestVersion) return;
+                    currentIndex++;
+                    if (currentIndex < segments.length) {
+                        setTimeout(playNext, segment.pauseMs);
+                    } else {
+                        activeTokenIndex.value = null; // 全部播放完，清空高亮
+                    }
+                };
+                
+                utterance.onerror = (e) => {
+                    console.error('系统语音合成片段播放出错:', e);
+                    if (currentSession !== speakRequestVersion) return;
+                    currentIndex++;
+                    playNext();
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            }
             
-            utterance.rate = voiceSettings.value.rate;
-            utterance.pitch = voiceSettings.value.pitch;
-            window.speechSynthesis.speak(utterance);
+            playNext();
         } else {
             new Notice('当前系统不支持离线发音');
         }
@@ -1144,6 +1578,7 @@ export default defineComponent({
       sentenceTranslation,
       analyzedSentenceTokens,
       analyzedWordsList,
+      activeTokenIndex,
       selectWord,
       changeWordStatus,
       quickAdvance,
@@ -1154,7 +1589,11 @@ export default defineComponent({
       importSelection,
       onSentenceWordClick,
       onSentenceWordDblClick,
-      updateWordStatusInList
+      updateWordStatusInList,
+      displayWord,
+      toggleSyllableSplit,
+      exampleSentences,
+      isLoadingExamples
     };
   }
 });

@@ -41,9 +41,16 @@
 - [x] 引入追加式更新机制：如果卡片已存在，解析 Front Matter 并将新语境追加至 `## 历史流转语境` 尾部，禁止覆盖旧数据 (支持同文本去重)
 
 ### 6. 整句分析与双引擎混合发音 (N2 & F12)
-- [x] 实现侧边栏“整句分析” Tab 页，通过 `tokenize` 和 `lemmatizer` 实现长句交互分词高亮、去重清单展示及 MyMemory API 跨域整句翻译
+- [x] 实现侧边栏“整句分析” Tab 页，通过 `tokenize` and `lemmatizer` 实现长句交互分词高亮、去重清单展示及 MyMemory API 跨域整句翻译
 - [x] 实现 **F12 双引擎混合真人发音系统 (Hybrid TTS)**，内置在线真人配音（有道 + 谷歌翻译）与离线系统合成双模引擎
 - [x] 实现宿主 `requestUrl` 无 Origin/Referer 特权代理与本地 Blob 二进制转换播放，解决跨域及 Status 500 播放报错问题，并添加 localStorage 持久化及 stopAllAudio 播音打断隔离
+
+### 7. 教学法发音调优与词源检索增强 (F12 & F11)
+- [x] 实现基于句法结构的意群意向断句算法 (Syntactic Sense Group Phrasing)，支持大介词短语前自然换气与 Liaison 连读保留
+- [x] 实现自适应语速控制 (Tempo Tuning)，复杂词降速 88%，过渡词提速 105% 提升发音真实度
+- [x] 接入有道 `jsonapi` 词源与记忆辅助信息 (Etymology & Mnemonic) 获取并持久化至 `vocabulary.json`
+- [x] 优化单词详情 UI，新增 `💡 词源与记忆辅助` 面板并支持 Obsidian 原生主题及换行渲染
+- [x] 优化 `lemmatizer.ts` 中缀词性还原算法，确保稀有词（如 `languished` -> `languish`）正确匹配原型，并通过自动化单元测试
 
 ## 🧪 阶段 3: 整体测试与部署联调
 - [x] 初始化 `/Users/up_dong/Documents/Obsidian-Dev-Sandbox` 沙盒 (已自动注入 community-plugins 并放置测试文档)

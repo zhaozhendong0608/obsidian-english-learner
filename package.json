@@ -23,6 +23,7 @@
         "vitest": "^1.5.0"
     },
     "dependencies": {
+        "hyphen": "^1.14.1",
         "vue": "^3.4.0"
     }
 }

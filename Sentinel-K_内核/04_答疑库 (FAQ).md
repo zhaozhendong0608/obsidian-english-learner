@@ -71,3 +71,17 @@
   2. **防盗链与 CORS 规避**：第三方接口会对来自沙盒内部（`app://obsidian.md`）的请求实施跨域或防盗链拦截，重定向回 HTML 网页而非原本的 MP3 音频流，导致 `<audio>` 播放非媒体流时发生 `NotSupportedError` 错误。此时应使用 `obsidian.requestUrl` 下载二进制 `ArrayBuffer`，在本地将其封装为 `Blob` 并利用 `URL.createObjectURL` 映射为本地 Blob URL 交付 `Audio` 对象播放。播放完毕或报错后应及时 Revoke 以防内存泄露。
   3. **链式 Failover 容错降级**：在线发音对长句或频控极其脆弱。必须实现多源责任链发音分发路由（有道真人发音 -> 谷歌高清真人 TTS -> 本地系统离线合成），发生异常时自动且秒级在 `try-catch` 中转移发音任务，保障系统级的高可用性。
 
+## 10. 稀有词的词形还原 (Lemmatization) 算法规则顺序冲突
+- **问题**: 在处理一些较为罕见的派生生词（如 `languished`）时，词形还原模块直接返回了 `carri`（如 `carried` -> `carri`）或者完全未能识别，查词详情白屏或无释义。
+- **对策**:
+  1. 动词或名词变形规则中，具体的形态拼写变化（例如 `ied` -> `y` 变形如 `carried` -> `carry`，以及双辅音还原如 `running` -> `run`）优先级必须排在通用的直接切除后缀（如 `ed`/`ing`）之前。如果通用规则在先，会导致 `carried` 错误匹配 `carri` 从而直接中断逆推。
+  2. 原型有效性校验函数 `isValidBase` 判定时，除了检索高频白名单 Set 之外，必须联合检索离线字典缓存（`OFFLINE_DICT`）。对于更长单词（如 `languish`，长度 >= 5），在规则还原判定中，如果去后缀得到的基础词长度大于等于 5，即使没在预设词库中，也应予以原型还原通过。
+
+## 11. 在线词源 (Etymology) 和助记信息的获取与持久化
+- **问题**: 使用在线有道 `jsonapi` 批量抓取释义与音标时，若接口只提供翻译，无法显示极具教学价值的词源和助记说明，或因为网络不稳定发生空缺。
+- **对策**:
+  1. 调用 `jsonapi?q=[word]` 时，定位 `data.etym.etyms.zh[0].value` 提取中文词源。
+  2. 采用以有道 Suggest API 为后盾的级联兜底（Fallback）模式，当 `jsonapi` 主翻译模块未响应或释义为空时，退避至 Suggest 服务获取翻译，再组装交付。
+  3. 通过 `vocabManager.set(word, status, trans, phonetic, etymology)` 保持词源信息的本地存储，防止后续用户更改状态（KNOWN/LEARNING）时丢失已加载的词源数据。
+
+

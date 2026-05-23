@@ -39,6 +39,15 @@
     /* 无额外样式，与正常文本一致 */
 }
 
+/* 朗读跟读高亮样式 */
+.lang-learner-word.lang-learner-word-speaking {
+    background-color: var(--text-accent, rgba(46, 204, 113, 0.35)) !important;
+    color: var(--text-normal, #ffffff) !important;
+    border-radius: 3px;
+    box-shadow: 0 0 5px var(--text-accent, rgba(46, 204, 113, 0.4));
+    transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+}
+
 /* 短语高亮：整体包裹，内部不嵌套子 span */
 .lang-learner-word.lang-learner-phrase {
     white-space: nowrap;
@@ -110,6 +119,74 @@
 .lang-learner-noise-3 .lang-learner-word[data-freq-rank="intermediate"] {
     opacity: 0.15;
 }
+
+/* ---- 4. 单词详情页增强样式 (音标内联、可点击提示与例句模块) ---- */
+
+.lang-learner-word-detail-word-box {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: -6px;
+    transition: background-color 0.2s ease;
+}
+
+.lang-learner-word-detail-word-box:hover {
+    background-color: var(--background-primary-alt);
+}
+
+.lang-learner-word-phonetic-inline {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-family: var(--font-monospace, monospace);
+    font-weight: normal;
+}
+
+.lang-learner-word-examples-container {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--background-modifier-border);
+}
+
+.lang-learner-examples-title {
+    font-size: 0.8em;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lang-learner-example-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.lang-learner-example-item {
+    font-size: 0.82em;
+    color: var(--text-normal);
+    line-height: 1.45;
+    padding-left: 8px;
+    border-left: 2px solid var(--interactive-accent);
+    font-style: italic;
+}
+
+.lang-learner-examples-loading,
+.lang-learner-examples-empty {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0;
+    margin: 0;
+}
+
 
 /* sfc-style:/Users/up_dong/Documents/open_workspace/obsidian-english-learner/src/ui/Panel.vue?type=style&index=0 */
 .lang-learner-panel {

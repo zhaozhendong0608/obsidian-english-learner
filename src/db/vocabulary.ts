@@ -81,7 +81,7 @@ export class VocabularyManager {
      * @param trans 汉化释义 (若为空，则自动检索内置离线字典)
      * @param phonetic 音标 (可选，若为空且内置字典有则自动填充)
      */
-    public set(word: string, status: WordStatus, trans: string, phonetic?: string): void {
+    public set(word: string, status: WordStatus, trans: string, phonetic?: string, etymology?: string): void {
         if (!word) return;
         const cleanWord = word.trim().toLowerCase();
         
@@ -107,6 +107,7 @@ export class VocabularyManager {
             existing.status = status;
             if (finalTrans) existing.trans = finalTrans;
             if (finalPhonetic) existing.phonetic = finalPhonetic;
+            if (etymology !== undefined) existing.etymology = etymology;
             existing.updated = now;
         } else {
             // 新增单词数据
@@ -115,6 +116,7 @@ export class VocabularyManager {
                 status,
                 trans: finalTrans,
                 phonetic: finalPhonetic || undefined,
+                etymology,
                 added: now,
                 updated: now
             });
@@ -250,6 +252,81 @@ export class VocabularyManager {
             console.error('在线获取释义失败:', e);
         }
         return '';
+    }
+
+    /**
+     * 在线异步拉取单词详细信息（含释义、音标、词源与记忆辅助）
+     */
+    public async fetchOnlineTranslationAndDetails(word: string): Promise<{ trans: string; phonetic?: string; etymology?: string }> {
+        try {
+            const cleanWord = word.trim().toLowerCase();
+            const url = `https://dict.youdao.com/jsonapi?q=${encodeURIComponent(cleanWord)}`;
+            
+            let data: any = null;
+            // 优先使用 Obsidian requestUrl 绕过 CORS
+            try {
+                const obsidian = require('obsidian');
+                if (obsidian && obsidian.requestUrl) {
+                    const res = await obsidian.requestUrl({ url });
+                    data = typeof res.json === 'object' ? res.json : JSON.parse(res.text || '{}');
+                }
+            } catch (obsError) {
+                console.warn('使用 Obsidian requestUrl 失败，回退到 fetch:', obsError);
+            }
+
+            if (!data) {
+                const res = await fetch(url);
+                if (res.ok) {
+                    data = await res.json();
+                }
+            }
+
+            if (data) {
+                let trans = '';
+                if (data.ec && data.ec.word && data.ec.word[0]) {
+                    const w = data.ec.word[0];
+                    if (w.trs && w.trs.length > 0) {
+                        trans = w.trs.map((t: any) => {
+                            if (t.tr && t.tr[0] && t.tr[0].l && t.tr[0].l.i) {
+                                return t.tr[0].l.i.join('；');
+                            }
+                            return '';
+                        }).filter(Boolean).join('\n');
+                    }
+                }
+
+                let phonetic = '';
+                if (data.ec && data.ec.word && data.ec.word[0]) {
+                    phonetic = data.ec.word[0].usphone || data.ec.word[0].ukphone || '';
+                }
+
+                let etymology = '';
+                if (data.etym && data.etym.etyms && data.etym.etyms.zh && data.etym.etyms.zh[0]) {
+                    etymology = data.etym.etyms.zh[0].value || '';
+                }
+
+                // 如果通过 jsonapi 获取的主翻译为空，回退到 suggest API 兜底获取
+                if (!trans) {
+                    trans = await this.fetchOnlineTranslation(cleanWord);
+                }
+
+                return {
+                    trans: trans || '',
+                    phonetic: phonetic || undefined,
+                    etymology: etymology || undefined
+                };
+            }
+        } catch (e) {
+            console.error('在线获取单词详细信息失败:', e);
+        }
+        
+        // 最终兜底
+        try {
+            const trans = await this.fetchOnlineTranslation(word);
+            return { trans };
+        } catch (e) {
+            return { trans: '' };
+        }
     }
 
     /**

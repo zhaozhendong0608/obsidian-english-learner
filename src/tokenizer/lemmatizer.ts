@@ -1,8 +1,17 @@
 import { LemmatizerResult } from '../types';
-import { HIGH_FREQUENCY_WORDS, IRREGULAR_MAP } from '../data/static_data';
+import { HIGH_FREQUENCY_WORDS, IRREGULAR_MAP, OFFLINE_DICT } from '../data/static_data';
 
 // 使用 Set 提高高频白名单查找的响应速度 (O(1) 复杂度)
 const wordSet = new Set<string>(HIGH_FREQUENCY_WORDS);
+
+/**
+ * 判断是否是合法英文单词原型 (在高频词表、或离线词典中)
+ */
+function isValidBase(base: string): boolean {
+    const clean = base.toLowerCase().trim();
+    if (!clean) return false;
+    return wordSet.has(clean) || (OFFLINE_DICT as any)[clean] !== undefined;
+}
 
 /**
  * 判断字符串是否以双写辅音字母结尾
@@ -31,37 +40,55 @@ function innerLemmatize(word: string): string | null {
     // A. 动词进行时 (-ing 结尾，至少 5 字符如 doing)
     if (word.endsWith('ing') && len > 4) {
         const base = word.slice(0, -3);
-        // 规则 1: studying -> study
-        if (wordSet.has(base)) return base;
-        // 规则 2: loving -> love
-        const baseWithE = base + 'e';
-        if (wordSet.has(baseWithE)) return baseWithE;
-        // 规则 3: running -> run (双写辅音还原)
+        
+        // 规则 1: 双写辅音还原 (如 running -> run)
         if (isDoubleConsonant(base)) {
             const singleBase = base.slice(0, -1);
-            if (wordSet.has(singleBase)) return singleBase;
+            if (isValidBase(singleBase)) return singleBase;
+        }
+        
+        // 规则 2: studying -> study
+        if (isValidBase(base)) return base;
+        
+        // 规则 3: loving -> love
+        const baseWithE = base + 'e';
+        if (isValidBase(baseWithE)) return baseWithE;
+        
+        // 规则 4: 稀有词进行时还原 (如 languishing -> languish)
+        if (base.length >= 5) {
+            return base;
         }
     }
 
     // B. 动词过去式/过去分词 (-ed 结尾，至少 4 字符如 used)
     if (word.endsWith('ed') && len > 3) {
         const base = word.slice(0, -2);
-        // 规则 1: started -> start
-        if (wordSet.has(base)) return base;
-        // 规则 2: carried -> carry (变 y 为 i 加 ed)
+        
+        // 规则 1: carried -> carry (变 y 为 i 加 ed)
         if (word.endsWith('ied') && len > 4) {
             const yBase = word.slice(0, -3) + 'y';
-            if (wordSet.has(yBase)) return yBase;
+            if (isValidBase(yBase)) return yBase;
+            if (yBase.length >= 5) return yBase;
         }
-        // 规则 3: stopped -> stop (双写辅音还原)
+        
+        // 规则 2: 双写辅音还原 (如 stopped -> stop)
         if (isDoubleConsonant(base)) {
             const singleBase = base.slice(0, -1);
-            if (wordSet.has(singleBase)) return singleBase;
+            if (isValidBase(singleBase)) return singleBase;
         }
-        // 规则 4: loved -> love (只需去掉 d)
+        
+        // 规则 3: loved -> love (只需去掉 d)
         if (word.endsWith('d')) {
             const dBase = word.slice(0, -1);
-            if (wordSet.has(dBase)) return dBase;
+            if (isValidBase(dBase)) return dBase;
+        }
+        
+        // 规则 4: started -> start
+        if (isValidBase(base)) return base;
+        
+        // 规则 5: 稀有词过去式还原 (如 languished -> languish)
+        if (base.length >= 5 && !base.endsWith('i')) {
+            return base;
         }
     }
 
@@ -70,41 +97,59 @@ function innerLemmatize(word: string): string | null {
         // 规则 1: flies -> fly (变 y 为 i 加 es)
         if (word.endsWith('ies') && len > 4) {
             const yBase = word.slice(0, -3) + 'y';
-            if (wordSet.has(yBase)) return yBase;
+            if (isValidBase(yBase)) return yBase;
+            if (yBase.length >= 5) return yBase;
         }
         // 规则 2: boxes -> box
         if (word.endsWith('es') && len > 3) {
             const base = word.slice(0, -2);
-            if (wordSet.has(base)) return base;
+            if (isValidBase(base)) return base;
         }
         // 规则 3: cats -> cat
         const base = word.slice(0, -1);
-        if (wordSet.has(base)) return base;
+        if (isValidBase(base)) return base;
+        
+        // 规则 4: 稀有词复数/单三还原 (如 properties -> property)
+        if (word.endsWith('es') && len > 4) {
+            const base = word.slice(0, -2);
+            if (base.length >= 5) return base;
+        }
+        if (base.length >= 5) {
+            return base;
+        }
     }
 
     // D. 比较级/最高级 (-er 或 -est 结尾，至少 4 字符)
     if (word.endsWith('est') && len > 4) {
         const base = word.slice(0, -3);
-        if (wordSet.has(base)) return base;
+        if (isValidBase(base)) return base;
         const baseWithE = base + 'e';
-        if (wordSet.has(baseWithE)) return baseWithE;
+        if (isValidBase(baseWithE)) return baseWithE;
         if (word.endsWith('iest') && len > 5) {
             const yBase = word.slice(0, -4) + 'y';
-            if (wordSet.has(yBase)) return yBase;
+            if (isValidBase(yBase)) return yBase;
+            if (yBase.length >= 5) return yBase;
+        }
+        if (base.length >= 5) {
+            return base;
         }
     }
     if (word.endsWith('er') && len > 3) {
         const base = word.slice(0, -2);
-        if (wordSet.has(base)) return base;
+        if (isValidBase(base)) return base;
         const baseWithE = base + 'e';
-        if (wordSet.has(baseWithE)) return baseWithE;
+        if (isValidBase(baseWithE)) return baseWithE;
         if (word.endsWith('ier') && len > 4) {
             const yBase = word.slice(0, -3) + 'y';
-            if (wordSet.has(yBase)) return yBase;
+            if (isValidBase(yBase)) return yBase;
+            if (yBase.length >= 5) return yBase;
+        }
+        if (base.length >= 5) {
+            return base;
         }
     }
 
-    // 3. 高频词白名单判断 (形态规则均无法还原出其他高频词时，如果单词本身已是高频词原型，则直接返回其自身)
+    // 3. 高频词白名单判断
     if (wordSet.has(word)) {
         return word;
     }

@@ -36,6 +36,8 @@ describe('词形还原算法 (Lemmatizer) 测试', () => {
         expect(lemmatize('stopped').lemma).toBe('stop');
         // 去掉 d 还原 (如 love + d)
         expect(lemmatize('loved').lemma).toBe('love');
+        // 稀有词还原测试
+        expect(lemmatize('languished').lemma).toBe('languish');
     });
 
     it('应能正确还原名词复数与动词单三变形', () => {

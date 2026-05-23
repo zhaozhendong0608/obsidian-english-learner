@@ -22,6 +22,8 @@ export interface WordInfo {
     added: number;
     /** 最后更新的时间戳 */
     updated: number;
+    /** 词源与记忆法辅助信息 (可选) */
+    etymology?: string;
 }
 
 /**
