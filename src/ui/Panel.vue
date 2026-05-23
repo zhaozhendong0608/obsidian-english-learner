@@ -23,6 +23,13 @@
       >
         🔍 整句分析
       </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'review' }"
+        @click="mainTab = 'review'"
+      >
+        📅 间隔复习
+      </button>
     </div>
 
     <!-- 全局自主查词输入框 -->
@@ -403,12 +410,113 @@
       </div>
     </div>
 
+    <!-- Tab 4: 间隔复习 -->
+    <div v-show="mainTab === 'review'" class="lang-learner-tab-content">
+      <div class="lang-learner-panel-dashboard">
+        <h3 class="lang-learner-panel-title">📅 间隔复习</h3>
+        <div class="lang-learner-stats-grid">
+          <div class="lang-learner-stat-item lang-learner-stat-learning" style="grid-column: span 2;">
+            <span class="lang-learner-stat-value">{{ dueWords.length }}</span>
+            <span class="lang-learner-stat-label">今日待复习</span>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="currentReviewWord" class="lang-learner-review-card-container">
+        <!-- 单词展示区 -->
+        <div class="lang-learner-estimation-word">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px 10px 10px;">
+            <span class="lang-learner-big-word">{{ currentReviewWord.word }}</span>
+            <button 
+              class="lang-learner-btn-voice-word" 
+              title="朗读单词" 
+              @click="speak(currentReviewWord.word)"
+              style="background: transparent; border: none; cursor: pointer; font-size: 1.2em; opacity: 0.85;"
+            >
+              🔊
+            </button>
+          </div>
+          <div v-if="currentReviewWord.phonetic" class="lang-learner-word-phonetic" style="margin-top: 4px;">
+            /{{ currentReviewWord.phonetic }}/
+          </div>
+        </div>
+
+        <!-- 答面详情 (点击“显示释义”后呈现) -->
+        <div v-if="showReviewAnswer" class="lang-learner-panel-section lang-learner-review-answer-section" style="margin-top: 12px;">
+          <div class="lang-learner-word-trans" style="border-top: none; padding-top: 0; font-size: 0.95em;">
+            {{ currentReviewWord.trans || '暂无释义' }}
+          </div>
+
+          <!-- 词源 -->
+          <div v-if="currentReviewWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
+            <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px;">
+              💡 词源记忆
+            </div>
+            <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent);">
+              {{ currentReviewWord.etymology }}
+            </div>
+          </div>
+
+          <!-- 例句 -->
+          <div class="lang-learner-word-examples-container" style="margin-top: 12px;">
+            <div class="lang-learner-examples-title" style="font-size: 0.85em; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">
+              💡 例句上下文
+            </div>
+            <div v-if="isLoadingReviewExamples" class="lang-learner-examples-loading" style="font-size: 0.8em; color: var(--text-muted);">
+              正在获取例句...
+            </div>
+            <ul v-else-if="reviewExampleSentences.length > 0" class="lang-learner-example-list" style="margin: 0; padding-left: 14px; font-size: 0.85em; line-height: 1.4;">
+              <li v-for="(sentence, idx) in reviewExampleSentences" :key="idx" class="lang-learner-example-item" style="margin-bottom: 4px;">
+                {{ sentence }}
+              </li>
+            </ul>
+            <div v-else class="lang-learner-examples-empty" style="font-size: 0.8em; color: var(--text-muted); font-style: italic;">
+              暂无例句
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部控制按钮 -->
+        <div style="margin-top: 16px;">
+          <button 
+            v-if="!showReviewAnswer" 
+            @click="showReviewAnswer = true" 
+            class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
+            style="font-size: 0.95em; padding: 10px;"
+          >
+            显示释义
+          </button>
+          
+          <div v-else style="display: flex; gap: 8px;">
+            <button @click="submitReviewGrade(0)" class="lang-learner-btn lang-learner-btn-no" style="font-size: 0.85em; padding: 8px 4px; flex: 1;">
+              🔴 忘记
+            </button>
+            <button @click="submitReviewGrade(1)" class="lang-learner-btn" style="background: #f39c12; color: #fff; font-size: 0.85em; padding: 8px 4px; flex: 1;">
+              🟡 模糊
+            </button>
+            <button @click="submitReviewGrade(2)" class="lang-learner-btn lang-learner-btn-yes" style="font-size: 0.85em; padding: 8px 4px; flex: 1;">
+              🟢 记得
+            </button>
+            <button @click="submitReviewGrade(3)" class="lang-learner-btn lang-learner-btn-accent" style="font-size: 0.85em; padding: 8px 4px; flex: 1;">
+              ⚡ 熟练
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="lang-learner-empty-hint" style="padding: 40px 0; text-align: center;">
+        <div style="font-size: 3em; margin-bottom: 12px;">🎉</div>
+        <p style="font-weight: 600; color: var(--text-success, #27ae60); margin: 0 0 4px 0;">已完成今日复习！</p>
+        <p style="font-size: 0.85em; color: var(--text-muted); margin: 0;">太棒了，目前没有待复习的到期单词。</p>
+      </div>
+    </div>
+
     <!-- 单词详情面板已移至 Tab 按钮下方 (全局最高优先级位置) -->
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, inject, onMounted, onUnmounted } from 'vue';
+import { defineComponent, ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import { Notice } from 'obsidian';
 // @ts-ignore
 import createHyphenator from 'hyphen';
@@ -434,7 +542,7 @@ export default defineComponent({
     const highFreqSet = new Set<string>(HIGH_FREQUENCY_WORDS);
 
     // ========== 导航 Tab 控制 ==========
-    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence'>('vocabulary');
+    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review'>('vocabulary');
 
     // ========== 统计仪表盘 ==========
     const stats = ref({ total: 0, unknown: 0, learning: 0, known: 0 });
@@ -1612,6 +1720,87 @@ export default defineComponent({
         });
     }
 
+    // ========== 间隔复习 (Spaced Repetition) ==========
+    const showReviewAnswer = ref(false);
+    const reviewExampleSentences = ref<string[]>([]);
+    const isLoadingReviewExamples = ref(false);
+    let reviewExampleVersion = 0;
+
+    const dueWords = computed(() => {
+        const now = Date.now();
+        return wordListCache.value
+            .filter(w => w.status === 'LEARNING' && (!w.nextReview || w.nextReview <= now))
+            .sort((a, b) => (a.nextReview || 0) - (b.nextReview || 0));
+    });
+
+    const currentReviewWord = computed(() => {
+        return dueWords.value[0] || null;
+    });
+
+    async function loadReviewExamples(word: string) {
+        const currentVersion = ++reviewExampleVersion;
+        reviewExampleSentences.value = [];
+        isLoadingReviewExamples.value = true;
+
+        try {
+            const cleanWord = word.trim().toLowerCase();
+            let sentences = await searchCurrentDocSentences(cleanWord);
+            if (sentences.length < 3) {
+                const cardSentences = await loadLocalCardSentences(cleanWord);
+                sentences = [...sentences, ...cardSentences];
+            }
+            sentences = Array.from(new Set(sentences.map(s => s.trim()))).filter(Boolean);
+
+            if (sentences.length < 2) {
+                const res = await fetchOnlineExamples(cleanWord);
+                sentences = [...sentences, ...res.examples];
+            }
+
+            const finalSentences = Array.from(new Set(sentences.map(s => s.trim())))
+                .filter(s => s.toLowerCase().includes(cleanWord) || s.length > 5)
+                .slice(0, 3);
+
+            if (currentVersion === reviewExampleVersion) {
+                reviewExampleSentences.value = finalSentences;
+            }
+        } catch (e) {
+            console.error('加载复习例句失败:', e);
+        } finally {
+            if (currentVersion === reviewExampleVersion) {
+                isLoadingReviewExamples.value = false;
+            }
+        }
+    }
+
+    watch(currentReviewWord, (newWord) => {
+        showReviewAnswer.value = false;
+        if (newWord) {
+            loadReviewExamples(newWord.word);
+        }
+    }, { immediate: true });
+
+    function submitReviewGrade(grade: number) {
+        const wordObj = currentReviewWord.value;
+        if (!wordObj) return;
+
+        vocabManager.reviewWord(wordObj.word, grade);
+        
+        refreshStats();
+        refreshWordList();
+
+        new Notice(`已记录复习：${wordObj.word} (${getGradeLabel(grade)})`);
+    }
+
+    function getGradeLabel(grade: number): string {
+        switch (grade) {
+            case 0: return '忘记';
+            case 1: return '模糊';
+            case 2: return '记得';
+            case 3: return '熟练';
+            default: return '';
+        }
+    }
+
     return {
       speak,
       availableVoices,
@@ -1658,7 +1847,14 @@ export default defineComponent({
       isLoadingExamples,
       searchQuery,
       performSearch,
-      copyCardContent
+      copyCardContent,
+      dueWords,
+      currentReviewWord,
+      showReviewAnswer,
+      reviewExampleSentences,
+      isLoadingReviewExamples,
+      submitReviewGrade,
+      getGradeLabel
     };
   }
 });
@@ -2268,6 +2464,20 @@ export default defineComponent({
     padding: 6px 12px;
     font-size: 0.82em;
     white-space: nowrap;
+}
+
+/* ---- 13. 动画与间隔复习样式 ---- */
+@keyframes langLearnerFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.lang-learner-review-card-container {
+    animation: langLearnerFadeIn 0.25s ease-out;
+}
+
+.lang-learner-review-answer-section {
+    animation: langLearnerFadeIn 0.2s ease-out;
 }
 </style>
 

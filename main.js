@@ -16807,6 +16807,64 @@ var OFFLINE_DICT = {
   }
 };
 
+// src/event/EventBus.ts
+var EventBus = class {
+  constructor() {
+    // 使用 EventMap 对应的 Key 作为监听器的键，确保事件名及签名类型安全
+    this.listeners = /* @__PURE__ */ new Map();
+  }
+  /**
+   * 订阅事件
+   * @param event 事件名称
+   * @param callback 回调函数
+   */
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event).push(callback);
+  }
+  /**
+   * 取消订阅事件
+   * @param event 事件名称
+   * @param callback 回调函数
+   */
+  off(event, callback) {
+    const list = this.listeners.get(event);
+    if (!list)
+      return;
+    const index = list.indexOf(callback);
+    if (index !== -1) {
+      list.splice(index, 1);
+    }
+  }
+  /**
+   * 广播/触发事件
+   * @param event 事件名称
+   * @param args 传递给回调的参数（会自动推导并强校验对应事件的参数类型）
+   */
+  emit(event, ...args) {
+    const list = this.listeners.get(event);
+    if (!list)
+      return;
+    const copied = [...list];
+    for (const callback of copied) {
+      try {
+        callback(...args);
+      } catch (err) {
+        console.error(`EventBus \u5E7F\u64AD\u4E8B\u4EF6 [${event}] \u53D1\u751F\u5F02\u5E38:`, err);
+      }
+    }
+  }
+  /**
+   * 清空所有订阅，通常在插件重置或卸载时调用
+   */
+  clear() {
+    this.listeners.clear();
+  }
+};
+var eventBus = new EventBus();
+
 // src/db/vocabulary.ts
 var VocabularyManager = class {
   constructor(adapter, dbPath = "vocabulary.json") {
@@ -16904,6 +16962,102 @@ var VocabularyManager = class {
         updated: now
       });
     }
+    this.triggerSave();
+  }
+  /**
+   * 根据 SM-2 间隔复习算法更新单词记忆参数，并触发 2000ms 异步节流落盘
+   * @param word 单词原型
+   * @param grade 用户评分 (0: 忘记, 1: 模糊, 2: 记得, 3: 熟练)
+   */
+  reviewWord(word, grade) {
+    if (!word)
+      return;
+    const cleanWord = word.trim().toLowerCase();
+    const existing = this.cache.get(cleanWord);
+    const now = Date.now();
+    let status = "LEARNING";
+    let trans = "";
+    let phonetic = "";
+    let etymology;
+    let interval = 1;
+    let ease = 2.5;
+    let repetitions = 0;
+    if (existing) {
+      status = existing.status;
+      trans = existing.trans;
+      phonetic = existing.phonetic || "";
+      etymology = existing.etymology;
+      interval = existing.interval || 1;
+      ease = existing.ease || 2.5;
+      repetitions = existing.repetitions || 0;
+    } else {
+      const dictEntry = OFFLINE_DICT[cleanWord];
+      if (dictEntry) {
+        trans = dictEntry.trans;
+        phonetic = dictEntry.phonetic || "";
+      }
+    }
+    if (grade === 0) {
+      repetitions = 0;
+      interval = 1;
+      ease = Math.max(1.3, ease - 0.2);
+      status = "LEARNING";
+    } else if (grade === 1) {
+      repetitions = 1;
+      interval = 1;
+      ease = Math.max(1.3, ease - 0.15);
+      status = "LEARNING";
+    } else if (grade === 2) {
+      repetitions = repetitions + 1;
+      if (repetitions === 1) {
+        interval = 1;
+      } else if (repetitions === 2) {
+        interval = 3;
+      } else {
+        interval = Math.round(interval * ease);
+      }
+      if (status === "UNKNOWN") {
+        status = "LEARNING";
+      }
+    } else if (grade === 3) {
+      repetitions = repetitions + 1;
+      if (repetitions === 1) {
+        interval = 2;
+      } else if (repetitions === 2) {
+        interval = 6;
+      } else {
+        interval = Math.round(interval * ease * 1.2);
+      }
+      ease = Math.min(3, ease + 0.15);
+      if (status === "UNKNOWN") {
+        status = "LEARNING";
+      }
+    }
+    ease = Math.round(ease * 100) / 100;
+    const nextReview = now + interval * 24 * 60 * 60 * 1e3;
+    if (existing) {
+      existing.status = status;
+      existing.interval = interval;
+      existing.ease = ease;
+      existing.repetitions = repetitions;
+      existing.nextReview = nextReview;
+      existing.updated = now;
+    } else {
+      this.cache.set(cleanWord, {
+        word: cleanWord,
+        status,
+        trans,
+        phonetic: phonetic || void 0,
+        etymology,
+        added: now,
+        updated: now,
+        interval,
+        ease,
+        repetitions,
+        nextReview
+      });
+    }
+    eventBus.emit("lang-learner:word-changed", cleanWord, status);
     this.triggerSave();
   }
   /**
@@ -17505,64 +17659,6 @@ function tokenize(text, options = {}) {
   }
   return rawTokens;
 }
-
-// src/event/EventBus.ts
-var EventBus = class {
-  constructor() {
-    // 使用 EventMap 对应的 Key 作为监听器的键，确保事件名及签名类型安全
-    this.listeners = /* @__PURE__ */ new Map();
-  }
-  /**
-   * 订阅事件
-   * @param event 事件名称
-   * @param callback 回调函数
-   */
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event).push(callback);
-  }
-  /**
-   * 取消订阅事件
-   * @param event 事件名称
-   * @param callback 回调函数
-   */
-  off(event, callback) {
-    const list = this.listeners.get(event);
-    if (!list)
-      return;
-    const index = list.indexOf(callback);
-    if (index !== -1) {
-      list.splice(index, 1);
-    }
-  }
-  /**
-   * 广播/触发事件
-   * @param event 事件名称
-   * @param args 传递给回调的参数（会自动推导并强校验对应事件的参数类型）
-   */
-  emit(event, ...args) {
-    const list = this.listeners.get(event);
-    if (!list)
-      return;
-    const copied = [...list];
-    for (const callback of copied) {
-      try {
-        callback(...args);
-      } catch (err) {
-        console.error(`EventBus \u5E7F\u64AD\u4E8B\u4EF6 [${event}] \u53D1\u751F\u5F02\u5E38:`, err);
-      }
-    }
-  }
-  /**
-   * 清空所有订阅，通常在插件重置或卸载时调用
-   */
-  clear() {
-    this.listeners.clear();
-  }
-};
-var eventBus = new EventBus();
 
 // src/generator/contextNote.ts
 function extractSentence(paragraphText, wordOffset) {
@@ -18277,6 +18373,9 @@ var EffectScope = class {
     }
   }
 };
+function getCurrentScope() {
+  return activeEffectScope;
+}
 var activeSub;
 var pausedQueueEffects = /* @__PURE__ */ new WeakSet();
 var ReactiveEffect = class {
@@ -19653,6 +19752,179 @@ function computed(getterOrOptions, debugOptions, isSSR = false) {
   }
   return cRef;
 }
+var INITIAL_WATCHER_VALUE = {};
+var cleanupMap = /* @__PURE__ */ new WeakMap();
+var activeWatcher = void 0;
+function onWatcherCleanup(cleanupFn, failSilently = false, owner = activeWatcher) {
+  if (owner) {
+    let cleanups = cleanupMap.get(owner);
+    if (!cleanups)
+      cleanupMap.set(owner, cleanups = []);
+    cleanups.push(cleanupFn);
+  } else if (!failSilently) {
+    warn(
+      `onWatcherCleanup() was called when there was no active watcher to associate with.`
+    );
+  }
+}
+function watch(source, cb, options = EMPTY_OBJ) {
+  const { immediate, deep, once, scheduler, augmentJob, call } = options;
+  const warnInvalidSource = (s) => {
+    (options.onWarn || warn)(
+      `Invalid watch source: `,
+      s,
+      `A watch source can only be a getter/effect function, a ref, a reactive object, or an array of these types.`
+    );
+  };
+  const reactiveGetter = (source2) => {
+    if (deep)
+      return source2;
+    if (/* @__PURE__ */ isShallow(source2) || deep === false || deep === 0)
+      return traverse(source2, 1);
+    return traverse(source2);
+  };
+  let effect2;
+  let getter;
+  let cleanup;
+  let boundCleanup;
+  let forceTrigger = false;
+  let isMultiSource = false;
+  if (/* @__PURE__ */ isRef2(source)) {
+    getter = () => source.value;
+    forceTrigger = /* @__PURE__ */ isShallow(source);
+  } else if (/* @__PURE__ */ isReactive(source)) {
+    getter = () => reactiveGetter(source);
+    forceTrigger = true;
+  } else if (isArray(source)) {
+    isMultiSource = true;
+    forceTrigger = source.some((s) => /* @__PURE__ */ isReactive(s) || /* @__PURE__ */ isShallow(s));
+    getter = () => source.map((s) => {
+      if (/* @__PURE__ */ isRef2(s)) {
+        return s.value;
+      } else if (/* @__PURE__ */ isReactive(s)) {
+        return reactiveGetter(s);
+      } else if (isFunction(s)) {
+        return call ? call(s, 2) : s();
+      } else {
+        warnInvalidSource(s);
+      }
+    });
+  } else if (isFunction(source)) {
+    if (cb) {
+      getter = call ? () => call(source, 2) : source;
+    } else {
+      getter = () => {
+        if (cleanup) {
+          pauseTracking();
+          try {
+            cleanup();
+          } finally {
+            resetTracking();
+          }
+        }
+        const currentEffect = activeWatcher;
+        activeWatcher = effect2;
+        try {
+          return call ? call(source, 3, [boundCleanup]) : source(boundCleanup);
+        } finally {
+          activeWatcher = currentEffect;
+        }
+      };
+    }
+  } else {
+    getter = NOOP;
+    warnInvalidSource(source);
+  }
+  if (cb && deep) {
+    const baseGetter = getter;
+    const depth = deep === true ? Infinity : deep;
+    getter = () => traverse(baseGetter(), depth);
+  }
+  const scope = getCurrentScope();
+  const watchHandle = () => {
+    effect2.stop();
+    if (scope && scope.active) {
+      remove(scope.effects, effect2);
+    }
+  };
+  if (once && cb) {
+    const _cb = cb;
+    cb = (...args) => {
+      _cb(...args);
+      watchHandle();
+    };
+  }
+  let oldValue = isMultiSource ? new Array(source.length).fill(INITIAL_WATCHER_VALUE) : INITIAL_WATCHER_VALUE;
+  const job = (immediateFirstRun) => {
+    if (!(effect2.flags & 1) || !effect2.dirty && !immediateFirstRun) {
+      return;
+    }
+    if (cb) {
+      const newValue = effect2.run();
+      if (deep || forceTrigger || (isMultiSource ? newValue.some((v, i) => hasChanged(v, oldValue[i])) : hasChanged(newValue, oldValue))) {
+        if (cleanup) {
+          cleanup();
+        }
+        const currentWatcher = activeWatcher;
+        activeWatcher = effect2;
+        try {
+          const args = [
+            newValue,
+            // pass undefined as the old value when it's changed for the first time
+            oldValue === INITIAL_WATCHER_VALUE ? void 0 : isMultiSource && oldValue[0] === INITIAL_WATCHER_VALUE ? [] : oldValue,
+            boundCleanup
+          ];
+          oldValue = newValue;
+          call ? call(cb, 3, args) : (
+            // @ts-expect-error
+            cb(...args)
+          );
+        } finally {
+          activeWatcher = currentWatcher;
+        }
+      }
+    } else {
+      effect2.run();
+    }
+  };
+  if (augmentJob) {
+    augmentJob(job);
+  }
+  effect2 = new ReactiveEffect(getter);
+  effect2.scheduler = scheduler ? () => scheduler(job, false) : job;
+  boundCleanup = (fn) => onWatcherCleanup(fn, false, effect2);
+  cleanup = effect2.onStop = () => {
+    const cleanups = cleanupMap.get(effect2);
+    if (cleanups) {
+      if (call) {
+        call(cleanups, 4);
+      } else {
+        for (const cleanup2 of cleanups)
+          cleanup2();
+      }
+      cleanupMap.delete(effect2);
+    }
+  };
+  if (true) {
+    effect2.onTrack = options.onTrack;
+    effect2.onTrigger = options.onTrigger;
+  }
+  if (cb) {
+    if (immediate) {
+      job(true);
+    } else {
+      oldValue = effect2.run();
+    }
+  } else if (scheduler) {
+    scheduler(job.bind(null, true), true);
+  } else {
+    effect2.run();
+  }
+  watchHandle.pause = effect2.pause.bind(effect2);
+  watchHandle.resume = effect2.resume.bind(effect2);
+  watchHandle.stop = watchHandle;
+  return watchHandle;
+}
 function traverse(value, depth = Infinity, seen) {
   if (depth <= 0 || !isObject(value) || value["__v_skip"]) {
     return value;
@@ -20431,6 +20703,102 @@ function inject(key, defaultValue, treatDefaultAsFactory = false) {
   } else if (true) {
     warn$1(`inject() can only be used inside setup() or functional components.`);
   }
+}
+var ssrContextKey = /* @__PURE__ */ Symbol.for("v-scx");
+var useSSRContext = () => {
+  {
+    const ctx = inject(ssrContextKey);
+    if (!ctx) {
+      warn$1(
+        `Server rendering context not provided. Make sure to only call useSSRContext() conditionally in the server build.`
+      );
+    }
+    return ctx;
+  }
+};
+function watch2(source, cb, options) {
+  if (!isFunction(cb)) {
+    warn$1(
+      `\`watch(fn, options?)\` signature has been moved to a separate API. Use \`watchEffect(fn, options?)\` instead. \`watch\` now only supports \`watch(source, cb, options?) signature.`
+    );
+  }
+  return doWatch(source, cb, options);
+}
+function doWatch(source, cb, options = EMPTY_OBJ) {
+  const { immediate, deep, flush, once } = options;
+  if (!cb) {
+    if (immediate !== void 0) {
+      warn$1(
+        `watch() "immediate" option is only respected when using the watch(source, callback, options?) signature.`
+      );
+    }
+    if (deep !== void 0) {
+      warn$1(
+        `watch() "deep" option is only respected when using the watch(source, callback, options?) signature.`
+      );
+    }
+    if (once !== void 0) {
+      warn$1(
+        `watch() "once" option is only respected when using the watch(source, callback, options?) signature.`
+      );
+    }
+  }
+  const baseWatchOptions = extend({}, options);
+  if (true)
+    baseWatchOptions.onWarn = warn$1;
+  const runsImmediately = cb && immediate || !cb && flush !== "post";
+  let ssrCleanup;
+  if (isInSSRComponentSetup) {
+    if (flush === "sync") {
+      const ctx = useSSRContext();
+      ssrCleanup = ctx.__watcherHandles || (ctx.__watcherHandles = []);
+    } else if (!runsImmediately) {
+      const watchStopHandle = () => {
+      };
+      watchStopHandle.stop = NOOP;
+      watchStopHandle.resume = NOOP;
+      watchStopHandle.pause = NOOP;
+      return watchStopHandle;
+    }
+  }
+  const instance = currentInstance;
+  baseWatchOptions.call = (fn, type, args) => callWithAsyncErrorHandling(fn, instance, type, args);
+  let isPre = false;
+  if (flush === "post") {
+    baseWatchOptions.scheduler = (job) => {
+      queuePostRenderEffect(job, instance && instance.suspense);
+    };
+  } else if (flush !== "sync") {
+    isPre = true;
+    baseWatchOptions.scheduler = (job, isFirstRun) => {
+      if (isFirstRun) {
+        job();
+      } else {
+        queueJob(job);
+      }
+    };
+  }
+  baseWatchOptions.augmentJob = (job) => {
+    if (cb) {
+      job.flags |= 4;
+    }
+    if (isPre) {
+      job.flags |= 2;
+      if (instance) {
+        job.id = instance.uid;
+        job.i = instance;
+      }
+    }
+  };
+  const watchHandle = watch(source, cb, baseWatchOptions);
+  if (isInSSRComponentSetup) {
+    if (ssrCleanup) {
+      ssrCleanup.push(watchHandle);
+    } else if (runsImmediately) {
+      watchHandle();
+    }
+  }
+  return watchHandle;
 }
 var TeleportEndKey = /* @__PURE__ */ Symbol("_vte");
 var isTeleport = (type) => type.__isTeleport;
@@ -26480,6 +26848,74 @@ var Panel_default = defineComponent({
         new import_obsidian2.Notice("\u590D\u5236\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u6D4F\u89C8\u5668\u6743\u9650");
       });
     }
+    const showReviewAnswer = ref(false);
+    const reviewExampleSentences = ref([]);
+    const isLoadingReviewExamples = ref(false);
+    let reviewExampleVersion = 0;
+    const dueWords = computed2(() => {
+      const now = Date.now();
+      return wordListCache.value.filter((w) => w.status === "LEARNING" && (!w.nextReview || w.nextReview <= now)).sort((a, b) => (a.nextReview || 0) - (b.nextReview || 0));
+    });
+    const currentReviewWord = computed2(() => {
+      return dueWords.value[0] || null;
+    });
+    async function loadReviewExamples(word) {
+      const currentVersion = ++reviewExampleVersion;
+      reviewExampleSentences.value = [];
+      isLoadingReviewExamples.value = true;
+      try {
+        const cleanWord = word.trim().toLowerCase();
+        let sentences = await searchCurrentDocSentences(cleanWord);
+        if (sentences.length < 3) {
+          const cardSentences = await loadLocalCardSentences(cleanWord);
+          sentences = [...sentences, ...cardSentences];
+        }
+        sentences = Array.from(new Set(sentences.map((s) => s.trim()))).filter(Boolean);
+        if (sentences.length < 2) {
+          const res = await fetchOnlineExamples(cleanWord);
+          sentences = [...sentences, ...res.examples];
+        }
+        const finalSentences = Array.from(new Set(sentences.map((s) => s.trim()))).filter((s) => s.toLowerCase().includes(cleanWord) || s.length > 5).slice(0, 3);
+        if (currentVersion === reviewExampleVersion) {
+          reviewExampleSentences.value = finalSentences;
+        }
+      } catch (e) {
+        console.error("\u52A0\u8F7D\u590D\u4E60\u4F8B\u53E5\u5931\u8D25:", e);
+      } finally {
+        if (currentVersion === reviewExampleVersion) {
+          isLoadingReviewExamples.value = false;
+        }
+      }
+    }
+    watch2(currentReviewWord, (newWord) => {
+      showReviewAnswer.value = false;
+      if (newWord) {
+        loadReviewExamples(newWord.word);
+      }
+    }, { immediate: true });
+    function submitReviewGrade(grade) {
+      const wordObj = currentReviewWord.value;
+      if (!wordObj)
+        return;
+      vocabManager.reviewWord(wordObj.word, grade);
+      refreshStats();
+      refreshWordList();
+      new import_obsidian2.Notice(`\u5DF2\u8BB0\u5F55\u590D\u4E60\uFF1A${wordObj.word} (${getGradeLabel(grade)})`);
+    }
+    function getGradeLabel(grade) {
+      switch (grade) {
+        case 0:
+          return "\u5FD8\u8BB0";
+        case 1:
+          return "\u6A21\u7CCA";
+        case 2:
+          return "\u8BB0\u5F97";
+        case 3:
+          return "\u719F\u7EC3";
+        default:
+          return "";
+      }
+    }
     return {
       speak,
       availableVoices,
@@ -26526,7 +26962,14 @@ var Panel_default = defineComponent({
       isLoadingExamples,
       searchQuery,
       performSearch,
-      copyCardContent
+      copyCardContent,
+      dueWords,
+      currentReviewWord,
+      showReviewAnswer,
+      reviewExampleSentences,
+      isLoadingReviewExamples,
+      submitReviewGrade,
+      getGradeLabel
     };
   }
 });
@@ -26711,6 +27154,73 @@ var _hoisted_87 = {
   key: 0,
   class: "lang-learner-empty-hint"
 };
+var _hoisted_88 = { class: "lang-learner-tab-content" };
+var _hoisted_89 = { class: "lang-learner-panel-dashboard" };
+var _hoisted_90 = { class: "lang-learner-stats-grid" };
+var _hoisted_91 = {
+  class: "lang-learner-stat-item lang-learner-stat-learning",
+  style: { "grid-column": "span 2" }
+};
+var _hoisted_92 = { class: "lang-learner-stat-value" };
+var _hoisted_93 = {
+  key: 0,
+  class: "lang-learner-review-card-container"
+};
+var _hoisted_94 = { class: "lang-learner-estimation-word" };
+var _hoisted_95 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "padding": "0 10px 10px 10px" } };
+var _hoisted_96 = { class: "lang-learner-big-word" };
+var _hoisted_97 = {
+  key: 0,
+  class: "lang-learner-word-phonetic",
+  style: { "margin-top": "4px" }
+};
+var _hoisted_98 = {
+  key: 0,
+  class: "lang-learner-panel-section lang-learner-review-answer-section",
+  style: { "margin-top": "12px" }
+};
+var _hoisted_99 = {
+  class: "lang-learner-word-trans",
+  style: { "border-top": "none", "padding-top": "0", "font-size": "0.95em" }
+};
+var _hoisted_100 = {
+  key: 0,
+  class: "lang-learner-word-etymology-container",
+  style: { "margin-top": "10px", "padding-top": "10px", "border-top": "1px dashed var(--background-modifier-border)" }
+};
+var _hoisted_101 = {
+  class: "lang-learner-etymology-content",
+  style: { "font-size": "0.85em", "color": "var(--text-normal)", "line-height": "1.4", "background-color": "var(--background-secondary-alt)", "padding": "6px 8px", "border-radius": "4px", "border-left": "3px solid var(--text-accent)" }
+};
+var _hoisted_102 = {
+  class: "lang-learner-word-examples-container",
+  style: { "margin-top": "12px" }
+};
+var _hoisted_103 = {
+  key: 0,
+  class: "lang-learner-examples-loading",
+  style: { "font-size": "0.8em", "color": "var(--text-muted)" }
+};
+var _hoisted_104 = {
+  key: 1,
+  class: "lang-learner-example-list",
+  style: { "margin": "0", "padding-left": "14px", "font-size": "0.85em", "line-height": "1.4" }
+};
+var _hoisted_105 = {
+  key: 2,
+  class: "lang-learner-examples-empty",
+  style: { "font-size": "0.8em", "color": "var(--text-muted)", "font-style": "italic" }
+};
+var _hoisted_106 = { style: { "margin-top": "16px" } };
+var _hoisted_107 = {
+  key: 1,
+  style: { "display": "flex", "gap": "8px" }
+};
+var _hoisted_108 = {
+  key: 1,
+  class: "lang-learner-empty-hint",
+  style: { "padding": "40px 0", "text-align": "center" }
+};
 function render(_ctx, _cache) {
   return openBlock(), createElementBlock("div", _hoisted_1, [
     createBaseVNode("div", _hoisted_2, [
@@ -26743,14 +27253,24 @@ function render(_ctx, _cache) {
         " \u{1F50D} \u6574\u53E5\u5206\u6790 ",
         2
         /* CLASS */
+      ),
+      createBaseVNode(
+        "button",
+        {
+          class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "review" }]),
+          onClick: _cache[3] || (_cache[3] = ($event) => _ctx.mainTab = "review")
+        },
+        " \u{1F4C5} \u95F4\u9694\u590D\u4E60 ",
+        2
+        /* CLASS */
       )
     ]),
     createBaseVNode("div", _hoisted_3, [
       withDirectives(createBaseVNode(
         "input",
         {
-          "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.searchQuery = $event),
-          onKeyup: _cache[4] || (_cache[4] = withKeys((...args) => _ctx.performSearch && _ctx.performSearch(...args), ["enter"])),
+          "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.searchQuery = $event),
+          onKeyup: _cache[5] || (_cache[5] = withKeys((...args) => _ctx.performSearch && _ctx.performSearch(...args), ["enter"])),
           placeholder: "\u8F93\u5165\u5355\u8BCD\u67E5\u8BE2...",
           class: "lang-learner-search-input"
         },
@@ -26761,13 +27281,13 @@ function render(_ctx, _cache) {
         [vModelText, _ctx.searchQuery]
       ]),
       createBaseVNode("button", {
-        onClick: _cache[5] || (_cache[5] = (...args) => _ctx.performSearch && _ctx.performSearch(...args)),
+        onClick: _cache[6] || (_cache[6] = (...args) => _ctx.performSearch && _ctx.performSearch(...args)),
         class: "lang-learner-btn lang-learner-btn-primary lang-learner-search-btn"
       }, "\u{1F50D} \u67E5\u8BE2")
     ]),
     _ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_4, [
       createBaseVNode("h4", _hoisted_5, [
-        _cache[31] || (_cache[31] = createBaseVNode(
+        _cache[38] || (_cache[38] = createBaseVNode(
           "span",
           null,
           "\u{1F4DD} \u5355\u8BCD\u8BE6\u60C5",
@@ -26777,7 +27297,7 @@ function render(_ctx, _cache) {
         createBaseVNode("button", {
           class: "lang-learner-btn-icon",
           title: "\u590D\u5236\u5361\u7247\u5185\u5BB9",
-          onClick: _cache[6] || (_cache[6] = (...args) => _ctx.copyCardContent && _ctx.copyCardContent(...args))
+          onClick: _cache[7] || (_cache[7] = (...args) => _ctx.copyCardContent && _ctx.copyCardContent(...args))
         }, "\u{1F4CB}")
       ]),
       createBaseVNode("div", _hoisted_6, [
@@ -26785,7 +27305,7 @@ function render(_ctx, _cache) {
           createBaseVNode("div", {
             class: "lang-learner-word-detail-word-box",
             title: "\u70B9\u51FB\u5207\u6362\u97F3\u8282\u5212\u5206",
-            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.toggleSyllableSplit && _ctx.toggleSyllableSplit(...args))
+            onClick: _cache[8] || (_cache[8] = (...args) => _ctx.toggleSyllableSplit && _ctx.toggleSyllableSplit(...args))
           }, [
             createBaseVNode(
               "span",
@@ -26805,7 +27325,7 @@ function render(_ctx, _cache) {
           createBaseVNode("button", {
             class: "lang-learner-btn-voice-word",
             title: "\u6717\u8BFB\u5355\u8BCD",
-            onClick: _cache[8] || (_cache[8] = ($event) => _ctx.speak(_ctx.selectedWord.word)),
+            onClick: _cache[9] || (_cache[9] = ($event) => _ctx.speak(_ctx.selectedWord.word)),
             style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
           }, " \u{1F50A} ")
         ]),
@@ -26817,7 +27337,7 @@ function render(_ctx, _cache) {
           /* TEXT */
         ),
         _ctx.selectedWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_11, [
-          _cache[32] || (_cache[32] = createBaseVNode(
+          _cache[39] || (_cache[39] = createBaseVNode(
             "div",
             {
               class: "lang-learner-etymology-title",
@@ -26838,7 +27358,7 @@ function render(_ctx, _cache) {
           )
         ])) : createCommentVNode("v-if", true),
         createBaseVNode("div", _hoisted_13, [
-          _cache[33] || (_cache[33] = createBaseVNode(
+          _cache[40] || (_cache[40] = createBaseVNode(
             "div",
             { class: "lang-learner-examples-title" },
             " \u{1F4A1} \u4F8B\u53E5\u8054\u60F3 ",
@@ -26873,7 +27393,7 @@ function render(_ctx, _cache) {
       _hoisted_17,
       [
         createBaseVNode("div", _hoisted_18, [
-          _cache[38] || (_cache[38] = createBaseVNode(
+          _cache[45] || (_cache[45] = createBaseVNode(
             "h3",
             { class: "lang-learner-panel-title" },
             "\u{1F4D6} \u8BED\u8A00\u5B66\u4E60\u52A9\u624B",
@@ -26889,7 +27409,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[34] || (_cache[34] = createBaseVNode(
+              _cache[41] || (_cache[41] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u603B\u8BCD\u91CF",
@@ -26905,7 +27425,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[35] || (_cache[35] = createBaseVNode(
+              _cache[42] || (_cache[42] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5DF2\u638C\u63E1",
@@ -26921,7 +27441,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[36] || (_cache[36] = createBaseVNode(
+              _cache[43] || (_cache[43] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5B66\u4E60\u4E2D",
@@ -26937,7 +27457,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[37] || (_cache[37] = createBaseVNode(
+              _cache[44] || (_cache[44] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u751F\u8BCD",
@@ -26948,7 +27468,7 @@ function render(_ctx, _cache) {
           ])
         ]),
         createBaseVNode("div", _hoisted_28, [
-          _cache[39] || (_cache[39] = createBaseVNode(
+          _cache[46] || (_cache[46] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4CB} \u751F\u8BCD\u672C",
@@ -26960,7 +27480,7 @@ function render(_ctx, _cache) {
               "button",
               {
                 class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "UNKNOWN" }]),
-                onClick: _cache[9] || (_cache[9] = ($event) => _ctx.activeTab = "UNKNOWN")
+                onClick: _cache[10] || (_cache[10] = ($event) => _ctx.activeTab = "UNKNOWN")
               },
               "\u751F\u8BCD (" + toDisplayString(_ctx.unknownList.length) + ")",
               3
@@ -26970,7 +27490,7 @@ function render(_ctx, _cache) {
               "button",
               {
                 class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "LEARNING" }]),
-                onClick: _cache[10] || (_cache[10] = ($event) => _ctx.activeTab = "LEARNING")
+                onClick: _cache[11] || (_cache[11] = ($event) => _ctx.activeTab = "LEARNING")
               },
               "\u5B66\u4E60\u4E2D (" + toDisplayString(_ctx.learningList.length) + ")",
               3
@@ -27025,9 +27545,9 @@ function render(_ctx, _cache) {
         createBaseVNode("div", _hoisted_38, [
           createBaseVNode("button", {
             class: "lang-learner-btn lang-learner-btn-accent lang-learner-btn-full",
-            onClick: _cache[11] || (_cache[11] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
+            onClick: _cache[12] || (_cache[12] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
           }, " \u26A1 \u4E00\u952E\u5B66\u5B8C\u5F53\u524D\u6587\u7AE0 "),
-          _cache[40] || (_cache[40] = createBaseVNode(
+          _cache[47] || (_cache[47] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u5C06\u5F53\u524D\u6587\u7AE0\u4E2D\u9AD8\u9891\u8BCD\u8868\u5185\u7684\u672A\u6807\u8BB0\u8BCD\u6279\u91CF\u6807\u4E3A\u5DF2\u638C\u63E1",
@@ -27048,9 +27568,9 @@ function render(_ctx, _cache) {
         _ctx.estimationState === "idle" ? (openBlock(), createElementBlock("div", _hoisted_40, [
           createBaseVNode("button", {
             class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
-            onClick: _cache[12] || (_cache[12] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
+            onClick: _cache[13] || (_cache[13] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
           }, " \u{1F3AF} \u5F00\u59CB\u8BCD\u6C47\u91CF\u4F30\u7B97 "),
-          _cache[41] || (_cache[41] = createBaseVNode(
+          _cache[48] || (_cache[48] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u901A\u8FC7\u7EA6 20 \u9053\u9898\u5FEB\u901F\u6D4B\u5B9A\u4F60\u7684\u82F1\u8BED\u8BCD\u6C47\u6C34\u4F4D\u7EBF",
@@ -27089,7 +27609,7 @@ function render(_ctx, _cache) {
               /* TEXT */
             )
           ]),
-          _cache[42] || (_cache[42] = createBaseVNode(
+          _cache[49] || (_cache[49] = createBaseVNode(
             "p",
             { class: "lang-learner-estimation-prompt" },
             "\u4F60\u8BA4\u8BC6\u8FD9\u4E2A\u5355\u8BCD\u5417\uFF1F",
@@ -27099,16 +27619,16 @@ function render(_ctx, _cache) {
           createBaseVNode("div", _hoisted_47, [
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-yes",
-              onClick: _cache[13] || (_cache[13] = ($event) => _ctx.answerEstimation(true))
+              onClick: _cache[14] || (_cache[14] = ($event) => _ctx.answerEstimation(true))
             }, "\u2705 \u8BA4\u8BC6"),
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-no",
-              onClick: _cache[14] || (_cache[14] = ($event) => _ctx.answerEstimation(false))
+              onClick: _cache[15] || (_cache[15] = ($event) => _ctx.answerEstimation(false))
             }, "\u274C \u4E0D\u8BA4\u8BC6")
           ])
         ])) : createCommentVNode("v-if", true),
         _ctx.estimationState === "done" ? (openBlock(), createElementBlock("div", _hoisted_48, [
-          _cache[45] || (_cache[45] = createBaseVNode(
+          _cache[52] || (_cache[52] = createBaseVNode(
             "p",
             { class: "lang-learner-result-title" },
             "\u{1F389} \u4F30\u7B97\u5B8C\u6210\uFF01",
@@ -27116,7 +27636,7 @@ function render(_ctx, _cache) {
             /* CACHED */
           )),
           createBaseVNode("p", _hoisted_49, [
-            _cache[43] || (_cache[43] = createTextVNode(
+            _cache[50] || (_cache[50] = createTextVNode(
               "\u4F60\u7684\u8BCD\u6C47\u91CF\u7EA6\u4E3A ",
               -1
               /* CACHED */
@@ -27128,7 +27648,7 @@ function render(_ctx, _cache) {
               1
               /* TEXT */
             ),
-            _cache[44] || (_cache[44] = createTextVNode(
+            _cache[51] || (_cache[51] = createTextVNode(
               " \u8BCD",
               -1
               /* CACHED */
@@ -27143,7 +27663,7 @@ function render(_ctx, _cache) {
           ),
           createBaseVNode("button", {
             class: "lang-learner-btn lang-learner-btn-secondary",
-            onClick: _cache[15] || (_cache[15] = ($event) => _ctx.estimationState = "idle")
+            onClick: _cache[16] || (_cache[16] = ($event) => _ctx.estimationState = "idle")
           }, "\u5173\u95ED")
         ])) : createCommentVNode("v-if", true)
       ],
@@ -27159,10 +27679,10 @@ function render(_ctx, _cache) {
         createBaseVNode("div", _hoisted_52, [
           createBaseVNode("div", {
             class: "lang-learner-voice-settings-header",
-            onClick: _cache[16] || (_cache[16] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig),
+            onClick: _cache[17] || (_cache[17] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig),
             style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
           }, [
-            _cache[46] || (_cache[46] = createBaseVNode(
+            _cache[53] || (_cache[53] = createBaseVNode(
               "span",
               { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
               "\u2699\uFE0F \u53D1\u97F3\u914D\u7F6E (\u7F8E\u97F3/\u82F1\u97F3)",
@@ -27182,7 +27702,7 @@ function render(_ctx, _cache) {
             _hoisted_54,
             [
               createBaseVNode("div", _hoisted_55, [
-                _cache[48] || (_cache[48] = createBaseVNode(
+                _cache[55] || (_cache[55] = createBaseVNode(
                   "label",
                   { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                   "\u53D1\u97F3\u5F15\u64CE:",
@@ -27192,11 +27712,11 @@ function render(_ctx, _cache) {
                 withDirectives(createBaseVNode(
                   "select",
                   {
-                    "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => _ctx.voiceSettings.engine = $event),
-                    onChange: _cache[18] || (_cache[18] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                    "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => _ctx.voiceSettings.engine = $event),
+                    onChange: _cache[19] || (_cache[19] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                     style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                   },
-                  [..._cache[47] || (_cache[47] = [
+                  [..._cache[54] || (_cache[54] = [
                     createBaseVNode(
                       "option",
                       { value: "online" },
@@ -27219,7 +27739,7 @@ function render(_ctx, _cache) {
                 ])
               ]),
               _ctx.voiceSettings.engine === "online" ? (openBlock(), createElementBlock("div", _hoisted_56, [
-                _cache[50] || (_cache[50] = createBaseVNode(
+                _cache[57] || (_cache[57] = createBaseVNode(
                   "label",
                   { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                   "\u53E3\u97F3\u9009\u62E9:",
@@ -27229,11 +27749,11 @@ function render(_ctx, _cache) {
                 withDirectives(createBaseVNode(
                   "select",
                   {
-                    "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => _ctx.voiceSettings.onlineAccent = $event),
-                    onChange: _cache[20] || (_cache[20] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                    "onUpdate:modelValue": _cache[20] || (_cache[20] = ($event) => _ctx.voiceSettings.onlineAccent = $event),
+                    onChange: _cache[21] || (_cache[21] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                     style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                   },
-                  [..._cache[49] || (_cache[49] = [
+                  [..._cache[56] || (_cache[56] = [
                     createBaseVNode(
                       "option",
                       { value: 2 },
@@ -27259,7 +27779,7 @@ function render(_ctx, _cache) {
                 { key: 1 },
                 [
                   createBaseVNode("div", _hoisted_57, [
-                    _cache[51] || (_cache[51] = createBaseVNode(
+                    _cache[58] || (_cache[58] = createBaseVNode(
                       "label",
                       { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                       "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
@@ -27269,8 +27789,8 @@ function render(_ctx, _cache) {
                     withDirectives(createBaseVNode(
                       "select",
                       {
-                        "onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => _ctx.voiceSettings.voiceName = $event),
-                        onChange: _cache[22] || (_cache[22] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        "onUpdate:modelValue": _cache[22] || (_cache[22] = ($event) => _ctx.voiceSettings.voiceName = $event),
+                        onChange: _cache[23] || (_cache[23] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                         style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                       },
                       [
@@ -27306,11 +27826,11 @@ function render(_ctx, _cache) {
                       "input",
                       {
                         type: "range",
-                        "onUpdate:modelValue": _cache[23] || (_cache[23] = ($event) => _ctx.voiceSettings.rate = $event),
+                        "onUpdate:modelValue": _cache[24] || (_cache[24] = ($event) => _ctx.voiceSettings.rate = $event),
                         min: "0.5",
                         max: "1.8",
                         step: "0.1",
-                        onChange: _cache[24] || (_cache[24] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        onChange: _cache[25] || (_cache[25] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                         style: { "width": "60%", "cursor": "pointer" }
                       },
                       null,
@@ -27337,11 +27857,11 @@ function render(_ctx, _cache) {
                       "input",
                       {
                         type: "range",
-                        "onUpdate:modelValue": _cache[25] || (_cache[25] = ($event) => _ctx.voiceSettings.pitch = $event),
+                        "onUpdate:modelValue": _cache[26] || (_cache[26] = ($event) => _ctx.voiceSettings.pitch = $event),
                         min: "0.5",
                         max: "1.5",
                         step: "0.1",
-                        onChange: _cache[26] || (_cache[26] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        onChange: _cache[27] || (_cache[27] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                         style: { "width": "60%", "cursor": "pointer" }
                       },
                       null,
@@ -27368,7 +27888,7 @@ function render(_ctx, _cache) {
           ])
         ]),
         createBaseVNode("div", _hoisted_64, [
-          _cache[52] || (_cache[52] = createBaseVNode(
+          _cache[59] || (_cache[59] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F50D} \u8F93\u5165\u5F85\u5206\u6790\u53E5\u5B50",
@@ -27378,7 +27898,7 @@ function render(_ctx, _cache) {
           withDirectives(createBaseVNode(
             "textarea",
             {
-              "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => _ctx.sentenceInput = $event),
+              "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => _ctx.sentenceInput = $event),
               class: "lang-learner-textarea",
               placeholder: "\u5728\u6B64\u8F93\u5165\u6216\u7C98\u8D34\u4E00\u6BB5\u82F1\u6587\u53E5\u5B50...",
               rows: "4"
@@ -27392,19 +27912,19 @@ function render(_ctx, _cache) {
           createBaseVNode("div", _hoisted_65, [
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-primary",
-              onClick: _cache[28] || (_cache[28] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
+              onClick: _cache[29] || (_cache[29] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
               disabled: _ctx.isAnalyzing,
               style: { "flex": "1" }
             }, toDisplayString(_ctx.isAnalyzing ? "\u6B63\u5728\u5206\u6790..." : "\u5206\u6790\u53E5\u5B50"), 9, _hoisted_66),
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-secondary",
-              onClick: _cache[29] || (_cache[29] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
+              onClick: _cache[30] || (_cache[30] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
               style: { "flex": "1" }
             }, " \u5BFC\u5165\u9009\u4E2D\u6587\u672C ")
           ])
         ]),
         _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_67, [
-          _cache[56] || (_cache[56] = createBaseVNode(
+          _cache[63] || (_cache[63] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4D6} \u5206\u6790\u7ED3\u679C",
@@ -27413,7 +27933,7 @@ function render(_ctx, _cache) {
           )),
           createBaseVNode("div", _hoisted_68, [
             createBaseVNode("div", _hoisted_69, [
-              _cache[53] || (_cache[53] = createBaseVNode(
+              _cache[60] || (_cache[60] = createBaseVNode(
                 "span",
                 null,
                 "\u{1F310} \u673A\u5668\u7FFB\u8BD1",
@@ -27424,7 +27944,7 @@ function render(_ctx, _cache) {
                 key: 0,
                 class: "lang-learner-btn-voice-sentence",
                 title: "\u6717\u8BFB\u6574\u53E5",
-                onClick: _cache[30] || (_cache[30] = ($event) => _ctx.speak(_ctx.sentenceInput)),
+                onClick: _cache[31] || (_cache[31] = ($event) => _ctx.speak(_ctx.sentenceInput)),
                 style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
               }, " \u{1F50A} ")) : createCommentVNode("v-if", true)
             ]),
@@ -27437,7 +27957,7 @@ function render(_ctx, _cache) {
             ))
           ]),
           createBaseVNode("div", _hoisted_72, [
-            _cache[54] || (_cache[54] = createBaseVNode(
+            _cache[61] || (_cache[61] = createBaseVNode(
               "div",
               { class: "lang-learner-box-title" },
               "\u{1F3A8} \u53E5\u5B50\u9AD8\u4EAE\u4E0E\u4EA4\u4E92",
@@ -27483,7 +28003,7 @@ function render(_ctx, _cache) {
                 /* KEYED_FRAGMENT */
               ))
             ]),
-            _cache[55] || (_cache[55] = createBaseVNode(
+            _cache[62] || (_cache[62] = createBaseVNode(
               "p",
               {
                 class: "lang-learner-hint-text",
@@ -27569,6 +28089,181 @@ function render(_ctx, _cache) {
       /* NEED_PATCH */
     ), [
       [vShow, _ctx.mainTab === "sentence"]
+    ]),
+    withDirectives(createBaseVNode(
+      "div",
+      _hoisted_88,
+      [
+        createBaseVNode("div", _hoisted_89, [
+          _cache[65] || (_cache[65] = createBaseVNode(
+            "h3",
+            { class: "lang-learner-panel-title" },
+            "\u{1F4C5} \u95F4\u9694\u590D\u4E60",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode("div", _hoisted_90, [
+            createBaseVNode("div", _hoisted_91, [
+              createBaseVNode(
+                "span",
+                _hoisted_92,
+                toDisplayString(_ctx.dueWords.length),
+                1
+                /* TEXT */
+              ),
+              _cache[64] || (_cache[64] = createBaseVNode(
+                "span",
+                { class: "lang-learner-stat-label" },
+                "\u4ECA\u65E5\u5F85\u590D\u4E60",
+                -1
+                /* CACHED */
+              ))
+            ])
+          ])
+        ]),
+        _ctx.currentReviewWord ? (openBlock(), createElementBlock("div", _hoisted_93, [
+          createBaseVNode("div", _hoisted_94, [
+            createBaseVNode("div", _hoisted_95, [
+              createBaseVNode(
+                "span",
+                _hoisted_96,
+                toDisplayString(_ctx.currentReviewWord.word),
+                1
+                /* TEXT */
+              ),
+              createBaseVNode("button", {
+                class: "lang-learner-btn-voice-word",
+                title: "\u6717\u8BFB\u5355\u8BCD",
+                onClick: _cache[32] || (_cache[32] = ($event) => _ctx.speak(_ctx.currentReviewWord.word)),
+                style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.2em", "opacity": "0.85" }
+              }, " \u{1F50A} ")
+            ]),
+            _ctx.currentReviewWord.phonetic ? (openBlock(), createElementBlock(
+              "div",
+              _hoisted_97,
+              " /" + toDisplayString(_ctx.currentReviewWord.phonetic) + "/ ",
+              1
+              /* TEXT */
+            )) : createCommentVNode("v-if", true)
+          ]),
+          _ctx.showReviewAnswer ? (openBlock(), createElementBlock("div", _hoisted_98, [
+            createBaseVNode(
+              "div",
+              _hoisted_99,
+              toDisplayString(_ctx.currentReviewWord.trans || "\u6682\u65E0\u91CA\u4E49"),
+              1
+              /* TEXT */
+            ),
+            _ctx.currentReviewWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_100, [
+              _cache[66] || (_cache[66] = createBaseVNode(
+                "div",
+                {
+                  class: "lang-learner-etymology-title",
+                  style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-accent)", "margin-bottom": "4px" }
+                },
+                " \u{1F4A1} \u8BCD\u6E90\u8BB0\u5FC6 ",
+                -1
+                /* CACHED */
+              )),
+              createBaseVNode(
+                "div",
+                _hoisted_101,
+                toDisplayString(_ctx.currentReviewWord.etymology),
+                1
+                /* TEXT */
+              )
+            ])) : createCommentVNode("v-if", true),
+            createBaseVNode("div", _hoisted_102, [
+              _cache[67] || (_cache[67] = createBaseVNode(
+                "div",
+                {
+                  class: "lang-learner-examples-title",
+                  style: { "font-size": "0.85em", "font-weight": "700", "color": "var(--text-muted)", "margin-bottom": "6px" }
+                },
+                " \u{1F4A1} \u4F8B\u53E5\u4E0A\u4E0B\u6587 ",
+                -1
+                /* CACHED */
+              )),
+              _ctx.isLoadingReviewExamples ? (openBlock(), createElementBlock("div", _hoisted_103, " \u6B63\u5728\u83B7\u53D6\u4F8B\u53E5... ")) : _ctx.reviewExampleSentences.length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_104, [
+                (openBlock(true), createElementBlock(
+                  Fragment,
+                  null,
+                  renderList(_ctx.reviewExampleSentences, (sentence, idx) => {
+                    return openBlock(), createElementBlock(
+                      "li",
+                      {
+                        key: idx,
+                        class: "lang-learner-example-item",
+                        style: { "margin-bottom": "4px" }
+                      },
+                      toDisplayString(sentence),
+                      1
+                      /* TEXT */
+                    );
+                  }),
+                  128
+                  /* KEYED_FRAGMENT */
+                ))
+              ])) : (openBlock(), createElementBlock("div", _hoisted_105, " \u6682\u65E0\u4F8B\u53E5 "))
+            ])
+          ])) : createCommentVNode("v-if", true),
+          createBaseVNode("div", _hoisted_106, [
+            !_ctx.showReviewAnswer ? (openBlock(), createElementBlock("button", {
+              key: 0,
+              onClick: _cache[33] || (_cache[33] = ($event) => _ctx.showReviewAnswer = true),
+              class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
+              style: { "font-size": "0.95em", "padding": "10px" }
+            }, " \u663E\u793A\u91CA\u4E49 ")) : (openBlock(), createElementBlock("div", _hoisted_107, [
+              createBaseVNode("button", {
+                onClick: _cache[34] || (_cache[34] = ($event) => _ctx.submitReviewGrade(0)),
+                class: "lang-learner-btn lang-learner-btn-no",
+                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+              }, " \u{1F534} \u5FD8\u8BB0 "),
+              createBaseVNode("button", {
+                onClick: _cache[35] || (_cache[35] = ($event) => _ctx.submitReviewGrade(1)),
+                class: "lang-learner-btn",
+                style: { "background": "#f39c12", "color": "#fff", "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+              }, " \u{1F7E1} \u6A21\u7CCA "),
+              createBaseVNode("button", {
+                onClick: _cache[36] || (_cache[36] = ($event) => _ctx.submitReviewGrade(2)),
+                class: "lang-learner-btn lang-learner-btn-yes",
+                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+              }, " \u{1F7E2} \u8BB0\u5F97 "),
+              createBaseVNode("button", {
+                onClick: _cache[37] || (_cache[37] = ($event) => _ctx.submitReviewGrade(3)),
+                class: "lang-learner-btn lang-learner-btn-accent",
+                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+              }, " \u26A1 \u719F\u7EC3 ")
+            ]))
+          ])
+        ])) : (openBlock(), createElementBlock("div", _hoisted_108, [..._cache[68] || (_cache[68] = [
+          createBaseVNode(
+            "div",
+            { style: { "font-size": "3em", "margin-bottom": "12px" } },
+            "\u{1F389}",
+            -1
+            /* CACHED */
+          ),
+          createBaseVNode(
+            "p",
+            { style: { "font-weight": "600", "color": "var(--text-success, #27ae60)", "margin": "0 0 4px 0" } },
+            "\u5DF2\u5B8C\u6210\u4ECA\u65E5\u590D\u4E60\uFF01",
+            -1
+            /* CACHED */
+          ),
+          createBaseVNode(
+            "p",
+            { style: { "font-size": "0.85em", "color": "var(--text-muted)", "margin": "0" } },
+            "\u592A\u68D2\u4E86\uFF0C\u76EE\u524D\u6CA1\u6709\u5F85\u590D\u4E60\u7684\u5230\u671F\u5355\u8BCD\u3002",
+            -1
+            /* CACHED */
+          )
+        ])]))
+      ],
+      512
+      /* NEED_PATCH */
+    ), [
+      [vShow, _ctx.mainTab === "review"]
     ])
   ]);
 }
@@ -27576,7 +28271,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-87f8e771";
+Panel_default.__scopeId = "data-v-b92b5b76";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts

@@ -24,6 +24,14 @@ export interface WordInfo {
     updated: number;
     /** 词源与记忆法辅助信息 (可选) */
     etymology?: string;
+    /** 复习间隔天数 (可选) */
+    interval?: number;
+    /** E-Factor 易度因子 (可选) */
+    ease?: number;
+    /** 连续成功复习的次数 (可选) */
+    repetitions?: number;
+    /** 下一次复习的时间戳 (可选) */
+    nextReview?: number;
 }
 
 /**

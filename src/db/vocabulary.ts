@@ -1,5 +1,6 @@
 import { WordInfo, WordStatus } from '../types';
 import { OFFLINE_DICT } from '../data/static_data';
+import { eventBus } from '../event/EventBus';
 
 /**
  * 极简跨平台文件数据适配器接口
@@ -121,6 +122,122 @@ export class VocabularyManager {
                 updated: now
             });
         }
+
+        // 触发合并写节流 (每 2 秒最多发生一次物理 I/O 写入)
+        this.triggerSave();
+    }
+
+    /**
+     * 根据 SM-2 间隔复习算法更新单词记忆参数，并触发 2000ms 异步节流落盘
+     * @param word 单词原型
+     * @param grade 用户评分 (0: 忘记, 1: 模糊, 2: 记得, 3: 熟练)
+     */
+    public reviewWord(word: string, grade: number): void {
+        if (!word) return;
+        const cleanWord = word.trim().toLowerCase();
+        const existing = this.cache.get(cleanWord);
+
+        const now = Date.now();
+        let status: WordStatus = 'LEARNING';
+        let trans = '';
+        let phonetic = '';
+        let etymology: string | undefined;
+
+        let interval = 1;
+        let ease = 2.5;
+        let repetitions = 0;
+
+        if (existing) {
+            status = existing.status;
+            trans = existing.trans;
+            phonetic = existing.phonetic || '';
+            etymology = existing.etymology;
+
+            interval = existing.interval || 1;
+            ease = existing.ease || 2.5;
+            repetitions = existing.repetitions || 0;
+        } else {
+            // 新增单词，自动检索内置离线字典
+            const dictEntry = OFFLINE_DICT[cleanWord];
+            if (dictEntry) {
+                trans = dictEntry.trans;
+                phonetic = dictEntry.phonetic || '';
+            }
+        }
+
+        // SM-2 算法核心逻辑
+        if (grade === 0) {
+            // 忘记
+            repetitions = 0;
+            interval = 1;
+            ease = Math.max(1.3, ease - 0.2);
+            status = 'LEARNING';
+        } else if (grade === 1) {
+            // 模糊
+            repetitions = 1;
+            interval = 1;
+            ease = Math.max(1.3, ease - 0.15);
+            status = 'LEARNING';
+        } else if (grade === 2) {
+            // 记得
+            repetitions = repetitions + 1;
+            if (repetitions === 1) {
+                interval = 1;
+            } else if (repetitions === 2) {
+                interval = 3;
+            } else {
+                interval = Math.round(interval * ease);
+            }
+            if (status === 'UNKNOWN') {
+                status = 'LEARNING';
+            }
+        } else if (grade === 3) {
+            // 熟练
+            repetitions = repetitions + 1;
+            if (repetitions === 1) {
+                interval = 2;
+            } else if (repetitions === 2) {
+                interval = 6;
+            } else {
+                interval = Math.round(interval * ease * 1.2);
+            }
+            ease = Math.min(3.0, ease + 0.15);
+            if (status === 'UNKNOWN') {
+                status = 'LEARNING';
+            }
+        }
+
+        // 限制并四舍五入 E-Factor 精度以防浮点误差
+        ease = Math.round(ease * 100) / 100;
+
+        // 计算下次复习的时间戳
+        const nextReview = now + interval * 24 * 60 * 60 * 1000;
+
+        if (existing) {
+            existing.status = status;
+            existing.interval = interval;
+            existing.ease = ease;
+            existing.repetitions = repetitions;
+            existing.nextReview = nextReview;
+            existing.updated = now;
+        } else {
+            this.cache.set(cleanWord, {
+                word: cleanWord,
+                status,
+                trans,
+                phonetic: phonetic || undefined,
+                etymology,
+                added: now,
+                updated: now,
+                interval,
+                ease,
+                repetitions,
+                nextReview
+            });
+        }
+
+        // 广播状态更新以同步至主窗口视图
+        eventBus.emit('lang-learner:word-changed', cleanWord, status);
 
         // 触发合并写节流 (每 2 秒最多发生一次物理 I/O 写入)
         this.triggerSave();

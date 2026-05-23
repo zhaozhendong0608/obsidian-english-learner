@@ -514,3 +514,19 @@
   font-size: 0.82em;
   white-space: nowrap;
 }
+@keyframes langLearnerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.lang-learner-review-card-container {
+  animation: langLearnerFadeIn 0.25s ease-out;
+}
+.lang-learner-review-answer-section {
+  animation: langLearnerFadeIn 0.2s ease-out;
+}
