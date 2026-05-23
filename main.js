@@ -21413,6 +21413,57 @@ var Panel_default = defineComponent({
         saveVoiceSettings();
       }
     }
+    async function fetchAndPlayAudio(url) {
+      let hasObsidianRequest = false;
+      let obsidianRequestUrl = null;
+      try {
+        const obs = require("obsidian");
+        if (obs && obs.requestUrl) {
+          obsidianRequestUrl = obs.requestUrl;
+          hasObsidianRequest = true;
+        }
+      } catch (e) {
+      }
+      if (hasObsidianRequest && obsidianRequestUrl) {
+        const response = await obsidianRequestUrl({
+          url,
+          method: "GET",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+          },
+          throw: true
+        });
+        if (response.status === 200 && response.arrayBuffer) {
+          const blob = new Blob([response.arrayBuffer], { type: "audio/mpeg" });
+          const blobUrl = URL.createObjectURL(blob);
+          const audio = new Audio(blobUrl);
+          currentAudio = audio;
+          return new Promise((resolve, reject) => {
+            audio.onended = () => {
+              URL.revokeObjectURL(blobUrl);
+              resolve(true);
+            };
+            audio.onerror = (errEvent) => {
+              URL.revokeObjectURL(blobUrl);
+              reject(new Error("\u97F3\u9891\u89E3\u7801\u6216\u64AD\u653E\u5931\u8D25"));
+            };
+            audio.play().catch((err) => {
+              URL.revokeObjectURL(blobUrl);
+              reject(err);
+            });
+          });
+        }
+        throw new Error(`\u7F51\u7EDC\u54CD\u5E94\u72B6\u6001\u9519\u8BEF: ${response.status}`);
+      } else {
+        const audio = new Audio(url);
+        currentAudio = audio;
+        return new Promise((resolve, reject) => {
+          audio.onended = () => resolve(true);
+          audio.onerror = () => reject(new Error("HTMLAudioElement \u64AD\u653E\u5931\u8D25"));
+          audio.play().catch(reject);
+        });
+      }
+    }
     async function speak(text) {
       if (!text || !text.trim())
         return;
@@ -21420,49 +21471,27 @@ var Panel_default = defineComponent({
       try {
         if (voiceSettings.value.engine === "online") {
           const accent = voiceSettings.value.onlineAccent || 2;
-          const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
-          let hasObsidianRequest = false;
-          let obsidianRequestUrl = null;
           try {
-            const obs = require("obsidian");
-            if (obs && obs.requestUrl) {
-              obsidianRequestUrl = obs.requestUrl;
-              hasObsidianRequest = true;
-            }
-          } catch (e) {
+            const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+            await fetchAndPlayAudio(youdaoUrl);
+            return;
+          } catch (err1) {
+            console.warn("\u6709\u9053\u5728\u7EBF\u53D1\u97F3\u6E90\u8BF7\u6C42\u5F02\u5E38\uFF0C\u81EA\u52A8\u5C1D\u8BD5\u5907\u7528\u8C37\u6B4C\u6E90:", err1);
           }
-          if (hasObsidianRequest && obsidianRequestUrl) {
-            const response = await obsidianRequestUrl({
-              url,
-              method: "GET",
-              headers: {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-              },
-              throw: true
-            });
-            if (response.status === 200 && response.arrayBuffer) {
-              const blob = new Blob([response.arrayBuffer], { type: "audio/mpeg" });
-              const blobUrl = URL.createObjectURL(blob);
-              const audio2 = new Audio(blobUrl);
-              currentAudio = audio2;
-              audio2.onended = () => {
-                URL.revokeObjectURL(blobUrl);
-              };
-              audio2.onerror = () => {
-                URL.revokeObjectURL(blobUrl);
-              };
-              await audio2.play();
-              return;
-            }
+          try {
+            const tl = accent === 2 ? "en-US" : "en-GB";
+            const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=tw-ob`;
+            await fetchAndPlayAudio(googleUrl);
+            return;
+          } catch (err2) {
+            console.error("\u6709\u9053\u4E0E\u8C37\u6B4C\u5907\u7528\u53D1\u97F3\u6E90\u5747\u52A0\u8F7D\u5931\u8D25\uFF0C\u964D\u7EA7\u56DE\u9000\u7CFB\u7EDF\u5408\u6210:", err2);
+            playLocalVoice(text);
           }
-          const audio = new Audio(url);
-          currentAudio = audio;
-          await audio.play();
         } else {
           playLocalVoice(text);
         }
       } catch (e) {
-        console.error("\u5728\u7EBF\u771F\u4EBA\u53D1\u97F3\u64AD\u653E\u5931\u8D25\uFF0C\u5C1D\u8BD5\u56DE\u9000\u7CFB\u7EDF\u79BB\u7EBF\u5408\u6210:", e);
+        console.error("\u53D1\u97F3\u8DEF\u7531\u94FE\u6761\u5F02\u5E38\uFF0C\u5F3A\u5236\u56DE\u9000\u672C\u5730\u64AD\u653E:", e);
         playLocalVoice(text);
       }
     }
@@ -22459,7 +22488,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-09d82eaa";
+Panel_default.__scopeId = "data-v-325299f8";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts

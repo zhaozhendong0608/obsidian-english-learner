@@ -992,7 +992,69 @@ export default defineComponent({
     }
 
     /**
-     * 语音朗读单词或整句 (在线真人 or 系统离线双引擎)
+     * 网络获取并播放音频流，播放成功返回 true，失败抛出异常
+     * @param url 音频链接
+     */
+    async function fetchAndPlayAudio(url: string): Promise<boolean> {
+        let hasObsidianRequest = false;
+        let obsidianRequestUrl: any = null;
+        try {
+            const obs = require('obsidian');
+            if (obs && obs.requestUrl) {
+                obsidianRequestUrl = obs.requestUrl;
+                hasObsidianRequest = true;
+            }
+        } catch (e) {
+            // 忽略开发环境 require 异常
+        }
+
+        if (hasObsidianRequest && obsidianRequestUrl) {
+            const response = await obsidianRequestUrl({
+                url,
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+                },
+                throw: true
+            });
+
+            if (response.status === 200 && response.arrayBuffer) {
+                const blob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
+                const blobUrl = URL.createObjectURL(blob);
+                const audio = new Audio(blobUrl);
+                currentAudio = audio;
+
+                // 播放完成或出错时释放内存
+                return new Promise((resolve, reject) => {
+                    audio.onended = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        resolve(true);
+                    };
+                    audio.onerror = (errEvent) => {
+                        URL.revokeObjectURL(blobUrl);
+                        reject(new Error('音频解码或播放失败'));
+                    };
+                    audio.play().catch(err => {
+                        URL.revokeObjectURL(blobUrl);
+                        reject(err);
+                    });
+                });
+            }
+            throw new Error(`网络响应状态错误: ${response.status}`);
+        } else {
+            // 常规环境 fallback
+            const audio = new Audio(url);
+            currentAudio = audio;
+            return new Promise((resolve, reject) => {
+                audio.onended = () => resolve(true);
+                audio.onerror = () => reject(new Error('HTMLAudioElement 播放失败'));
+                audio.play().catch(reject);
+            });
+        }
+    }
+
+    /**
+     * 语音朗读单词或整句 (高可用多源发音路由)
      * @param text 待播放的文本
      */
     async function speak(text: string) {
@@ -1004,59 +1066,31 @@ export default defineComponent({
         try {
             if (voiceSettings.value.engine === 'online') {
                 const accent = voiceSettings.value.onlineAccent || 2; // 2: 美音, 1: 英音
-                const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
                 
-                // 尝试检测 Obsidian 内部的 requestUrl
-                let hasObsidianRequest = false;
-                let obsidianRequestUrl: any = null;
+                // --- 尝试源 1: 有道发音 ---
                 try {
-                    const obs = require('obsidian');
-                    if (obs && obs.requestUrl) {
-                        obsidianRequestUrl = obs.requestUrl;
-                        hasObsidianRequest = true;
-                    }
-                } catch (e) {
-                    // 忽略非 Obsidian 环境（如浏览器测试等）的 require 报错
+                    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+                    await fetchAndPlayAudio(youdaoUrl);
+                    return; // 播放成功，直接退出
+                } catch (err1) {
+                    console.warn('有道在线发音源请求异常，自动尝试备用谷歌源:', err1);
                 }
 
-                if (hasObsidianRequest && obsidianRequestUrl) {
-                    // 使用 Obsidian 的网络客户端获取 ArrayBuffer（绕过沙盒 Referer/CORS 拦截）
-                    const response = await obsidianRequestUrl({
-                        url,
-                        method: 'GET',
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-                        },
-                        throw: true
-                    });
-
-                    if (response.status === 200 && response.arrayBuffer) {
-                        const blob = new Blob([response.arrayBuffer], { type: 'audio/mpeg' });
-                        const blobUrl = URL.createObjectURL(blob);
-                        const audio = new Audio(blobUrl);
-                        currentAudio = audio;
-
-                        audio.onended = () => {
-                            URL.revokeObjectURL(blobUrl);
-                        };
-                        audio.onerror = () => {
-                            URL.revokeObjectURL(blobUrl);
-                        };
-
-                        await audio.play();
-                        return;
-                    }
+                // --- 尝试源 2: 谷歌翻译 TTS (长句/重负载高频极其稳定) ---
+                try {
+                    const tl = accent === 2 ? 'en-US' : 'en-GB';
+                    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=tw-ob`;
+                    await fetchAndPlayAudio(googleUrl);
+                    return; // 播放成功
+                } catch (err2) {
+                    console.error('有道与谷歌备用发音源均加载失败，降级回退系统合成:', err2);
+                    playLocalVoice(text);
                 }
-
-                // 常规降级播放器（多用于开发测试阶段）
-                const audio = new Audio(url);
-                currentAudio = audio;
-                await audio.play();
             } else {
                 playLocalVoice(text);
             }
         } catch (e) {
-            console.error('在线真人发音播放失败，尝试回退系统离线合成:', e);
+            console.error('发音路由链条异常，强制回退本地播放:', e);
             playLocalVoice(text);
         }
     }
