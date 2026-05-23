@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-english-learner",
+  "name": "Obsidian English Learner",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "High-performance vocabulary builder integration.",
+  "author": "dongzi",
+  "authorUrl": "https://github.com",
+  "isDesktopOnly": false
+}

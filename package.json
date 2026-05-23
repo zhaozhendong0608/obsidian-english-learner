@@ -1,0 +1,25 @@
+{
+    "name": "obsidian-english-learner",
+    "version": "1.0.0",
+    "description": "Obsidian language learner plugin",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "build": "node esbuild.config.mjs production"
+    },
+    "keywords": [],
+    "author": "up_dong",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "builtin-modules": "^3.3.0",
+        "esbuild": "^0.20.0",
+        "esbuild-plugin-vue3": "^0.1.3",
+        "obsidian": "^1.5.0",
+        "tslib": "^2.6.2",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "vue": "^3.4.0"
+    }
+}
