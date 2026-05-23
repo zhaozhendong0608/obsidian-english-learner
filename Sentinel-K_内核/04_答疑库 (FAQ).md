@@ -54,3 +54,12 @@
 - **对策**:
   1. 与传统 Node.js `fs.rename` 会直接覆盖不同，Obsidian 的 `adapter.rename` 接口在目标文件已存在时会强制抛出 Destination file already exists 报错。
   2. 应对策略：因为 Obsidian 核心库的 `adapter.write` 已经实现了原子级安全直写缓存保护，所以开发中无需再次造轮子进行临时文件重命名。直接调用 `await adapter.write(targetPath, data)` 即可安全实现覆盖写入。
+
+## 8. Obsidian 插件沙盒 CORS 跨域请求限制
+- **问题**: 在插件中通过 `fetch` 或 `axios` 访问外部 API 接口时出现 `Access to fetch ... blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present` 跨域拦截报错。
+- **场景**: 当离线词典在有网状态下触发降级，异步拉取外部词典 API 获取翻译时。
+- **对策**:
+  1. 发生该问题是因为 Obsidian 的插件运行在 `app://obsidian.md` 的特殊安全源下，浏览器同源策略会严格限制普通的 HTTP 网页请求。
+  2. 彻底的解决方案：使用 Obsidian 官方底座提供的底层网络桥接接口——`requestUrl`（相当于在 Node.js 主进程/ Capacitor 原生进程发起请求，完美规避前端沙盒 CORS 策略）。
+  3. **兼顾单元测试**：为了防止导入 `obsidian` 后导致 Vitest 单元测试运行抛出“无法加载模块”的报错，在代码中可以通过检测全局变量 `window.app`，并在 Obsidian 沙盒内动态加载 `require('obsidian').requestUrl` ；而在非 Obsidian 环境（测试脚本中）自动降级退避回退为标准全局 `fetch` 请求。
+
