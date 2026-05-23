@@ -21435,7 +21435,9 @@ var Panel_default = defineComponent({
             const response = await obsidianRequestUrl({
               url,
               method: "GET",
-              contentType: "audio/mpeg",
+              headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+              },
               throw: true
             });
             if (response.status === 200 && response.arrayBuffer) {
@@ -22457,7 +22459,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-40f83ea6";
+Panel_default.__scopeId = "data-v-09d82eaa";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
