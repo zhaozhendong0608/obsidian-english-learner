@@ -27088,6 +27088,30 @@ var Panel_default = defineComponent({
         loadMediaSource(selectedMediaFile.value);
       }
     }
+    function getActiveMarkdownView() {
+      try {
+        const activeLeaf = plugin.app.workspace.activeLeaf;
+        if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === "markdown") {
+          return activeLeaf.view;
+        }
+      } catch (e) {
+      }
+      try {
+        const mostRecentLeaf = plugin.app.workspace.getMostRecentLeaf();
+        if (mostRecentLeaf && mostRecentLeaf.view && mostRecentLeaf.view.getViewType() === "markdown") {
+          return mostRecentLeaf.view;
+        }
+      } catch (e) {
+      }
+      try {
+        const leaves = plugin.app.workspace.getLeavesOfType("markdown");
+        if (leaves && leaves.length > 0) {
+          return leaves[0].view;
+        }
+      } catch (e) {
+      }
+      return null;
+    }
     function insertVideoTimestamp() {
       let time = 0;
       if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.getCurrentTime === "function") {
@@ -27099,7 +27123,7 @@ var Panel_default = defineComponent({
         return;
       }
       const formatted = formatTime(time);
-      const markdownView = plugin.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+      const markdownView = getActiveMarkdownView();
       if (markdownView) {
         const editor = markdownView.editor;
         if (editor) {
@@ -28756,7 +28780,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-3f1baddd";
+Panel_default.__scopeId = "data-v-54c59e82";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts

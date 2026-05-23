@@ -2131,6 +2131,35 @@ export default defineComponent({
         }
     }
 
+    // 获取活动或最近聚焦的 Markdown 编辑器（兼容侧边栏点击焦点丢失场景）
+    function getActiveMarkdownView() {
+        try {
+            // 方式一：尝试直接获取 activeLeaf
+            const activeLeaf = plugin.app.workspace.activeLeaf;
+            if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === 'markdown') {
+                return activeLeaf.view;
+            }
+        } catch (e) {}
+
+        try {
+            // 方式二：获取最近被聚焦/活跃的主编辑叶子（最适合侧边栏夺取焦点的场景）
+            const mostRecentLeaf = plugin.app.workspace.getMostRecentLeaf();
+            if (mostRecentLeaf && mostRecentLeaf.view && mostRecentLeaf.view.getViewType() === 'markdown') {
+                return mostRecentLeaf.view;
+            }
+        } catch (e) {}
+
+        try {
+            // 方式三：兜底遍历工作区中所有 Markdown 类型的叶子
+            const leaves = plugin.app.workspace.getLeavesOfType('markdown');
+            if (leaves && leaves.length > 0) {
+                return leaves[0].view;
+            }
+        } catch (e) {}
+
+        return null;
+    }
+
     // 插入视频戳
     function insertVideoTimestamp() {
         let time = 0;
@@ -2145,8 +2174,8 @@ export default defineComponent({
 
         const formatted = formatTime(time);
         
-        // 使用 getActiveViewOfType(MarkdownView) 安全获取处于激活或最近聚焦的 Markdown 编辑器
-        const markdownView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+        // 获取活动或最近聚焦的 Markdown 编辑器
+        const markdownView = getActiveMarkdownView();
         if (markdownView) {
             const editor = markdownView.editor;
             if (editor) {
