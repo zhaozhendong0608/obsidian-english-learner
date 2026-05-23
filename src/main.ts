@@ -110,6 +110,21 @@ export default class EnglishLearnerPlugin extends Plugin {
             this.app.workspace.trigger('layout-change');
         });
 
+        // 注册 obsidian://lang-learner-media 协议处理器，用于支持“视频戳笔记”跳转播放
+        this.registerObsidianProtocolHandler('lang-learner-media', (params) => {
+            const url = params.url;
+            const path = params.path;
+            const t = parseFloat(params.t || '0');
+            const target = url || path;
+            if (target) {
+                this.activateView();
+                // 延迟广播以确保 Vue 实例激活
+                setTimeout(() => {
+                    eventBus.emit('lang-learner:play-media', target, t);
+                }, 300);
+            }
+        });
+
         console.log('🚀 Obsidian English Learner 插件加载完毕！');
     }
 

@@ -30,6 +30,13 @@
       >
         📅 间隔复习
       </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'media' }"
+        @click="mainTab = 'media'; scanMediaFiles();"
+      >
+        🎬 视频笔记
+      </button>
     </div>
 
     <!-- 全局自主查词输入框 -->
@@ -511,6 +518,113 @@
       </div>
     </div>
 
+    <!-- Tab 5: 视频戳笔记 -->
+    <div v-show="mainTab === 'media'" class="lang-learner-tab-content">
+      <div class="lang-learner-panel-dashboard">
+        <h3 class="lang-learner-panel-title">🎬 视频戳笔记 (Media Extended)</h3>
+        <p style="font-size: 0.82em; color: var(--text-muted); margin: -4px 0 12px 0;">
+          在此处播放本地或在线视频，随时插入带有时间戳跳转功能的媒体链接。
+        </p>
+      </div>
+
+      <!-- 媒体文件选择与输入 -->
+      <div class="lang-learner-panel-section" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary);">
+        <!-- 本地文件选择 -->
+        <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 0.85em; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+            📁 载入库内媒体文件
+          </label>
+          <div style="display: flex; gap: 6px;">
+            <select 
+              v-model="selectedMediaFile" 
+              @change="handleSelectLocalMedia"
+              style="flex: 1; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em; cursor: pointer;"
+            >
+              <option value="">-- 请选择本地媒体 --</option>
+              <option v-for="file in mediaFiles" :key="file.path" :value="file.path">
+                {{ file.name }}
+              </option>
+            </select>
+            <button 
+              @click="scanMediaFiles" 
+              class="lang-learner-btn" 
+              style="padding: 6px 10px; font-size: 0.85em; display: flex; align-items: center; justify-content: center;"
+              title="重新扫描 Vault 媒体文件"
+            >
+              🔄
+            </button>
+          </div>
+        </div>
+
+        <!-- 外部 URL 输入 -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 0.85em; font-weight: 600; color: var(--text-muted);">🌐 外部直链媒体 URL</label>
+          <div style="display: flex; gap: 6px;">
+            <input 
+              v-model="currentVideoUrl" 
+              placeholder="输入 http://...mp4 等直链"
+              style="flex: 1; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em;"
+            />
+            <button 
+              @click="loadMediaSource(currentVideoUrl)" 
+              class="lang-learner-btn lang-learner-btn-primary" 
+              style="padding: 6px 12px; font-size: 0.85em; font-weight: 500;"
+            >
+              载入
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 视频播放区域 -->
+      <div v-if="activeVideoSrc" class="lang-learner-panel-section" style="margin-bottom: 12px; text-align: center; background: #000; border-radius: 8px; padding: 4px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);">
+        <video 
+          ref="mediaVideoRef" 
+          :src="activeVideoSrc" 
+          controls 
+          @timeupdate="onVideoTimeUpdate"
+          style="width: 100%; max-height: 240px; display: block; border-radius: 4px;"
+        ></video>
+      </div>
+
+      <!-- 视频控制与快捷操作 -->
+      <div v-if="activeVideoSrc" class="lang-learner-panel-section" style="padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 12px; background: var(--background-secondary);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.9em; font-weight: 600; color: var(--text-accent); display: flex; align-items: center; gap: 4px;">
+            🕒 进度: {{ formatTime(currentVideoTime) }}
+          </span>
+          <!-- 速度调节 -->
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <span style="font-size: 0.8em; color: var(--text-muted); margin-right: 4px;">倍速:</span>
+            <button 
+              v-for="rate in [0.8, 1.0, 1.25, 1.5]" 
+              :key="rate" 
+              @click="setPlaybackRate(rate)" 
+              class="lang-learner-btn-status-mini"
+              :class="{ active: mediaPlaybackRate === rate }"
+              style="padding: 2px 6px; font-size: 0.75em; font-weight: 500;"
+            >
+              {{ rate }}x
+            </button>
+          </div>
+        </div>
+
+        <button 
+          @click="insertVideoTimestamp" 
+          class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
+          style="font-size: 0.95em; padding: 10px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 6px; border-radius: 6px; transition: transform 0.1s ease;"
+        >
+          📌 插入视频时间戳
+        </button>
+      </div>
+
+      <div v-else class="lang-learner-empty-hint" style="padding: 50px 0; text-align: center; background: var(--background-secondary); border-radius: 8px; border: 1px dashed var(--background-modifier-border);">
+        <div style="font-size: 3em; margin-bottom: 12px; filter: grayscale(0.2);">🎬</div>
+        <p style="margin: 0 0 6px 0; font-weight: 600; font-size: 1.05em; color: var(--text-normal);">暂无载入媒体</p>
+        <p style="font-size: 0.85em; color: var(--text-muted); margin: 0; padding: 0 16px;">请在上方下拉列表中选择库内音视频，或输入网络直链载入播放</p>
+      </div>
+    </div>
+
     <!-- 单词详情面板已移至 Tab 按钮下方 (全局最高优先级位置) -->
   </div>
 </template>
@@ -542,7 +656,7 @@ export default defineComponent({
     const highFreqSet = new Set<string>(HIGH_FREQUENCY_WORDS);
 
     // ========== 导航 Tab 控制 ==========
-    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review'>('vocabulary');
+    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media'>('vocabulary');
 
     // ========== 统计仪表盘 ==========
     const stats = ref({ total: 0, unknown: 0, learning: 0, known: 0 });
@@ -1289,6 +1403,7 @@ export default defineComponent({
         refreshWordList();
         eventBus.on('lang-learner:word-changed', handleWordChanged);
         eventBus.on('lang-learner:word-selected', handleWordSelected);
+        eventBus.on('lang-learner:play-media', handlePlayMediaEvent);
         
         // 监听来自全局快捷命令的整句分析唤醒
         eventBus.on('lang-learner:analyze-sentence', (sentence: string) => {
@@ -1308,6 +1423,7 @@ export default defineComponent({
         eventBus.off('lang-learner:word-changed', handleWordChanged);
         eventBus.off('lang-learner:word-selected', handleWordSelected);
         eventBus.off('lang-learner:analyze-sentence');
+        eventBus.off('lang-learner:play-media', handlePlayMediaEvent);
         if (typeof window !== 'undefined' && window.speechSynthesis) {
             window.speechSynthesis.onvoiceschanged = null;
         }
@@ -1801,6 +1917,120 @@ export default defineComponent({
         }
     }
 
+    // ========== 视频播放/视频戳笔记 (Media Extended) ==========
+    const currentVideoUrl = ref(''); // 输入的 URL 或选中的本地路径
+    const activeVideoSrc = ref('');  // 最终给 <video> src 的解析 URL (本地文件使用 getResourcePath)
+    const mediaFiles = ref<{ path: string, name: string }[]>([]);
+    const selectedMediaFile = ref('');
+    const mediaVideoRef = ref<HTMLVideoElement | null>(null);
+    const mediaPlaybackRate = ref(1.0);
+    const currentVideoTime = ref(0);
+
+    // 格式化时间为 mm:ss 或 hh:mm:ss
+    function formatTime(seconds: number): string {
+        if (isNaN(seconds) || seconds < 0) return '00:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        if (h > 0) {
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
+        return `${pad(m)}:${pad(s)}`;
+    }
+
+    // 扫描 Vault 媒体文件
+    function scanMediaFiles() {
+        try {
+            if (!plugin || !plugin.app || !plugin.app.vault) return;
+            const files = plugin.app.vault.getFiles();
+            const extensions = ['mp4', 'webm', 'ogv', 'mp3', 'wav', 'm4a', 'ogg'];
+            mediaFiles.value = files
+                .filter((f: any) => extensions.includes(f.extension.toLowerCase()))
+                .map((f: any) => ({ path: f.path, name: f.name }));
+        } catch (e) {
+            console.error('扫描本地媒体文件失败:', e);
+        }
+    }
+
+    // 载入指定的媒体源
+    function loadMediaSource(targetUrlOrPath: string) {
+        if (!targetUrlOrPath) return;
+        currentVideoUrl.value = targetUrlOrPath;
+
+        // 如果是本地 Vault 路径，则使用 getResourcePath 获取可播放的本地服务 URL
+        if (!targetUrlOrPath.startsWith('http://') && !targetUrlOrPath.startsWith('https://') && !targetUrlOrPath.startsWith('app://')) {
+            const file = plugin.app.vault.getAbstractFileByPath(targetUrlOrPath);
+            if (file) {
+                activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
+            } else {
+                new Notice('找不到指定的库内媒体文件');
+            }
+        } else {
+            activeVideoSrc.value = targetUrlOrPath;
+        }
+    }
+
+    // 点击本地文件选择
+    function handleSelectLocalMedia() {
+        if (selectedMediaFile.value) {
+            loadMediaSource(selectedMediaFile.value);
+        }
+    }
+
+    // 插入视频戳
+    function insertVideoTimestamp() {
+        if (!mediaVideoRef.value) return;
+        
+        const time = mediaVideoRef.value.currentTime;
+        const formatted = formatTime(time);
+        
+        // 获取当前活动编辑器
+        const activeLeaf = plugin.app.workspace.activeLeaf;
+        if (activeLeaf && activeLeaf.view && activeLeaf.view.getViewType() === 'markdown') {
+            const editor = (activeLeaf.view as any).editor;
+            if (editor) {
+                // 构造 obsidian:// 协议跳转链接
+                const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(currentVideoUrl.value)}&t=${Math.floor(time)}`;
+                const timestampText = `[🎬 ${formatted}](${uri})`;
+                editor.replaceSelection(timestampText);
+                new Notice(`📌 已成功插入时间戳 ${formatted}`);
+            } else {
+                new Notice('无法获取编辑器实例，请将光标置于 Markdown 文档中');
+            }
+        } else {
+            new Notice('请先在主工作区打开并聚焦一个 Markdown 笔记');
+        }
+    }
+
+    // 调整播放速度
+    function setPlaybackRate(rate: number) {
+        mediaPlaybackRate.value = rate;
+        if (mediaVideoRef.value) {
+            mediaVideoRef.value.playbackRate = rate;
+        }
+    }
+
+    // 监听时间更新
+    function onVideoTimeUpdate() {
+        if (mediaVideoRef.value) {
+            currentVideoTime.value = mediaVideoRef.value.currentTime;
+        }
+    }
+
+    // 响应跳转事件
+    function handlePlayMediaEvent(urlOrPath: string, timestamp: number) {
+        mainTab.value = 'media';
+        loadMediaSource(urlOrPath);
+        
+        setTimeout(() => {
+            if (mediaVideoRef.value) {
+                mediaVideoRef.value.currentTime = timestamp;
+                mediaVideoRef.value.play().catch(e => console.log('自动播放安全受限:', e));
+            }
+        }, 500);
+    }
+
     return {
       speak,
       availableVoices,
@@ -1854,7 +2084,21 @@ export default defineComponent({
       reviewExampleSentences,
       isLoadingReviewExamples,
       submitReviewGrade,
-      getGradeLabel
+      getGradeLabel,
+      currentVideoUrl,
+      activeVideoSrc,
+      mediaFiles,
+      selectedMediaFile,
+      mediaVideoRef,
+      mediaPlaybackRate,
+      currentVideoTime,
+      formatTime,
+      scanMediaFiles,
+      loadMediaSource,
+      handleSelectLocalMedia,
+      insertVideoTimestamp,
+      setPlaybackRate,
+      onVideoTimeUpdate
     };
   }
 });

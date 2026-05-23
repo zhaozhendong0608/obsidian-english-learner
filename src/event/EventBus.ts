@@ -17,6 +17,7 @@ interface EventMap {
     'lang-learner:estimation-done': (level: number) => void;   // F5 估算完成事件，附带水位线索引
     'lang-learner:word-selected': (word: string) => void;      // 主窗口点击单词后通知侧边栏同步选中
     'lang-learner:analyze-sentence': (sentence: string) => void; // 快捷分析句子事件
+    'lang-learner:play-media': (urlOrPath: string, timestamp: number) => void; // 视频播放器跳转事件，包含视频链接或路径及跳转时间点
 }
 
 type EventCallback = (...args: any[]) => void;
