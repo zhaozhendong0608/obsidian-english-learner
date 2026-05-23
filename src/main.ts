@@ -1,4 +1,4 @@
-import { Plugin, MarkdownPostProcessorContext } from 'obsidian';
+import { Plugin, MarkdownPostProcessorContext, MarkdownView, Notice } from 'obsidian';
 import { VocabularyManager, DataAdapter } from './db/vocabulary';
 import { processElement, refreshWordsInDOM } from './renderer/postProcessor';
 import { LangLearnerSidebarView, VIEW_TYPE_LANG_LEARNER } from './ui/SidebarView';
@@ -39,6 +39,25 @@ export default class EnglishLearnerPlugin extends Plugin {
         // 添加侧边栏功能功能入口 Ribbon 图标
         this.addRibbonIcon('book-open', '打开语言学习助手', () => {
             this.activateView();
+        });
+
+        // 注册全局快捷命令：分析选中的句子/文本
+        this.addCommand({
+            id: 'analyze-selection',
+            name: '分析当前选中的句子/文本',
+            callback: () => {
+                const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+                const selection = activeView?.editor?.getSelection();
+                if (selection && selection.trim()) {
+                    this.activateView();
+                    // 稍作延迟以确保 Vue 组件挂载完成并监听了事件，然后广播
+                    setTimeout(() => {
+                        eventBus.emit('lang-learner:analyze-sentence', selection.trim());
+                    }, 200);
+                } else {
+                    new Notice('请先在文档中选中一段英文文本');
+                }
+            }
         });
 
         // 注册 Markdown 后置处理器 (DOM 拦截器)

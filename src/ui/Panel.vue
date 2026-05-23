@@ -1,61 +1,232 @@
 <template>
   <div class="lang-learner-panel">
-    <!-- 统计仪表盘 -->
-    <div class="lang-learner-panel-dashboard">
-      <h3 class="lang-learner-panel-title">📖 语言学习助手</h3>
-      <div class="lang-learner-stats-grid">
-        <div class="lang-learner-stat-item lang-learner-stat-total">
-          <span class="lang-learner-stat-value">{{ stats.total }}</span>
-          <span class="lang-learner-stat-label">总词量</span>
-        </div>
-        <div class="lang-learner-stat-item lang-learner-stat-known">
-          <span class="lang-learner-stat-value">{{ stats.known }}</span>
-          <span class="lang-learner-stat-label">已掌握</span>
-        </div>
-        <div class="lang-learner-stat-item lang-learner-stat-learning">
-          <span class="lang-learner-stat-value">{{ stats.learning }}</span>
-          <span class="lang-learner-stat-label">学习中</span>
-        </div>
-        <div class="lang-learner-stat-item lang-learner-stat-unknown">
-          <span class="lang-learner-stat-value">{{ stats.unknown }}</span>
-          <span class="lang-learner-stat-label">生词</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- F5 词汇量估算区 -->
-    <div v-if="estimationState === 'idle'" class="lang-learner-panel-section">
-      <button class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full" @click="startEstimation">
-        🎯 开始词汇量估算
+    <!-- 顶部主导航 Tab -->
+    <div class="lang-learner-main-tabs">
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'vocabulary' }"
+        @click="mainTab = 'vocabulary'"
+      >
+        📋 词汇本
       </button>
-      <p class="lang-learner-hint-text">通过约 20 道题快速测定你的英语词汇水位线</p>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'estimate' }"
+        @click="mainTab = 'estimate'"
+      >
+        🎯 词汇量测试
+      </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'sentence' }"
+        @click="mainTab = 'sentence'"
+      >
+        🔍 整句分析
+      </button>
     </div>
 
-    <div v-if="estimationState === 'running'" class="lang-learner-panel-section lang-learner-estimation-area">
-      <div class="lang-learner-estimation-header">
-        <span class="lang-learner-estimation-progress">第 {{ currentQuestionIndex + 1 }} / {{ totalQuestions }} 题</span>
-        <div class="lang-learner-progress-bar">
-          <div class="lang-learner-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+    <!-- Tab 1: 词汇库 -->
+    <div v-show="mainTab === 'vocabulary'" class="lang-learner-tab-content">
+      <!-- 统计仪表盘 -->
+      <div class="lang-learner-panel-dashboard">
+        <h3 class="lang-learner-panel-title">📖 语言学习助手</h3>
+        <div class="lang-learner-stats-grid">
+          <div class="lang-learner-stat-item lang-learner-stat-total">
+            <span class="lang-learner-stat-value">{{ stats.total }}</span>
+            <span class="lang-learner-stat-label">总词量</span>
+          </div>
+          <div class="lang-learner-stat-item lang-learner-stat-known">
+            <span class="lang-learner-stat-value">{{ stats.known }}</span>
+            <span class="lang-learner-stat-label">已掌握</span>
+          </div>
+          <div class="lang-learner-stat-item lang-learner-stat-learning">
+            <span class="lang-learner-stat-value">{{ stats.learning }}</span>
+            <span class="lang-learner-stat-label">学习中</span>
+          </div>
+          <div class="lang-learner-stat-item lang-learner-stat-unknown">
+            <span class="lang-learner-stat-value">{{ stats.unknown }}</span>
+            <span class="lang-learner-stat-label">生词</span>
+          </div>
         </div>
       </div>
-      <div class="lang-learner-estimation-word">
-        <span class="lang-learner-big-word">{{ currentTestWord }}</span>
+
+      <!-- 生词本列表区 -->
+      <div class="lang-learner-panel-section lang-learner-wordlist-area">
+        <h4 class="lang-learner-section-title">📋 生词本</h4>
+        <div class="lang-learner-tab-bar">
+          <button
+            class="lang-learner-tab-btn"
+            :class="{ 'lang-learner-active': activeTab === 'UNKNOWN' }"
+            @click="activeTab = 'UNKNOWN'"
+          >生词 ({{ unknownList.length }})</button>
+          <button
+            class="lang-learner-tab-btn"
+            :class="{ 'lang-learner-active': activeTab === 'LEARNING' }"
+            @click="activeTab = 'LEARNING'"
+          >学习中 ({{ learningList.length }})</button>
+        </div>
+        <div class="lang-learner-wordlist-container">
+          <div
+            v-for="item in currentTabList"
+            :key="item.word"
+            class="lang-learner-wordlist-item"
+            @click="selectWord(item)"
+          >
+            <span class="lang-learner-wl-word">{{ item.word }}</span>
+            <span class="lang-learner-wl-trans">{{ item.trans || '—' }}</span>
+            <button
+              class="lang-learner-btn-icon"
+              :title="item.status === 'UNKNOWN' ? '标为学习中' : '标为已掌握'"
+              @click.stop="quickAdvance(item)"
+            >{{ item.status === 'UNKNOWN' ? '📌' : '✅' }}</button>
+          </div>
+          <p v-if="currentTabList.length === 0" class="lang-learner-empty-hint">暂无数据</p>
+        </div>
       </div>
-      <p class="lang-learner-estimation-prompt">你认识这个单词吗？</p>
-      <div class="lang-learner-estimation-actions">
-        <button class="lang-learner-btn lang-learner-btn-yes" @click="answerEstimation(true)">✅ 认识</button>
-        <button class="lang-learner-btn lang-learner-btn-no" @click="answerEstimation(false)">❌ 不认识</button>
+
+      <!-- F8 一键学完 -->
+      <div class="lang-learner-panel-section">
+        <button class="lang-learner-btn lang-learner-btn-accent lang-learner-btn-full" @click="learnArticle">
+          ⚡ 一键学完当前文章
+        </button>
+        <p class="lang-learner-hint-text">将当前文章中高频词表内的未标记词批量标为已掌握</p>
       </div>
     </div>
 
-    <div v-if="estimationState === 'done'" class="lang-learner-panel-section lang-learner-estimation-result">
-      <p class="lang-learner-result-title">🎉 估算完成！</p>
-      <p class="lang-learner-result-value">你的词汇量约为 <strong>{{ estimatedLevel }}</strong> 词</p>
-      <p class="lang-learner-result-detail">已将水位线以下的 {{ batchMarkedCount }} 个高频词标记为已掌握</p>
-      <button class="lang-learner-btn lang-learner-btn-secondary" @click="estimationState = 'idle'">关闭</button>
+    <!-- Tab 2: 词汇量测试 -->
+    <div v-show="mainTab === 'estimate'" class="lang-learner-tab-content">
+      <div v-if="estimationState === 'idle'" class="lang-learner-panel-section">
+        <button class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full" @click="startEstimation">
+          🎯 开始词汇量估算
+        </button>
+        <p class="lang-learner-hint-text">通过约 20 道题快速测定你的英语词汇水位线</p>
+      </div>
+
+      <div v-if="estimationState === 'running'" class="lang-learner-panel-section lang-learner-estimation-area">
+        <div class="lang-learner-estimation-header">
+          <span class="lang-learner-estimation-progress">第 {{ currentQuestionIndex + 1 }} / {{ totalQuestions }} 题</span>
+          <div class="lang-learner-progress-bar">
+            <div class="lang-learner-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+          </div>
+        </div>
+        <div class="lang-learner-estimation-word">
+          <span class="lang-learner-big-word">{{ currentTestWord }}</span>
+        </div>
+        <p class="lang-learner-estimation-prompt">你认识这个单词吗？</p>
+        <div class="lang-learner-estimation-actions">
+          <button class="lang-learner-btn lang-learner-btn-yes" @click="answerEstimation(true)">✅ 认识</button>
+          <button class="lang-learner-btn lang-learner-btn-no" @click="answerEstimation(false)">❌ 不认识</button>
+        </div>
+      </div>
+
+      <div v-if="estimationState === 'done'" class="lang-learner-panel-section lang-learner-estimation-result">
+        <p class="lang-learner-result-title">🎉 估算完成！</p>
+        <p class="lang-learner-result-value">你的词汇量约为 <strong>{{ estimatedLevel }}</strong> 词</p>
+        <p class="lang-learner-result-detail">已将水位线以下的 {{ batchMarkedCount }} 个高频词标记为已掌握</p>
+        <button class="lang-learner-btn lang-learner-btn-secondary" @click="estimationState = 'idle'">关闭</button>
+      </div>
     </div>
 
-    <!-- 单词详情与熟悉度微调区 -->
+    <!-- Tab 3: 整句分析 -->
+    <div v-show="mainTab === 'sentence'" class="lang-learner-tab-content">
+      <div class="lang-learner-panel-section">
+        <h4 class="lang-learner-section-title">🔍 输入待分析句子</h4>
+        <textarea
+          v-model="sentenceInput"
+          class="lang-learner-textarea"
+          placeholder="在此输入或粘贴一段英文句子..."
+          rows="4"
+        ></textarea>
+        <div class="lang-learner-sentence-actions">
+          <button class="lang-learner-btn lang-learner-btn-primary" @click="analyzeInputSentence" :disabled="isAnalyzing" style="flex: 1;">
+            {{ isAnalyzing ? '正在分析...' : '分析句子' }}
+          </button>
+          <button class="lang-learner-btn lang-learner-btn-secondary" @click="importSelection" style="flex: 1;">
+            导入选中文本
+          </button>
+        </div>
+      </div>
+
+      <!-- 分析结果显示区 -->
+      <div v-if="hasAnalyzed" class="lang-learner-panel-section lang-learner-analysis-result">
+        <h4 class="lang-learner-section-title">📖 分析结果</h4>
+        
+        <!-- 翻译 -->
+        <div class="lang-learner-result-box">
+          <div class="lang-learner-box-title">🌐 机器翻译</div>
+          <p v-if="isTranslating" class="lang-learner-loading-text">正在翻译中...</p>
+          <p v-else class="lang-learner-translation-text">{{ sentenceTranslation || '暂无翻译结果' }}</p>
+        </div>
+
+        <!-- 句子高亮交互渲染区 -->
+        <div class="lang-learner-result-box">
+          <div class="lang-learner-box-title">🎨 句子高亮与交互</div>
+          <div class="lang-learner-interactive-sentence">
+            <template v-for="(token, index) in analyzedSentenceTokens" :key="index">
+              <!-- 未匹配的纯文本 -->
+              <span v-if="token.type === 'text'">{{ token.text }}</span>
+              <!-- 可交互的单词/短语 -->
+              <span
+                v-else
+                class="lang-learner-word"
+                :class="{
+                  'lang-learner-unknown': token.status === 'UNKNOWN',
+                  'lang-learner-learning': token.status === 'LEARNING',
+                  'lang-learner-known': token.status === 'KNOWN',
+                  'lang-learner-phrase': token.isPhrase
+                }"
+                :data-lemma="token.lemma"
+                :data-trans="token.trans"
+                :data-phonetic="token.phonetic ? '/' + token.phonetic + '/' : ''"
+                @click="onSentenceWordClick(token.lemma)"
+                @dblclick="onSentenceWordDblClick(token)"
+              >
+                {{ token.text }}
+              </span>
+            </template>
+          </div>
+          <p class="lang-learner-hint-text" style="text-align: left; margin-top: 8px;">提示: 单击单词选中，双击单词弹出释义并加入学习。</p>
+        </div>
+
+        <!-- 提取出的词汇分析列表 -->
+        <div class="lang-learner-result-box">
+          <div class="lang-learner-box-title">📊 词汇分析清单 (共 {{ analyzedWordsList.length }} 个)</div>
+          <div class="lang-learner-wordlist-container" style="max-height: 250px;">
+            <div
+              v-for="item in analyzedWordsList"
+              :key="item.word"
+              class="lang-learner-wordlist-item"
+              @click="onSentenceWordClick(item.word)"
+            >
+              <span class="lang-learner-wl-word" :class="{ 'lang-learner-wl-phrase': item.isPhrase }">
+                {{ item.word }} <small v-if="item.isPhrase" style="opacity: 0.6; font-size: 0.7em;">(短语)</small>
+              </span>
+              <span class="lang-learner-wl-trans">{{ item.trans || '—' }}</span>
+              <div class="lang-learner-sentence-word-status-btns">
+                <button
+                  class="lang-learner-btn-status-mini"
+                  :class="{ active: item.status === 'UNKNOWN' }"
+                  @click.stop="updateWordStatusInList(item.word, 'UNKNOWN')"
+                >生</button>
+                <button
+                  class="lang-learner-btn-status-mini"
+                  :class="{ active: item.status === 'LEARNING' }"
+                  @click.stop="updateWordStatusInList(item.word, 'LEARNING')"
+                >学</button>
+                <button
+                  class="lang-learner-btn-status-mini"
+                  :class="{ active: item.status === 'KNOWN' }"
+                  @click.stop="updateWordStatusInList(item.word, 'KNOWN')"
+                >熟</button>
+              </div>
+            </div>
+            <p v-if="analyzedWordsList.length === 0" class="lang-learner-empty-hint">未提取出英文词汇</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
     <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
       <h4 class="lang-learner-section-title">📝 单词详情</h4>
       <div class="lang-learner-word-info-card">
@@ -63,75 +234,16 @@
         <div v-if="selectedWord.phonetic" class="lang-learner-word-phonetic">/{{ selectedWord.phonetic }}/</div>
         <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
       </div>
-      <div class="lang-learner-status-actions">
-        <button
-          class="lang-learner-btn lang-learner-btn-status"
-          :class="{ 'lang-learner-active': selectedWord.status === 'UNKNOWN' }"
-          @click="changeWordStatus(selectedWord.word, 'UNKNOWN')"
-        >生词</button>
-        <button
-          class="lang-learner-btn lang-learner-btn-status"
-          :class="{ 'lang-learner-active': selectedWord.status === 'LEARNING' }"
-          @click="changeWordStatus(selectedWord.word, 'LEARNING')"
-        >学习中</button>
-        <button
-          class="lang-learner-btn lang-learner-btn-status"
-          :class="{ 'lang-learner-active': selectedWord.status === 'KNOWN' }"
-          @click="changeWordStatus(selectedWord.word, 'KNOWN')"
-        >已掌握</button>
-      </div>
-    </div>
-
-    <!-- 生词本列表区 -->
-    <div class="lang-learner-panel-section lang-learner-wordlist-area">
-      <h4 class="lang-learner-section-title">📋 生词本</h4>
-      <div class="lang-learner-tab-bar">
-        <button
-          class="lang-learner-tab-btn"
-          :class="{ 'lang-learner-active': activeTab === 'UNKNOWN' }"
-          @click="activeTab = 'UNKNOWN'"
-        >生词 ({{ unknownList.length }})</button>
-        <button
-          class="lang-learner-tab-btn"
-          :class="{ 'lang-learner-active': activeTab === 'LEARNING' }"
-          @click="activeTab = 'LEARNING'"
-        >学习中 ({{ learningList.length }})</button>
-      </div>
-      <div class="lang-learner-wordlist-container">
-        <div
-          v-for="item in currentTabList"
-          :key="item.word"
-          class="lang-learner-wordlist-item"
-          @click="selectWord(item)"
-        >
-          <span class="lang-learner-wl-word">{{ item.word }}</span>
-          <span class="lang-learner-wl-trans">{{ item.trans || '—' }}</span>
-          <button
-            class="lang-learner-btn-icon"
-            :title="item.status === 'UNKNOWN' ? '标为学习中' : '标为已掌握'"
-            @click.stop="quickAdvance(item)"
-          >{{ item.status === 'UNKNOWN' ? '📌' : '✅' }}</button>
-        </div>
-        <p v-if="currentTabList.length === 0" class="lang-learner-empty-hint">暂无数据</p>
-      </div>
-    </div>
-
-    <!-- F8 一键学完 -->
-    <div class="lang-learner-panel-section">
-      <button class="lang-learner-btn lang-learner-btn-accent lang-learner-btn-full" @click="learnArticle">
-        ⚡ 一键学完当前文章
-      </button>
-      <p class="lang-learner-hint-text">将当前文章中高频词表内的未标记词批量标为已掌握</p>
     </div>
   </div>
 </template>
-
 
 <script lang="ts">
 import { defineComponent, ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import { Notice } from 'obsidian';
 import { eventBus } from '../event/EventBus';
 import { HIGH_FREQUENCY_WORDS, OFFLINE_DICT } from '../data/static_data';
+import { tokenize } from '../tokenizer/tokenizer';
 import type { VocabularyManager } from '../db/vocabulary';
 import type { WordInfo, WordStatus } from '../types';
 
@@ -144,6 +256,9 @@ export default defineComponent({
 
     // 使用 Set 加速高频词查询 (O(1))
     const highFreqSet = new Set<string>(HIGH_FREQUENCY_WORDS);
+
+    // ========== 导航 Tab 控制 ==========
+    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence'>('vocabulary');
 
     // ========== 统计仪表盘 ==========
     const stats = ref({ total: 0, unknown: 0, learning: 0, known: 0 });
@@ -199,8 +314,8 @@ export default defineComponent({
     /** 修改单词熟悉度状态 */
     function changeWordStatus(word: string, newStatus: WordStatus) {
         const info = vocabManager.getInfo(word);
-        const trans = info?.trans || '';
-        const phonetic = info?.phonetic || '';
+        const trans = info?.trans || OFFLINE_DICT[word]?.trans || '';
+        const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || '';
         vocabManager.set(word, newStatus, trans, phonetic);
 
         // 通过 EventBus 广播，驱动 DOM 增量刷新
@@ -286,7 +401,7 @@ export default defineComponent({
         // 获取水位线以下的全部高频词
         const wordsToMark = HIGH_FREQUENCY_WORDS.slice(0, waterLevel);
 
-        // 过滤掉已经是 LEARNING 状态的词（用户主动标记的生词不应被覆盖）
+        // 过滤掉已经是 LEARNING 状态 of 词（用户主动标记的生词不应被覆盖）
         const safeWords = wordsToMark.filter(w => {
             const status = vocabManager.get(w);
             return status !== 'LEARNING';
@@ -364,12 +479,252 @@ export default defineComponent({
         }
     }
 
-    // ========== 生命周期 ==========
+    // ========== 整句分析模块 ==========
+    const sentenceInput = ref('');
+    const isAnalyzing = ref(false);
+    const hasAnalyzed = ref(false);
+    const isTranslating = ref(false);
+    const sentenceTranslation = ref('');
+    const analyzedSentenceTokens = ref<any[]>([]);
+    const analyzedWordsList = ref<any[]>([]);
 
-    /** 处理事件总线广播的刷新 */
-    function handleWordChanged() {
+    /** 分析输入的整句 */
+    async function analyzeInputSentence() {
+        const text = sentenceInput.value.trim();
+        if (!text) {
+            new Notice('请输入待分析的句子');
+            return;
+        }
+
+        isAnalyzing.value = true;
+        hasAnalyzed.value = true;
+        isTranslating.value = true;
+        sentenceTranslation.value = '';
+
+        try {
+            // 1. 调用分词器对输入文本进行分词
+            const tokens = tokenize(text);
+            
+            // 构建短语偏移范围索引，防止单字高亮 Span 嵌套入短语内
+            const phraseRanges: Array<{ start: number; end: number }> = [];
+            for (const token of tokens) {
+                if (token.isPhrase) {
+                    phraseRanges.push({ start: token.start, end: token.end });
+                }
+            }
+
+            function isCoveredByPhrase(token: any): boolean {
+                if (token.isPhrase) return false;
+                for (const range of phraseRanges) {
+                    if (token.start >= range.start && token.end <= range.end) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // 2. 将句子物理切分为文本段与可高亮交互的单词段
+            let lastIndex = 0;
+            const segments: any[] = [];
+            const uniqueWords = new Map<string, any>();
+
+            for (const token of tokens) {
+                if (isCoveredByPhrase(token)) continue;
+
+                // 填充单词之前的纯文本字符（如空格、标点）
+                if (token.start > lastIndex) {
+                    segments.push({
+                        type: 'text',
+                        text: text.slice(lastIndex, token.start),
+                        lemma: ''
+                    });
+                }
+
+                // 查询词汇的熟悉度与本地离线释义
+                const status = vocabManager.get(token.lemma);
+                const info = vocabManager.getInfo(token.lemma);
+                let trans = info?.trans || '';
+                let phonetic = info?.phonetic || '';
+                if (!trans) {
+                    const dictEntry = OFFLINE_DICT[token.lemma];
+                    if (dictEntry) {
+                        trans = dictEntry.trans;
+                        phonetic = phonetic || dictEntry.phonetic || '';
+                    }
+                }
+
+                const seg = {
+                    type: 'word',
+                    text: text.slice(token.start, token.end),
+                    lemma: token.lemma,
+                    isPhrase: token.isPhrase,
+                    status,
+                    trans,
+                    phonetic
+                };
+                segments.push(seg);
+
+                // 统计句中的去重词汇清单，短语比单字优先级高
+                const existing = uniqueWords.get(token.lemma);
+                if (!existing || (!existing.isPhrase && token.isPhrase)) {
+                    uniqueWords.set(token.lemma, {
+                        word: token.lemma,
+                        status,
+                        trans,
+                        phonetic,
+                        isPhrase: !!token.isPhrase
+                    });
+                }
+
+                lastIndex = token.end;
+            }
+
+            // 填充末尾多余文本
+            if (lastIndex < text.length) {
+                segments.push({
+                    type: 'text',
+                    text: text.slice(lastIndex),
+                    lemma: ''
+                });
+            }
+
+            analyzedSentenceTokens.value = segments;
+            analyzedWordsList.value = Array.from(uniqueWords.values());
+
+            // 3. 异步在线翻译句子并呈现
+            const translation = await vocabManager.translateSentence(text);
+            sentenceTranslation.value = translation;
+        } catch (err) {
+            console.error('分析句子过程中发生异常:', err);
+            new Notice('分析句子过程中发生错误');
+        } finally {
+            isAnalyzing.value = false;
+            isTranslating.value = false;
+        }
+    }
+
+    /** 导入当前文档中选中的文本 */
+    function importSelection() {
+        try {
+            const { MarkdownView } = require('obsidian');
+            let selection = '';
+            
+            // 优先查找活动视图的选中文本
+            const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView && activeView.editor) {
+                selection = activeView.editor.getSelection();
+            }
+            
+            // 降级遍历所有可见叶子寻找被选中的文本段
+            if (!selection || !selection.trim()) {
+                plugin.app.workspace.iterateAllLeaves((leaf: any) => {
+                    if (leaf.view && leaf.view.editor) {
+                        const sel = leaf.view.editor.getSelection();
+                        if (sel && sel.trim()) {
+                            selection = sel.trim();
+                        }
+                    }
+                });
+            }
+
+            if (selection && selection.trim()) {
+                sentenceInput.value = selection.trim();
+                analyzeInputSentence();
+            } else {
+                new Notice('当前活动文档中未检测到选中文本');
+            }
+        } catch (err) {
+            console.error('从编辑器获取选中文本失败:', err);
+            new Notice('无法直接获取选中文本，请使用命令面板或手动粘贴');
+        }
+    }
+
+    /** 分析句中单词的点击事件 */
+    function onSentenceWordClick(word: string) {
+        handleWordSelected(word);
+    }
+
+    /** 分析句中单词的双击事件：标记为学习中，并追加语境 */
+    async function onSentenceWordDblClick(token: any) {
+        const currentStatus = vocabManager.get(token.lemma);
+        const displayPhonetic = token.phonetic ? ` /${token.phonetic}/` : '';
+
+        if (token.trans) {
+            new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: ${token.trans}`, 3500);
+        } else {
+            const loadingNotice = new Notice(`📖 ${token.lemma}${displayPhonetic}\n正在从在线词典查询释义...`, 5000);
+            try {
+                const onlineTrans = await vocabManager.fetchOnlineTranslation(token.lemma);
+                loadingNotice.hide();
+                if (onlineTrans) {
+                    new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: ${onlineTrans}`, 4500);
+                    token.trans = onlineTrans;
+                } else {
+                    new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: 暂无释义`, 3500);
+                }
+            } catch (err) {
+                loadingNotice.hide();
+                new Notice(`📖 ${token.lemma}${displayPhonetic}\n释义: 暂无释义 (查询失败)`, 3500);
+            }
+        }
+
+        if (currentStatus !== 'KNOWN') {
+            const sentence = sentenceInput.value.trim();
+            updateWordStatusInList(token.lemma, 'LEARNING');
+            
+            // 广播词汇状态改变，联动 main.ts 触发语境卡片静默追加
+            eventBus.emit('lang-learner:word-changed', token.lemma, 'LEARNING', sentence);
+        }
+
+        handleWordSelected(token.lemma);
+    }
+
+    /** 句中单词列表的微型按钮状态修改 */
+    function updateWordStatusInList(word: string, newStatus: WordStatus) {
+        const info = vocabManager.getInfo(word);
+        const trans = info?.trans || OFFLINE_DICT[word]?.trans || '';
+        const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || '';
+        vocabManager.set(word, newStatus, trans, phonetic);
+
+        // 广播事件以触发全屏 DOM 刷新与样式重绘
+        eventBus.emit('lang-learner:word-changed', word, newStatus);
+
+        // 实时更新整句分析渲染的状态引用
+        analyzedSentenceTokens.value.forEach(token => {
+            if (token.lemma === word) {
+                token.status = newStatus;
+            }
+        });
+        analyzedWordsList.value.forEach(item => {
+            if (item.word === word) {
+                item.status = newStatus;
+            }
+        });
+    }
+
+    // ========== 生命周期与全局事件监听 ==========
+
+    /** 处理事件总线广播的单词状态更改，实现多组件联动 */
+    function handleWordChanged(word: string, status: string) {
         refreshStats();
         refreshWordList();
+        
+        // 同步对齐整句分析页面中的相应单词状态
+        analyzedSentenceTokens.value.forEach(token => {
+            if (token.lemma === word) {
+                token.status = status;
+            }
+        });
+        analyzedWordsList.value.forEach(item => {
+            if (item.word === word) {
+                item.status = status;
+            }
+        });
+
+        // 同步更新已选中单词的详情面板
+        if (selectedWord.value && selectedWord.value.word === word) {
+            selectedWord.value.status = status as WordStatus;
+        }
     }
 
     /** 响应主窗口的单词单击选中事件，更新侧边栏详情 */
@@ -427,11 +782,19 @@ export default defineComponent({
         refreshWordList();
         eventBus.on('lang-learner:word-changed', handleWordChanged);
         eventBus.on('lang-learner:word-selected', handleWordSelected);
+        
+        // 监听来自全局快捷命令的整句分析唤醒
+        eventBus.on('lang-learner:analyze-sentence', (sentence: string) => {
+            mainTab.value = 'sentence';
+            sentenceInput.value = sentence;
+            analyzeInputSentence();
+        });
     });
 
     onUnmounted(() => {
         eventBus.off('lang-learner:word-changed', handleWordChanged);
         eventBus.off('lang-learner:word-selected', handleWordSelected);
+        eventBus.off('lang-learner:analyze-sentence');
     });
 
     return {
@@ -449,12 +812,25 @@ export default defineComponent({
       estimatedLevel,
       batchMarkedCount,
       progressPercent,
+      mainTab,
+      sentenceInput,
+      isAnalyzing,
+      hasAnalyzed,
+      isTranslating,
+      sentenceTranslation,
+      analyzedSentenceTokens,
+      analyzedWordsList,
       selectWord,
       changeWordStatus,
       quickAdvance,
       startEstimation,
       answerEstimation,
-      learnArticle
+      learnArticle,
+      analyzeInputSentence,
+      importSelection,
+      onSentenceWordClick,
+      onSentenceWordDblClick,
+      updateWordStatusInList
     };
   }
 });
@@ -889,6 +1265,144 @@ export default defineComponent({
     margin: 0;
     opacity: 0.7;
     font-style: italic;
+}
+
+/* ---- 10. 顶部主导航 Tab ---- */
+.lang-learner-main-tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+.lang-learner-main-tab-btn {
+    flex: 1;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 4px;
+    font-size: 0.85em;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    text-align: center;
+}
+
+.lang-learner-main-tab-btn:hover {
+    background: var(--background-primary-alt);
+    color: var(--text-normal);
+}
+
+.lang-learner-main-tab-btn.lang-learner-active {
+    background: var(--background-primary);
+    color: var(--text-accent);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- 11. 整句分析样式 ---- */
+.lang-learner-textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    font-family: var(--font-interface, sans-serif);
+    font-size: 0.9em;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s ease;
+}
+
+.lang-learner-textarea:focus {
+    border-color: var(--interactive-accent);
+}
+
+.lang-learner-sentence-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.lang-learner-result-box {
+    margin-top: 14px;
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 12px;
+}
+
+.lang-learner-box-title {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lang-learner-loading-text {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.lang-learner-translation-text {
+    font-size: 0.9em;
+    color: var(--text-normal);
+    line-height: 1.5;
+    background: var(--background-primary);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid var(--interactive-accent);
+    margin: 0;
+}
+
+.lang-learner-interactive-sentence {
+    background: var(--background-primary);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    font-size: 1.05em;
+    line-height: 1.6;
+    color: var(--text-normal);
+}
+
+/* 单词列表迷你状态按钮 */
+.lang-learner-sentence-word-status-btns {
+    display: flex;
+    gap: 3px;
+}
+
+.lang-learner-btn-status-mini {
+    cursor: pointer;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.7em;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    outline: none;
+}
+
+.lang-learner-btn-status-mini:hover {
+    filter: brightness(1.1);
+}
+
+.lang-learner-btn-status-mini.active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.lang-learner-wl-phrase {
+    color: #8c7ae6;
+    font-weight: 800;
 }
 </style>
 

@@ -228,14 +228,12 @@ export class VocabularyManager {
             
             // 尝试使用 Obsidian requestUrl 绕过 CORS
             try {
-                // @ts-ignore
-                if (typeof window !== 'undefined' && (window.ObsidianApp || window.app)) {
-                    const obsidian = require('obsidian');
-                    if (obsidian && obsidian.requestUrl) {
-                        const res = await obsidian.requestUrl({ url });
-                        if (res.json?.data?.entries?.[0]?.explain) {
-                            return res.json.data.entries[0].explain;
-                        }
+                const obsidian = require('obsidian');
+                if (obsidian && obsidian.requestUrl) {
+                    const res = await obsidian.requestUrl({ url });
+                    const data = typeof res.json === 'object' ? res.json : JSON.parse(res.text || '{}');
+                    if (data?.data?.entries?.[0]?.explain) {
+                        return data.data.entries[0].explain;
                     }
                 }
             } catch (obsError) {
@@ -250,6 +248,42 @@ export class VocabularyManager {
             }
         } catch (e) {
             console.error('在线获取释义失败:', e);
+        }
+        return '';
+    }
+
+    /**
+     * 在线异步翻译整句/段落 (MyMemory 公开翻译 API)
+     * @param text 待翻译的整句或文本
+     */
+    public async translateSentence(text: string): Promise<string> {
+        try {
+            const cleanText = text.trim();
+            if (!cleanText) return '';
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=en|zh-CN`;
+
+            // 优先使用 Obsidian requestUrl 绕过 CORS
+            try {
+                const obsidian = require('obsidian');
+                if (obsidian && obsidian.requestUrl) {
+                    const res = await obsidian.requestUrl({ url });
+                    const data = typeof res.json === 'object' ? res.json : JSON.parse(res.text || '{}');
+                    if (data?.responseData?.translatedText) {
+                        return data.responseData.translatedText;
+                    }
+                }
+            } catch (obsError) {
+                console.warn('使用 Obsidian requestUrl 翻译整句失败，回退到 fetch:', obsError);
+            }
+
+            const res = await fetch(url);
+            if (!res.ok) return '';
+            const data = await res.json();
+            if (data?.responseData?.translatedText) {
+                return data.responseData.translatedText;
+            }
+        } catch (e) {
+            console.error('在线翻译整句失败:', e);
         }
         return '';
     }
