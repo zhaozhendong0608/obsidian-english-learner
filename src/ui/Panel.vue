@@ -148,46 +148,75 @@
           <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼ 收起' : '▶ 展开' }}</span>
         </div>
         <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-          <!-- 发音人选择 -->
+          <!-- 引擎选择 -->
           <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+            <label style="font-size: 0.75em; color: var(--text-muted);">发音引擎:</label>
             <select 
-              v-model="voiceSettings.voiceName" 
+              v-model="voiceSettings.engine" 
               @change="saveVoiceSettings"
               style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
             >
-              <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
-                {{ voice.name }} ({{ voice.lang }})
-              </option>
-              <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
+              <option value="online">🌐 在线真人发音 (推荐)</option>
+              <option value="local">💻 系统原生离线发音</option>
             </select>
           </div>
-          <!-- 语速调节 -->
-          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
-            <input 
-              type="range" 
-              v-model.number="voiceSettings.rate" 
-              min="0.5" 
-              max="1.8" 
-              step="0.1" 
+
+          <!-- 在线真人参数展示 -->
+          <div v-if="voiceSettings.engine === 'online'" class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">口音选择:</label>
+            <select 
+              v-model="voiceSettings.onlineAccent" 
               @change="saveVoiceSettings"
-              style="width: 60%; cursor: pointer;"
-            />
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+            >
+              <option :value="2">🇺🇸 美式发音 (General American)</option>
+              <option :value="1">🇬🇧 英式发音 (Received Pronunciation)</option>
+            </select>
           </div>
-          <!-- 音调调节 -->
-          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">音调 (调节扁平度): {{ voiceSettings.pitch.toFixed(1) }}</label>
-            <input 
-              type="range" 
-              v-model.number="voiceSettings.pitch" 
-              min="0.5" 
-              max="1.5" 
-              step="0.1" 
-              @change="saveVoiceSettings"
-              style="width: 60%; cursor: pointer;"
-            />
-          </div>
+
+          <!-- 离线系统参数展示 -->
+          <template v-else>
+            <!-- 发音人选择 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+              <select 
+                v-model="voiceSettings.voiceName" 
+                @change="saveVoiceSettings"
+                style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+              >
+                <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                  {{ voice.name }} ({{ voice.lang }})
+                </option>
+                <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
+              </select>
+            </div>
+            <!-- 语速调节 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
+              <input 
+                type="range" 
+                v-model.number="voiceSettings.rate" 
+                min="0.5" 
+                max="1.8" 
+                step="0.1" 
+                @change="saveVoiceSettings"
+                style="width: 60%; cursor: pointer;"
+              />
+            </div>
+            <!-- 音调调节 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">音调: {{ voiceSettings.pitch.toFixed(1) }}</label>
+              <input 
+                type="range" 
+                v-model.number="voiceSettings.pitch" 
+                min="0.5" 
+                max="1.5" 
+                step="0.1" 
+                @change="saveVoiceSettings"
+                style="width: 60%; cursor: pointer;"
+              />
+            </div>
+          </template>
         </div>
       </div>
 
@@ -898,10 +927,29 @@ export default defineComponent({
     const availableVoices = ref<SpeechSynthesisVoice[]>([]);
     const showVoiceConfig = ref(false);
     const voiceSettings = ref({
+        engine: 'online', // 'online' 或 'local'
+        onlineAccent: 2,  // 1: 英音, 2: 美音
         voiceName: '',
         rate: 0.9,
         pitch: 1.0
     });
+
+    let currentAudio: HTMLAudioElement | null = null;
+
+    function stopAllAudio() {
+        if (currentAudio) {
+            try {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            } catch (e) {
+                // 忽略清理报错
+            }
+            currentAudio = null;
+        }
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+    }
 
     function loadVoiceSettings() {
         try {
@@ -909,6 +957,8 @@ export default defineComponent({
             if (stored) {
                 const parsed = JSON.parse(stored);
                 if (parsed) {
+                    if (parsed.engine !== undefined) voiceSettings.value.engine = parsed.engine;
+                    if (parsed.onlineAccent !== undefined) voiceSettings.value.onlineAccent = parsed.onlineAccent;
                     if (parsed.voiceName !== undefined) voiceSettings.value.voiceName = parsed.voiceName;
                     if (parsed.rate !== undefined) voiceSettings.value.rate = parsed.rate;
                     if (parsed.pitch !== undefined) voiceSettings.value.pitch = parsed.pitch;
@@ -942,34 +992,52 @@ export default defineComponent({
     }
 
     /**
-     * 语音朗读单词或整句 (Web Speech API)
+     * 语音朗读单词或整句 (在线真人 or 系统离线双引擎)
      * @param text 待播放的文本
      */
     function speak(text: string) {
         if (!text || !text.trim()) return;
+        
+        // 停止当前所有播放的发音（隔离多重点击）
+        stopAllAudio();
+        
         try {
-            if (typeof window !== 'undefined' && window.speechSynthesis) {
-                // 停止当前任何正在播放的声音，避免堆叠混杂
-                window.speechSynthesis.cancel();
-                
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // 应用配置的发音人
-                if (voiceSettings.value.voiceName) {
-                    const matched = availableVoices.value.find(v => v.name === voiceSettings.value.voiceName);
-                    if (matched) {
-                        utterance.voice = matched;
-                    }
-                }
-                
-                utterance.rate = voiceSettings.value.rate;
-                utterance.pitch = voiceSettings.value.pitch;
-                window.speechSynthesis.speak(utterance);
+            if (voiceSettings.value.engine === 'online') {
+                const accent = voiceSettings.value.onlineAccent || 2; // 2: 美音, 1: 英音
+                const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+                const audio = new Audio(url);
+                currentAudio = audio;
+                audio.play().catch(err => {
+                    console.error('在线真人发音播放失败，尝试回退系统离线合成:', err);
+                    playLocalVoice(text);
+                });
             } else {
-                new Notice('当前系统不支持语音播放');
+                playLocalVoice(text);
             }
         } catch (e) {
-            console.error('语音朗读失败:', e);
+            console.error('发音模式路由异常，降级到本地播放:', e);
+            playLocalVoice(text);
+        }
+    }
+
+    /** 播放本地系统离线发音 */
+    function playLocalVoice(text: string) {
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // 应用配置的发音人
+            if (voiceSettings.value.voiceName) {
+                const matched = availableVoices.value.find(v => v.name === voiceSettings.value.voiceName);
+                if (matched) {
+                    utterance.voice = matched;
+                }
+            }
+            
+            utterance.rate = voiceSettings.value.rate;
+            utterance.pitch = voiceSettings.value.pitch;
+            window.speechSynthesis.speak(utterance);
+        } else {
+            new Notice('当前系统不支持离线发音');
         }
     }
 

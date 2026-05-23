@@ -21351,16 +21351,38 @@ var Panel_default = defineComponent({
     const availableVoices = ref([]);
     const showVoiceConfig = ref(false);
     const voiceSettings = ref({
+      engine: "online",
+      // 'online' 或 'local'
+      onlineAccent: 2,
+      // 1: 英音, 2: 美音
       voiceName: "",
       rate: 0.9,
       pitch: 1
     });
+    let currentAudio = null;
+    function stopAllAudio() {
+      if (currentAudio) {
+        try {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        } catch (e) {
+        }
+        currentAudio = null;
+      }
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
     function loadVoiceSettings() {
       try {
         const stored = localStorage.getItem("lang-learner-voice-settings");
         if (stored) {
           const parsed = JSON.parse(stored);
           if (parsed) {
+            if (parsed.engine !== void 0)
+              voiceSettings.value.engine = parsed.engine;
+            if (parsed.onlineAccent !== void 0)
+              voiceSettings.value.onlineAccent = parsed.onlineAccent;
             if (parsed.voiceName !== void 0)
               voiceSettings.value.voiceName = parsed.voiceName;
             if (parsed.rate !== void 0)
@@ -21394,24 +21416,39 @@ var Panel_default = defineComponent({
     function speak(text) {
       if (!text || !text.trim())
         return;
+      stopAllAudio();
       try {
-        if (typeof window !== "undefined" && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(text);
-          if (voiceSettings.value.voiceName) {
-            const matched = availableVoices.value.find((v) => v.name === voiceSettings.value.voiceName);
-            if (matched) {
-              utterance.voice = matched;
-            }
-          }
-          utterance.rate = voiceSettings.value.rate;
-          utterance.pitch = voiceSettings.value.pitch;
-          window.speechSynthesis.speak(utterance);
+        if (voiceSettings.value.engine === "online") {
+          const accent = voiceSettings.value.onlineAccent || 2;
+          const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+          const audio = new Audio(url);
+          currentAudio = audio;
+          audio.play().catch((err) => {
+            console.error("\u5728\u7EBF\u771F\u4EBA\u53D1\u97F3\u64AD\u653E\u5931\u8D25\uFF0C\u5C1D\u8BD5\u56DE\u9000\u7CFB\u7EDF\u79BB\u7EBF\u5408\u6210:", err);
+            playLocalVoice(text);
+          });
         } else {
-          new import_obsidian2.Notice("\u5F53\u524D\u7CFB\u7EDF\u4E0D\u652F\u6301\u8BED\u97F3\u64AD\u653E");
+          playLocalVoice(text);
         }
       } catch (e) {
-        console.error("\u8BED\u97F3\u6717\u8BFB\u5931\u8D25:", e);
+        console.error("\u53D1\u97F3\u6A21\u5F0F\u8DEF\u7531\u5F02\u5E38\uFF0C\u964D\u7EA7\u5230\u672C\u5730\u64AD\u653E:", e);
+        playLocalVoice(text);
+      }
+    }
+    function playLocalVoice(text) {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (voiceSettings.value.voiceName) {
+          const matched = availableVoices.value.find((v) => v.name === voiceSettings.value.voiceName);
+          if (matched) {
+            utterance.voice = matched;
+          }
+        }
+        utterance.rate = voiceSettings.value.rate;
+        utterance.pitch = voiceSettings.value.pitch;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        new import_obsidian2.Notice("\u5F53\u524D\u7CFB\u7EDF\u4E0D\u652F\u6301\u79BB\u7EBF\u53D1\u97F3");
       }
     }
     return {
@@ -21523,84 +21560,93 @@ var _hoisted_41 = {
   class: "lang-learner-voice-setting-item",
   style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
 };
-var _hoisted_42 = ["value"];
+var _hoisted_42 = {
+  key: 0,
+  class: "lang-learner-voice-setting-item",
+  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
+};
 var _hoisted_43 = {
+  class: "lang-learner-voice-setting-item",
+  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
+};
+var _hoisted_44 = ["value"];
+var _hoisted_45 = {
   key: 0,
   value: ""
 };
-var _hoisted_44 = {
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "align-items": "center", "justify-content": "space-between" }
-};
-var _hoisted_45 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
 var _hoisted_46 = {
   class: "lang-learner-voice-setting-item",
   style: { "display": "flex", "align-items": "center", "justify-content": "space-between" }
 };
 var _hoisted_47 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_48 = { class: "lang-learner-panel-section" };
-var _hoisted_49 = { class: "lang-learner-sentence-actions" };
-var _hoisted_50 = ["disabled"];
-var _hoisted_51 = {
+var _hoisted_48 = {
+  class: "lang-learner-voice-setting-item",
+  style: { "display": "flex", "align-items": "center", "justify-content": "space-between" }
+};
+var _hoisted_49 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
+var _hoisted_50 = { class: "lang-learner-panel-section" };
+var _hoisted_51 = { class: "lang-learner-sentence-actions" };
+var _hoisted_52 = ["disabled"];
+var _hoisted_53 = {
   key: 0,
   class: "lang-learner-panel-section lang-learner-analysis-result"
 };
-var _hoisted_52 = { class: "lang-learner-result-box" };
-var _hoisted_53 = {
+var _hoisted_54 = { class: "lang-learner-result-box" };
+var _hoisted_55 = {
   class: "lang-learner-box-title",
   style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
 };
-var _hoisted_54 = {
+var _hoisted_56 = {
   key: 0,
   class: "lang-learner-loading-text"
 };
-var _hoisted_55 = {
+var _hoisted_57 = {
   key: 1,
   class: "lang-learner-translation-text"
 };
-var _hoisted_56 = { class: "lang-learner-result-box" };
-var _hoisted_57 = { class: "lang-learner-interactive-sentence" };
-var _hoisted_58 = { key: 0 };
-var _hoisted_59 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_60 = { class: "lang-learner-result-box" };
-var _hoisted_61 = { class: "lang-learner-box-title" };
-var _hoisted_62 = {
+var _hoisted_58 = { class: "lang-learner-result-box" };
+var _hoisted_59 = { class: "lang-learner-interactive-sentence" };
+var _hoisted_60 = { key: 0 };
+var _hoisted_61 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_62 = { class: "lang-learner-result-box" };
+var _hoisted_63 = { class: "lang-learner-box-title" };
+var _hoisted_64 = {
   class: "lang-learner-wordlist-container",
   style: { "max-height": "250px" }
 };
-var _hoisted_63 = ["onClick"];
-var _hoisted_64 = {
+var _hoisted_65 = ["onClick"];
+var _hoisted_66 = {
   key: 0,
   style: { "opacity": "0.6", "font-size": "0.7em" }
 };
-var _hoisted_65 = { class: "lang-learner-wl-trans" };
-var _hoisted_66 = {
+var _hoisted_67 = { class: "lang-learner-wl-trans" };
+var _hoisted_68 = {
   class: "lang-learner-sentence-word-status-btns",
   style: { "display": "flex", "align-items": "center", "gap": "4px" }
 };
-var _hoisted_67 = ["onClick"];
-var _hoisted_68 = ["onClick"];
 var _hoisted_69 = ["onClick"];
 var _hoisted_70 = ["onClick"];
-var _hoisted_71 = {
+var _hoisted_71 = ["onClick"];
+var _hoisted_72 = ["onClick"];
+var _hoisted_73 = {
   key: 0,
   class: "lang-learner-empty-hint"
 };
-var _hoisted_72 = {
+var _hoisted_74 = {
   key: 0,
   class: "lang-learner-panel-section lang-learner-word-detail"
 };
-var _hoisted_73 = { class: "lang-learner-word-info-card" };
-var _hoisted_74 = {
+var _hoisted_75 = { class: "lang-learner-word-info-card" };
+var _hoisted_76 = {
   class: "lang-learner-word-detail-header",
   style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
 };
-var _hoisted_75 = { class: "lang-learner-word-lemma" };
-var _hoisted_76 = {
+var _hoisted_77 = { class: "lang-learner-word-lemma" };
+var _hoisted_78 = {
   key: 0,
   class: "lang-learner-word-phonetic"
 };
-var _hoisted_77 = { class: "lang-learner-word-trans" };
+var _hoisted_79 = { class: "lang-learner-word-trans" };
 function render(_ctx, _cache) {
   return openBlock(), createElementBlock("div", _hoisted_1, [
     createBaseVNode("div", _hoisted_2, [
@@ -21640,7 +21686,7 @@ function render(_ctx, _cache) {
       _hoisted_3,
       [
         createBaseVNode("div", _hoisted_4, [
-          _cache[26] || (_cache[26] = createBaseVNode(
+          _cache[30] || (_cache[30] = createBaseVNode(
             "h3",
             { class: "lang-learner-panel-title" },
             "\u{1F4D6} \u8BED\u8A00\u5B66\u4E60\u52A9\u624B",
@@ -21656,7 +21702,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[22] || (_cache[22] = createBaseVNode(
+              _cache[26] || (_cache[26] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u603B\u8BCD\u91CF",
@@ -21672,7 +21718,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[23] || (_cache[23] = createBaseVNode(
+              _cache[27] || (_cache[27] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5DF2\u638C\u63E1",
@@ -21688,7 +21734,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[24] || (_cache[24] = createBaseVNode(
+              _cache[28] || (_cache[28] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5B66\u4E60\u4E2D",
@@ -21704,7 +21750,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[25] || (_cache[25] = createBaseVNode(
+              _cache[29] || (_cache[29] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u751F\u8BCD",
@@ -21715,7 +21761,7 @@ function render(_ctx, _cache) {
           ])
         ]),
         createBaseVNode("div", _hoisted_14, [
-          _cache[27] || (_cache[27] = createBaseVNode(
+          _cache[31] || (_cache[31] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4CB} \u751F\u8BCD\u672C",
@@ -21794,7 +21840,7 @@ function render(_ctx, _cache) {
             class: "lang-learner-btn lang-learner-btn-accent lang-learner-btn-full",
             onClick: _cache[5] || (_cache[5] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
           }, " \u26A1 \u4E00\u952E\u5B66\u5B8C\u5F53\u524D\u6587\u7AE0 "),
-          _cache[28] || (_cache[28] = createBaseVNode(
+          _cache[32] || (_cache[32] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u5C06\u5F53\u524D\u6587\u7AE0\u4E2D\u9AD8\u9891\u8BCD\u8868\u5185\u7684\u672A\u6807\u8BB0\u8BCD\u6279\u91CF\u6807\u4E3A\u5DF2\u638C\u63E1",
@@ -21817,7 +21863,7 @@ function render(_ctx, _cache) {
             class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
             onClick: _cache[6] || (_cache[6] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
           }, " \u{1F3AF} \u5F00\u59CB\u8BCD\u6C47\u91CF\u4F30\u7B97 "),
-          _cache[29] || (_cache[29] = createBaseVNode(
+          _cache[33] || (_cache[33] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u901A\u8FC7\u7EA6 20 \u9053\u9898\u5FEB\u901F\u6D4B\u5B9A\u4F60\u7684\u82F1\u8BED\u8BCD\u6C47\u6C34\u4F4D\u7EBF",
@@ -21856,7 +21902,7 @@ function render(_ctx, _cache) {
               /* TEXT */
             )
           ]),
-          _cache[30] || (_cache[30] = createBaseVNode(
+          _cache[34] || (_cache[34] = createBaseVNode(
             "p",
             { class: "lang-learner-estimation-prompt" },
             "\u4F60\u8BA4\u8BC6\u8FD9\u4E2A\u5355\u8BCD\u5417\uFF1F",
@@ -21875,7 +21921,7 @@ function render(_ctx, _cache) {
           ])
         ])) : createCommentVNode("v-if", true),
         _ctx.estimationState === "done" ? (openBlock(), createElementBlock("div", _hoisted_34, [
-          _cache[33] || (_cache[33] = createBaseVNode(
+          _cache[37] || (_cache[37] = createBaseVNode(
             "p",
             { class: "lang-learner-result-title" },
             "\u{1F389} \u4F30\u7B97\u5B8C\u6210\uFF01",
@@ -21883,7 +21929,7 @@ function render(_ctx, _cache) {
             /* CACHED */
           )),
           createBaseVNode("p", _hoisted_35, [
-            _cache[31] || (_cache[31] = createTextVNode(
+            _cache[35] || (_cache[35] = createTextVNode(
               "\u4F60\u7684\u8BCD\u6C47\u91CF\u7EA6\u4E3A ",
               -1
               /* CACHED */
@@ -21895,7 +21941,7 @@ function render(_ctx, _cache) {
               1
               /* TEXT */
             ),
-            _cache[32] || (_cache[32] = createTextVNode(
+            _cache[36] || (_cache[36] = createTextVNode(
               " \u8BCD",
               -1
               /* CACHED */
@@ -21929,7 +21975,7 @@ function render(_ctx, _cache) {
             onClick: _cache[10] || (_cache[10] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig),
             style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
           }, [
-            _cache[34] || (_cache[34] = createBaseVNode(
+            _cache[38] || (_cache[38] = createBaseVNode(
               "span",
               { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
               "\u2699\uFE0F \u53D1\u97F3\u914D\u7F6E (\u7F8E\u97F3/\u82F1\u97F3)",
@@ -21949,103 +21995,184 @@ function render(_ctx, _cache) {
             _hoisted_40,
             [
               createBaseVNode("div", _hoisted_41, [
-                _cache[35] || (_cache[35] = createBaseVNode(
+                _cache[40] || (_cache[40] = createBaseVNode(
                   "label",
                   { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                  "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
+                  "\u53D1\u97F3\u5F15\u64CE:",
                   -1
                   /* CACHED */
                 )),
                 withDirectives(createBaseVNode(
                   "select",
                   {
-                    "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => _ctx.voiceSettings.voiceName = $event),
+                    "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => _ctx.voiceSettings.engine = $event),
                     onChange: _cache[12] || (_cache[12] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                     style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                   },
-                  [
-                    (openBlock(true), createElementBlock(
-                      Fragment,
-                      null,
-                      renderList(_ctx.availableVoices, (voice) => {
-                        return openBlock(), createElementBlock("option", {
-                          key: voice.name,
-                          value: voice.name
-                        }, toDisplayString(voice.name) + " (" + toDisplayString(voice.lang) + ") ", 9, _hoisted_42);
-                      }),
-                      128
-                      /* KEYED_FRAGMENT */
-                    )),
-                    _ctx.availableVoices.length === 0 ? (openBlock(), createElementBlock("option", _hoisted_43, "\u7CFB\u7EDF\u9ED8\u8BA4\u53D1\u97F3\u4EBA")) : createCommentVNode("v-if", true)
-                  ],
+                  [..._cache[39] || (_cache[39] = [
+                    createBaseVNode(
+                      "option",
+                      { value: "online" },
+                      "\u{1F310} \u5728\u7EBF\u771F\u4EBA\u53D1\u97F3 (\u63A8\u8350)",
+                      -1
+                      /* CACHED */
+                    ),
+                    createBaseVNode(
+                      "option",
+                      { value: "local" },
+                      "\u{1F4BB} \u7CFB\u7EDF\u539F\u751F\u79BB\u7EBF\u53D1\u97F3",
+                      -1
+                      /* CACHED */
+                    )
+                  ])],
                   544
                   /* NEED_HYDRATION, NEED_PATCH */
                 ), [
-                  [vModelSelect, _ctx.voiceSettings.voiceName]
+                  [vModelSelect, _ctx.voiceSettings.engine]
                 ])
               ]),
-              createBaseVNode("div", _hoisted_44, [
-                createBaseVNode(
+              _ctx.voiceSettings.engine === "online" ? (openBlock(), createElementBlock("div", _hoisted_42, [
+                _cache[42] || (_cache[42] = createBaseVNode(
                   "label",
-                  _hoisted_45,
-                  "\u8BED\u901F: " + toDisplayString(_ctx.voiceSettings.rate.toFixed(1)) + "x",
-                  1
-                  /* TEXT */
-                ),
+                  { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
+                  "\u53E3\u97F3\u9009\u62E9:",
+                  -1
+                  /* CACHED */
+                )),
                 withDirectives(createBaseVNode(
-                  "input",
+                  "select",
                   {
-                    type: "range",
-                    "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => _ctx.voiceSettings.rate = $event),
-                    min: "0.5",
-                    max: "1.8",
-                    step: "0.1",
+                    "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => _ctx.voiceSettings.onlineAccent = $event),
                     onChange: _cache[14] || (_cache[14] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                    style: { "width": "60%", "cursor": "pointer" }
+                    style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                   },
-                  null,
+                  [..._cache[41] || (_cache[41] = [
+                    createBaseVNode(
+                      "option",
+                      { value: 2 },
+                      "\u{1F1FA}\u{1F1F8} \u7F8E\u5F0F\u53D1\u97F3 (General American)",
+                      -1
+                      /* CACHED */
+                    ),
+                    createBaseVNode(
+                      "option",
+                      { value: 1 },
+                      "\u{1F1EC}\u{1F1E7} \u82F1\u5F0F\u53D1\u97F3 (Received Pronunciation)",
+                      -1
+                      /* CACHED */
+                    )
+                  ])],
                   544
                   /* NEED_HYDRATION, NEED_PATCH */
                 ), [
-                  [
-                    vModelText,
-                    _ctx.voiceSettings.rate,
-                    void 0,
-                    { number: true }
-                  ]
+                  [vModelSelect, _ctx.voiceSettings.onlineAccent]
                 ])
-              ]),
-              createBaseVNode("div", _hoisted_46, [
-                createBaseVNode(
-                  "label",
-                  _hoisted_47,
-                  "\u97F3\u8C03 (\u8C03\u8282\u6241\u5E73\u5EA6): " + toDisplayString(_ctx.voiceSettings.pitch.toFixed(1)),
-                  1
-                  /* TEXT */
-                ),
-                withDirectives(createBaseVNode(
-                  "input",
-                  {
-                    type: "range",
-                    "onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => _ctx.voiceSettings.pitch = $event),
-                    min: "0.5",
-                    max: "1.5",
-                    step: "0.1",
-                    onChange: _cache[16] || (_cache[16] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                    style: { "width": "60%", "cursor": "pointer" }
-                  },
-                  null,
-                  544
-                  /* NEED_HYDRATION, NEED_PATCH */
-                ), [
-                  [
-                    vModelText,
-                    _ctx.voiceSettings.pitch,
-                    void 0,
-                    { number: true }
-                  ]
-                ])
-              ])
+              ])) : (openBlock(), createElementBlock(
+                Fragment,
+                { key: 1 },
+                [
+                  createBaseVNode("div", _hoisted_43, [
+                    _cache[43] || (_cache[43] = createBaseVNode(
+                      "label",
+                      { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
+                      "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
+                      -1
+                      /* CACHED */
+                    )),
+                    withDirectives(createBaseVNode(
+                      "select",
+                      {
+                        "onUpdate:modelValue": _cache[15] || (_cache[15] = ($event) => _ctx.voiceSettings.voiceName = $event),
+                        onChange: _cache[16] || (_cache[16] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
+                      },
+                      [
+                        (openBlock(true), createElementBlock(
+                          Fragment,
+                          null,
+                          renderList(_ctx.availableVoices, (voice) => {
+                            return openBlock(), createElementBlock("option", {
+                              key: voice.name,
+                              value: voice.name
+                            }, toDisplayString(voice.name) + " (" + toDisplayString(voice.lang) + ") ", 9, _hoisted_44);
+                          }),
+                          128
+                          /* KEYED_FRAGMENT */
+                        )),
+                        _ctx.availableVoices.length === 0 ? (openBlock(), createElementBlock("option", _hoisted_45, "\u7CFB\u7EDF\u9ED8\u8BA4\u53D1\u97F3\u4EBA")) : createCommentVNode("v-if", true)
+                      ],
+                      544
+                      /* NEED_HYDRATION, NEED_PATCH */
+                    ), [
+                      [vModelSelect, _ctx.voiceSettings.voiceName]
+                    ])
+                  ]),
+                  createBaseVNode("div", _hoisted_46, [
+                    createBaseVNode(
+                      "label",
+                      _hoisted_47,
+                      "\u8BED\u901F: " + toDisplayString(_ctx.voiceSettings.rate.toFixed(1)) + "x",
+                      1
+                      /* TEXT */
+                    ),
+                    withDirectives(createBaseVNode(
+                      "input",
+                      {
+                        type: "range",
+                        "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => _ctx.voiceSettings.rate = $event),
+                        min: "0.5",
+                        max: "1.8",
+                        step: "0.1",
+                        onChange: _cache[18] || (_cache[18] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        style: { "width": "60%", "cursor": "pointer" }
+                      },
+                      null,
+                      544
+                      /* NEED_HYDRATION, NEED_PATCH */
+                    ), [
+                      [
+                        vModelText,
+                        _ctx.voiceSettings.rate,
+                        void 0,
+                        { number: true }
+                      ]
+                    ])
+                  ]),
+                  createBaseVNode("div", _hoisted_48, [
+                    createBaseVNode(
+                      "label",
+                      _hoisted_49,
+                      "\u97F3\u8C03: " + toDisplayString(_ctx.voiceSettings.pitch.toFixed(1)),
+                      1
+                      /* TEXT */
+                    ),
+                    withDirectives(createBaseVNode(
+                      "input",
+                      {
+                        type: "range",
+                        "onUpdate:modelValue": _cache[19] || (_cache[19] = ($event) => _ctx.voiceSettings.pitch = $event),
+                        min: "0.5",
+                        max: "1.5",
+                        step: "0.1",
+                        onChange: _cache[20] || (_cache[20] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
+                        style: { "width": "60%", "cursor": "pointer" }
+                      },
+                      null,
+                      544
+                      /* NEED_HYDRATION, NEED_PATCH */
+                    ), [
+                      [
+                        vModelText,
+                        _ctx.voiceSettings.pitch,
+                        void 0,
+                        { number: true }
+                      ]
+                    ])
+                  ])
+                ],
+                64
+                /* STABLE_FRAGMENT */
+              ))
             ],
             512
             /* NEED_PATCH */
@@ -22053,8 +22180,8 @@ function render(_ctx, _cache) {
             [vShow, _ctx.showVoiceConfig]
           ])
         ]),
-        createBaseVNode("div", _hoisted_48, [
-          _cache[36] || (_cache[36] = createBaseVNode(
+        createBaseVNode("div", _hoisted_50, [
+          _cache[44] || (_cache[44] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F50D} \u8F93\u5165\u5F85\u5206\u6790\u53E5\u5B50",
@@ -22064,7 +22191,7 @@ function render(_ctx, _cache) {
           withDirectives(createBaseVNode(
             "textarea",
             {
-              "onUpdate:modelValue": _cache[17] || (_cache[17] = ($event) => _ctx.sentenceInput = $event),
+              "onUpdate:modelValue": _cache[21] || (_cache[21] = ($event) => _ctx.sentenceInput = $event),
               class: "lang-learner-textarea",
               placeholder: "\u5728\u6B64\u8F93\u5165\u6216\u7C98\u8D34\u4E00\u6BB5\u82F1\u6587\u53E5\u5B50...",
               rows: "4"
@@ -22075,31 +22202,31 @@ function render(_ctx, _cache) {
           ), [
             [vModelText, _ctx.sentenceInput]
           ]),
-          createBaseVNode("div", _hoisted_49, [
+          createBaseVNode("div", _hoisted_51, [
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-primary",
-              onClick: _cache[18] || (_cache[18] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
+              onClick: _cache[22] || (_cache[22] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
               disabled: _ctx.isAnalyzing,
               style: { "flex": "1" }
-            }, toDisplayString(_ctx.isAnalyzing ? "\u6B63\u5728\u5206\u6790..." : "\u5206\u6790\u53E5\u5B50"), 9, _hoisted_50),
+            }, toDisplayString(_ctx.isAnalyzing ? "\u6B63\u5728\u5206\u6790..." : "\u5206\u6790\u53E5\u5B50"), 9, _hoisted_52),
             createBaseVNode("button", {
               class: "lang-learner-btn lang-learner-btn-secondary",
-              onClick: _cache[19] || (_cache[19] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
+              onClick: _cache[23] || (_cache[23] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
               style: { "flex": "1" }
             }, " \u5BFC\u5165\u9009\u4E2D\u6587\u672C ")
           ])
         ]),
-        _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_51, [
-          _cache[40] || (_cache[40] = createBaseVNode(
+        _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_53, [
+          _cache[48] || (_cache[48] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4D6} \u5206\u6790\u7ED3\u679C",
             -1
             /* CACHED */
           )),
-          createBaseVNode("div", _hoisted_52, [
-            createBaseVNode("div", _hoisted_53, [
-              _cache[37] || (_cache[37] = createBaseVNode(
+          createBaseVNode("div", _hoisted_54, [
+            createBaseVNode("div", _hoisted_55, [
+              _cache[45] || (_cache[45] = createBaseVNode(
                 "span",
                 null,
                 "\u{1F310} \u673A\u5668\u7FFB\u8BD1",
@@ -22110,27 +22237,27 @@ function render(_ctx, _cache) {
                 key: 0,
                 class: "lang-learner-btn-voice-sentence",
                 title: "\u6717\u8BFB\u6574\u53E5",
-                onClick: _cache[20] || (_cache[20] = ($event) => _ctx.speak(_ctx.sentenceInput)),
+                onClick: _cache[24] || (_cache[24] = ($event) => _ctx.speak(_ctx.sentenceInput)),
                 style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
               }, " \u{1F50A} ")) : createCommentVNode("v-if", true)
             ]),
-            _ctx.isTranslating ? (openBlock(), createElementBlock("p", _hoisted_54, "\u6B63\u5728\u7FFB\u8BD1\u4E2D...")) : (openBlock(), createElementBlock(
+            _ctx.isTranslating ? (openBlock(), createElementBlock("p", _hoisted_56, "\u6B63\u5728\u7FFB\u8BD1\u4E2D...")) : (openBlock(), createElementBlock(
               "p",
-              _hoisted_55,
+              _hoisted_57,
               toDisplayString(_ctx.sentenceTranslation || "\u6682\u65E0\u7FFB\u8BD1\u7ED3\u679C"),
               1
               /* TEXT */
             ))
           ]),
-          createBaseVNode("div", _hoisted_56, [
-            _cache[38] || (_cache[38] = createBaseVNode(
+          createBaseVNode("div", _hoisted_58, [
+            _cache[46] || (_cache[46] = createBaseVNode(
               "div",
               { class: "lang-learner-box-title" },
               "\u{1F3A8} \u53E5\u5B50\u9AD8\u4EAE\u4E0E\u4EA4\u4E92",
               -1
               /* CACHED */
             )),
-            createBaseVNode("div", _hoisted_57, [
+            createBaseVNode("div", _hoisted_59, [
               (openBlock(true), createElementBlock(
                 Fragment,
                 null,
@@ -22141,7 +22268,7 @@ function render(_ctx, _cache) {
                     [
                       token.type === "text" ? (openBlock(), createElementBlock(
                         "span",
-                        _hoisted_58,
+                        _hoisted_60,
                         toDisplayString(token.text),
                         1
                         /* TEXT */
@@ -22158,7 +22285,7 @@ function render(_ctx, _cache) {
                         "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
                         onClick: ($event) => _ctx.onSentenceWordClick(token.lemma),
                         onDblclick: ($event) => _ctx.onSentenceWordDblClick(token)
-                      }, toDisplayString(token.text), 43, _hoisted_59))
+                      }, toDisplayString(token.text), 43, _hoisted_61))
                     ],
                     64
                     /* STABLE_FRAGMENT */
@@ -22168,7 +22295,7 @@ function render(_ctx, _cache) {
                 /* KEYED_FRAGMENT */
               ))
             ]),
-            _cache[39] || (_cache[39] = createBaseVNode(
+            _cache[47] || (_cache[47] = createBaseVNode(
               "p",
               {
                 class: "lang-learner-hint-text",
@@ -22179,15 +22306,15 @@ function render(_ctx, _cache) {
               /* CACHED */
             ))
           ]),
-          createBaseVNode("div", _hoisted_60, [
+          createBaseVNode("div", _hoisted_62, [
             createBaseVNode(
               "div",
-              _hoisted_61,
+              _hoisted_63,
               "\u{1F4CA} \u8BCD\u6C47\u5206\u6790\u6E05\u5355 (\u5171 " + toDisplayString(_ctx.analyzedWordsList.length) + " \u4E2A)",
               1
               /* TEXT */
             ),
-            createBaseVNode("div", _hoisted_62, [
+            createBaseVNode("div", _hoisted_64, [
               (openBlock(true), createElementBlock(
                 Fragment,
                 null,
@@ -22208,44 +22335,44 @@ function render(_ctx, _cache) {
                           1
                           /* TEXT */
                         ),
-                        item.isPhrase ? (openBlock(), createElementBlock("small", _hoisted_64, "(\u77ED\u8BED)")) : createCommentVNode("v-if", true)
+                        item.isPhrase ? (openBlock(), createElementBlock("small", _hoisted_66, "(\u77ED\u8BED)")) : createCommentVNode("v-if", true)
                       ],
                       2
                       /* CLASS */
                     ),
                     createBaseVNode(
                       "span",
-                      _hoisted_65,
+                      _hoisted_67,
                       toDisplayString(item.trans || "\u2014"),
                       1
                       /* TEXT */
                     ),
-                    createBaseVNode("div", _hoisted_66, [
+                    createBaseVNode("div", _hoisted_68, [
                       createBaseVNode("button", {
                         class: "lang-learner-btn-voice-mini",
                         title: "\u53D1\u97F3",
                         onClick: withModifiers(($event) => _ctx.speak(item.word), ["stop"]),
                         style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "0.9em", "padding": "2px 4px", "opacity": "0.8" }
-                      }, "\u{1F50A}", 8, _hoisted_67),
+                      }, "\u{1F50A}", 8, _hoisted_69),
                       createBaseVNode("button", {
                         class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "UNKNOWN" }]),
                         onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "UNKNOWN"), ["stop"])
-                      }, "\u751F", 10, _hoisted_68),
+                      }, "\u751F", 10, _hoisted_70),
                       createBaseVNode("button", {
                         class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "LEARNING" }]),
                         onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "LEARNING"), ["stop"])
-                      }, "\u5B66", 10, _hoisted_69),
+                      }, "\u5B66", 10, _hoisted_71),
                       createBaseVNode("button", {
                         class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "KNOWN" }]),
                         onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "KNOWN"), ["stop"])
-                      }, "\u719F", 10, _hoisted_70)
+                      }, "\u719F", 10, _hoisted_72)
                     ])
-                  ], 8, _hoisted_63);
+                  ], 8, _hoisted_65);
                 }),
                 128
                 /* KEYED_FRAGMENT */
               )),
-              _ctx.analyzedWordsList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_71, "\u672A\u63D0\u53D6\u51FA\u82F1\u6587\u8BCD\u6C47")) : createCommentVNode("v-if", true)
+              _ctx.analyzedWordsList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_73, "\u672A\u63D0\u53D6\u51FA\u82F1\u6587\u8BCD\u6C47")) : createCommentVNode("v-if", true)
             ])
           ])
         ])) : createCommentVNode("v-if", true)
@@ -22255,19 +22382,19 @@ function render(_ctx, _cache) {
     ), [
       [vShow, _ctx.mainTab === "sentence"]
     ]),
-    _ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_72, [
-      _cache[41] || (_cache[41] = createBaseVNode(
+    _ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_74, [
+      _cache[49] || (_cache[49] = createBaseVNode(
         "h4",
         { class: "lang-learner-section-title" },
         "\u{1F4DD} \u5355\u8BCD\u8BE6\u60C5",
         -1
         /* CACHED */
       )),
-      createBaseVNode("div", _hoisted_73, [
-        createBaseVNode("div", _hoisted_74, [
+      createBaseVNode("div", _hoisted_75, [
+        createBaseVNode("div", _hoisted_76, [
           createBaseVNode(
             "span",
-            _hoisted_75,
+            _hoisted_77,
             toDisplayString(_ctx.selectedWord.word),
             1
             /* TEXT */
@@ -22275,20 +22402,20 @@ function render(_ctx, _cache) {
           createBaseVNode("button", {
             class: "lang-learner-btn-voice-word",
             title: "\u6717\u8BFB\u5355\u8BCD",
-            onClick: _cache[21] || (_cache[21] = ($event) => _ctx.speak(_ctx.selectedWord.word)),
+            onClick: _cache[25] || (_cache[25] = ($event) => _ctx.speak(_ctx.selectedWord.word)),
             style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
           }, " \u{1F50A} ")
         ]),
         _ctx.selectedWord.phonetic ? (openBlock(), createElementBlock(
           "div",
-          _hoisted_76,
+          _hoisted_78,
           "/" + toDisplayString(_ctx.selectedWord.phonetic) + "/",
           1
           /* TEXT */
         )) : createCommentVNode("v-if", true),
         createBaseVNode(
           "div",
-          _hoisted_77,
+          _hoisted_79,
           toDisplayString(_ctx.selectedWord.trans || "\u6682\u65E0\u91CA\u4E49"),
           1
           /* TEXT */
@@ -22301,7 +22428,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-f7bfc101";
+Panel_default.__scopeId = "data-v-3086043d";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
