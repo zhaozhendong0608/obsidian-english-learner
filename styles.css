@@ -673,3 +673,34 @@
   color: #8c7ae6;
   font-weight: 800;
 }
+.lang-learner-search-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+.lang-learner-search-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-interface, sans-serif);
+  font-size: 0.85em;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.lang-learner-search-input:focus {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.15);
+}
+.lang-learner-search-input::placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+}
+.lang-learner-search-btn {
+  padding: 6px 12px;
+  font-size: 0.82em;
+  white-space: nowrap;
+}

@@ -25,6 +25,74 @@
       </button>
     </div>
 
+    <!-- 全局自主查词输入框 -->
+    <div class="lang-learner-search-bar">
+      <input
+        v-model="searchQuery"
+        @keyup.enter="performSearch"
+        placeholder="输入单词查询..."
+        class="lang-learner-search-input"
+      />
+      <button @click="performSearch" class="lang-learner-btn lang-learner-btn-primary lang-learner-search-btn">🔍 查询</button>
+    </div>
+
+    <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
+    <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
+      <h4 class="lang-learner-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📝 单词详情</span>
+        <button
+          class="lang-learner-btn-icon"
+          title="复制卡片内容"
+          @click="copyCardContent"
+        >📋</button>
+      </h4>
+      <div class="lang-learner-word-info-card">
+        <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
+            <span class="lang-learner-word-lemma">{{ displayWord }}</span>
+            <span v-if="selectedWord.phonetic" class="lang-learner-word-phonetic-inline">/{{ selectedWord.phonetic }}/</span>
+          </div>
+          <button 
+            class="lang-learner-btn-voice-word" 
+            title="朗读单词" 
+            @click="speak(selectedWord.word)"
+            style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+          >
+            🔊
+          </button>
+        </div>
+        <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
+        
+        <!-- 词源与记忆法辅助 -->
+        <div v-if="selectedWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
+          <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <span>💡 词源与记忆辅助</span>
+          </div>
+          <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent); white-space: pre-wrap;">
+            {{ selectedWord.etymology }}
+          </div>
+        </div>
+        
+        <!-- 例句联想模块 -->
+        <div class="lang-learner-word-examples-container">
+          <div class="lang-learner-examples-title">
+            💡 例句联想
+          </div>
+          <div v-if="isLoadingExamples" class="lang-learner-examples-loading">
+            正在获取例句...
+          </div>
+          <ul v-else-if="exampleSentences.length > 0" class="lang-learner-example-list">
+            <li v-for="(sentence, idx) in exampleSentences" :key="idx" class="lang-learner-example-item">
+              {{ sentence }}
+            </li>
+          </ul>
+          <div v-else class="lang-learner-examples-empty">
+            暂无相关例句
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tab 1: 词汇库 -->
     <div v-show="mainTab === 'vocabulary'" class="lang-learner-tab-content">
       <!-- 统计仪表盘 -->
@@ -335,55 +403,7 @@
       </div>
     </div>
 
-    <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
-    <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
-      <h4 class="lang-learner-section-title">📝 单词详情</h4>
-      <div class="lang-learner-word-info-card">
-        <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
-            <span class="lang-learner-word-lemma">{{ displayWord }}</span>
-            <span v-if="selectedWord.phonetic" class="lang-learner-word-phonetic-inline">/{{ selectedWord.phonetic }}/</span>
-          </div>
-          <button 
-            class="lang-learner-btn-voice-word" 
-            title="朗读单词" 
-            @click="speak(selectedWord.word)"
-            style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
-          >
-            🔊
-          </button>
-        </div>
-        <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
-        
-        <!-- 词源与记忆法辅助 -->
-        <div v-if="selectedWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
-          <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-            <span>💡 词源与记忆辅助</span>
-          </div>
-          <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent); white-space: pre-wrap;">
-            {{ selectedWord.etymology }}
-          </div>
-        </div>
-        
-        <!-- 例句联想模块 -->
-        <div class="lang-learner-word-examples-container">
-          <div class="lang-learner-examples-title">
-            💡 例句联想
-          </div>
-          <div v-if="isLoadingExamples" class="lang-learner-examples-loading">
-            正在获取例句...
-          </div>
-          <ul v-else-if="exampleSentences.length > 0" class="lang-learner-example-list">
-            <li v-for="(sentence, idx) in exampleSentences" :key="idx" class="lang-learner-example-item">
-              {{ sentence }}
-            </li>
-          </ul>
-          <div v-else class="lang-learner-examples-empty">
-            暂无相关例句
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 单词详情面板已移至 Tab 按钮下方 (全局最高优先级位置) -->
   </div>
 </template>
 
@@ -395,6 +415,7 @@ import createHyphenator from 'hyphen';
 // @ts-ignore
 import hyphenationPatternsEnUs from 'hyphen/patterns/en-us';
 import { eventBus } from '../event/EventBus';
+import { lemmatize } from '../tokenizer/lemmatizer';
 import { HIGH_FREQUENCY_WORDS, OFFLINE_DICT } from '../data/static_data';
 import { tokenize } from '../tokenizer/tokenizer';
 import type { VocabularyManager } from '../db/vocabulary';
@@ -1098,6 +1119,8 @@ export default defineComponent({
 
     /** 响应主窗口的单词单击选中事件，更新侧边栏详情 */
     function handleWordSelected(word: string) {
+        // 自动切换到词汇本 Tab，确保用户能立即看到单词详情
+        mainTab.value = 'vocabulary';
         showSyllableSplit.value = false;
         loadExamples(word);
         const info = vocabManager.getInfo(word);
@@ -1550,6 +1573,45 @@ export default defineComponent({
         }
     }
 
+    // ========== 全局自主查词 ==========
+    const searchQuery = ref('');
+
+    /** 执行自主查词：将输入词还原为原型后触发 handleWordSelected */
+    function performSearch() {
+        const query = searchQuery.value.trim().toLowerCase();
+        if (!query) return;
+        const result = lemmatize(query);
+        handleWordSelected(result.lemma);
+        searchQuery.value = '';
+    }
+
+    // ========== 卡片内容一键复制 ==========
+
+    /** 将当前选中单词的详情格式化为 Markdown 并复制到剪贴板 */
+    function copyCardContent() {
+        if (!selectedWord.value) return;
+        const lines: string[] = [];
+        lines.push(`# ${selectedWord.value.word}`);
+        if (selectedWord.value.phonetic) {
+            lines.push(`**音标**: /${selectedWord.value.phonetic}/`);
+        }
+        lines.push(`**释义**: ${selectedWord.value.trans || '暂无释义'}`);
+        if (selectedWord.value.etymology) {
+            lines.push(`**词源**: ${selectedWord.value.etymology}`);
+        }
+        if (exampleSentences.value.length > 0) {
+            lines.push('');
+            lines.push('## 例句');
+            exampleSentences.value.forEach(s => lines.push(`> ${s}`));
+        }
+        const content = lines.join('\n\n');
+        navigator.clipboard.writeText(content).then(() => {
+            new Notice('📋 已成功复制卡片内容到剪贴板！');
+        }).catch(() => {
+            new Notice('复制失败，请检查浏览器权限');
+        });
+    }
+
     return {
       speak,
       availableVoices,
@@ -1593,7 +1655,10 @@ export default defineComponent({
       displayWord,
       toggleSyllableSplit,
       exampleSentences,
-      isLoadingExamples
+      isLoadingExamples,
+      searchQuery,
+      performSearch,
+      copyCardContent
     };
   }
 });
@@ -2166,6 +2231,43 @@ export default defineComponent({
 .lang-learner-wl-phrase {
     color: #8c7ae6;
     font-weight: 800;
+}
+
+/* ---- 12. 全局自主查词输入框 ---- */
+.lang-learner-search-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 0 2px;
+}
+
+.lang-learner-search-input {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-family: var(--font-interface, sans-serif);
+    font-size: 0.85em;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lang-learner-search-input:focus {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.15);
+}
+
+.lang-learner-search-input::placeholder {
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+.lang-learner-search-btn {
+    padding: 6px 12px;
+    font-size: 0.82em;
+    white-space: nowrap;
 }
 </style>
 

@@ -51,6 +51,10 @@
 - [x] 接入有道 `jsonapi` 词源与记忆辅助信息 (Etymology & Mnemonic) 获取并持久化至 `vocabulary.json`
 - [x] 优化单词详情 UI，新增 `💡 词源与记忆辅助` 面板并支持 Obsidian 原生主题及换行渲染
 - [x] 优化 `lemmatizer.ts` 中缀词性还原算法，确保稀有词（如 `languished` -> `languish`）正确匹配原型，并通过自动化单元测试
+- [x] 实现点击文档单词时主进程自动激活侧边栏并聚焦 Tab 的联动逻辑 `(2026-05-23)`
+- [x] 实现基于 lemmatizer 词干还原的全局自主查词框，打通从手动输入到生词本详情展示的检索通路 `(2026-05-23)`
+- [x] 实现单词详情卡片一键复制 Markdown 格式文本至剪贴板功能 `(2026-05-23)`
+- [x] 调整 Panel.vue DOM 布局，将单词详情区域提权至 Tab 按钮正下方，解决需滚动查看的体验问题 `(2026-05-23)`
 
 ## 🧪 阶段 3: 整体测试与部署联调
 - [x] 初始化 `/Users/up_dong/Documents/Obsidian-Dev-Sandbox` 沙盒 (已自动注入 community-plugins 并放置测试文档)

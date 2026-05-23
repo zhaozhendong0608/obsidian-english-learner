@@ -96,6 +96,14 @@ export default class EnglishLearnerPlugin extends Plugin {
             }
         });
 
+        // 监听单词点击/选中事件：自动激活侧边栏，确保用户能立即看到单词详情
+        // 注意：不能在此 re-emit word-selected，否则会形成无限循环
+        // Panel.vue 内部的 handleWordSelected 已经通过 eventBus.on 直接监听了 word-selected
+        // 此处只需确保侧边栏可见即可
+        eventBus.on('lang-learner:word-selected', (_word: string) => {
+            this.activateView();
+        });
+
         // 监听批量标熟事件：F5 估算完成或 F8 一键学完后，触发全页重渲染
         eventBus.on('lang-learner:batch-known', (_count: number) => {
             // 通知 Obsidian 触发布局变更，让 MarkdownPostProcessor 对可见文档重新渲染

@@ -84,4 +84,13 @@
   2. 采用以有道 Suggest API 为后盾的级联兜底（Fallback）模式，当 `jsonapi` 主翻译模块未响应或释义为空时，退避至 Suggest 服务获取翻译，再组装交付。
   3. 通过 `vocabManager.set(word, status, trans, phonetic, etymology)` 保持词源信息的本地存储，防止后续用户更改状态（KNOWN/LEARNING）时丢失已加载的词源数据。
 
+## 12. 主进程事件转发死循环与侧边栏即时聚焦 Tab 切换避坑
+- **问题**: 点击文档单词触发 `lang-learner:word-selected` 时，侧边栏详情面板因位于底部或由于标签页后台运行，未能及时展现给用户；且在主进程中监听事件并转发时引发了无限循环。
+- **对策**:
+  1. **避免 re-emit 同名事件**：在 `main.ts` 监听 `word-selected` 时，仅执行 `this.activateView()` 来拉起侧边栏，禁止在主进程中继续向事件总线 emit 同名 `word-selected` 导致消息循环传递。侧边栏 `Panel.vue` 组件直接订阅 `eventBus.on('lang-learner:word-selected')` 即可获取单词数据。
+  2. **状态驱动的自动 Tab 切换**：在 `Panel.vue` 内部的 `handleWordSelected` 回调函数中，显式将 `mainTab.value = 'vocabulary'`，强制让侧边栏切回词汇本以高亮展现单词详情卡片。
+  3. **布局提权（即时呈现）**：对于高频高优先级的“单词详情”面板，必须在 UI 树中将其从列表底部提升至 Tab 按钮的正下方。这样当用户点击文档中的任意单词或利用新增的“全局自主查词”框输入词汇时，详情面板会在第一物理视觉区域瞬间呈现，免去手动翻卷侧边栏的动作，实现无滞后感（零视觉延迟）的学习体验。
+  4. **剪贴板安全写入与 Notice 级联**：卡片复制功能直接使用格式化 Markdown 的 `navigator.clipboard.writeText(content)`，并在 Promise 回调中分发 Obsidian 的 `new Notice`，便于外部卡片流转。
+
+
 
