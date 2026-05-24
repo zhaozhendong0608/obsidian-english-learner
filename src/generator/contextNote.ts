@@ -181,3 +181,79 @@ export async function appendContextNote(
         console.error(`生成/追加 [${cleanWord}] 的语境卡片时发生异常:`, err);
     }
 }
+
+/**
+ * 导出 AI 教师解析到单词卡片，并自动建立词根图谱双链
+ */
+export async function updateAIContextNote(
+    app: App,
+    word: string,
+    root: string,
+    rootMeaning: string,
+    aiMarkdown: string
+): Promise<void> {
+    const cleanWord = word.trim().toLowerCase();
+    if (!cleanWord) return;
+
+    const folderPath = 'LangLearner/Cards';
+    const filePath = `${folderPath}/${cleanWord}.md`;
+    const today = new Date().toISOString().slice(0, 10);
+
+    try {
+        const adapter = app.vault.adapter;
+        const folderExists = await adapter.exists(folderPath);
+        if (!folderExists) {
+            await adapter.mkdir(folderPath);
+        }
+
+        let rawContent = '';
+        if (await adapter.exists(filePath)) {
+            rawContent = await adapter.read(filePath);
+        } else {
+            // 如果尚不存在，先初始化
+            const initialFM = { word: cleanWord, status: 'UNKNOWN', added: today, updated: today };
+            const initialBody = `\n# ${cleanWord}\n\n- **释义**: 暂无\n`;
+            rawContent = stringifyFrontMatter(initialFM, initialBody);
+        }
+
+        const { data, body } = parseFrontMatter(rawContent);
+        let updatedBody = body;
+
+        // 1. 更新 Front Matter
+        if (root) {
+            data.root = root;
+            data.rootMeaning = rootMeaning || '';
+        }
+        data.updated = today;
+
+        // 2. 注入词根双链
+        if (root && !updatedBody.includes('**关联词根**:')) {
+            const rootLink = `- **关联词根**: [[Root - ${root}|${root} (${rootMeaning})]]\n`;
+            // 尝试插在标题之后
+            if (updatedBody.includes(`# ${cleanWord}`)) {
+                updatedBody = updatedBody.replace(`# ${cleanWord}`, `# ${cleanWord}\n\n${rootLink}`);
+            } else {
+                updatedBody = rootLink + '\n' + updatedBody;
+            }
+        }
+
+        // 3. 注入 AI 解析
+        const aiSectionHeader = '## AI 教师解析';
+        const aiBlock = `> [!tip] AI 解析 (${today})\n${aiMarkdown.split('\n').map(l => '> ' + l).join('\n')}\n`;
+        
+        if (updatedBody.includes(aiSectionHeader)) {
+            // 追加
+            const parts = updatedBody.split(aiSectionHeader);
+            parts[parts.length - 1] = parts[parts.length - 1].trimEnd() + '\n\n' + aiBlock;
+            updatedBody = parts.join(aiSectionHeader);
+        } else {
+            // 新增节
+            updatedBody = updatedBody.trimEnd() + '\n\n' + aiSectionHeader + '\n\n' + aiBlock;
+        }
+
+        const newContent = stringifyFrontMatter(data, updatedBody);
+        await adapter.write(filePath, newContent);
+    } catch (err) {
+        console.error(`导出 AI 解析至 [${cleanWord}] 时发生异常:`, err);
+    }
+}

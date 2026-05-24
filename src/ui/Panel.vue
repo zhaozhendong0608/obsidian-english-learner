@@ -21,86 +21,135 @@
       </button>
     </div>
 
-    <!-- 语音发音配置区 -->
-    <div class="lang-learner-panel-section lang-learner-voice-settings-section" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border);">
-      <div 
-        class="lang-learner-voice-settings-header" 
-        @click="showVoiceConfig = !showVoiceConfig"
-        style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
-      >
-        <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">⚙️ 发音配置 (美音/英音)</span>
-        <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼ 收起' : '▶ 展开' }}</span>
-      </div>
-      <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-        <!-- 引擎选择 -->
-        <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-          <label style="font-size: 0.75em; color: var(--text-muted);">发音引擎:</label>
-          <select 
-            v-model="voiceSettings.engine" 
-            @change="saveVoiceSettings"
-            style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
-          >
-            <option value="online">🌐 在线真人发音 (推荐)</option>
-            <option value="local">💻 系统原生离线发音</option>
-          </select>
+    <!-- 顶部双配置折叠栏 -->
+    <div class="lang-learner-settings-row" style="display: flex; gap: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 8px; align-items: flex-start;">
+      <!-- 语音发音配置区 -->
+      <div class="lang-learner-panel-section lang-learner-voice-settings-section" style="flex: 1; margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+        <div 
+          class="lang-learner-voice-settings-header" 
+          @click="showVoiceConfig = !showVoiceConfig"
+          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
+        >
+          <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">⚙️ 发音配置</span>
+          <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼' : '▶' }}</span>
         </div>
-
-        <!-- 在线真人参数展示 -->
-        <div v-if="voiceSettings.engine === 'online'" class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-          <label style="font-size: 0.75em; color: var(--text-muted);">口音选择:</label>
-          <select 
-            v-model="voiceSettings.onlineAccent" 
-            @change="saveVoiceSettings"
-            style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
-          >
-            <option :value="2">🇺🇸 美式发音 (General American)</option>
-            <option :value="1">🇬🇧 英式发音 (Received Pronunciation)</option>
-          </select>
-        </div>
-
-        <!-- 离线系统参数展示 -->
-        <template v-else>
-          <!-- 发音人选择 -->
+        <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto; padding-right: 4px;">
+          <!-- 引擎选择 -->
           <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+            <label style="font-size: 0.75em; color: var(--text-muted);">发音引擎:</label>
             <select 
-              v-model="voiceSettings.voiceName" 
+              v-model="voiceSettings.engine" 
               @change="saveVoiceSettings"
               style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
             >
-              <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
-                {{ voice.name }} ({{ voice.lang }})
-              </option>
-              <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
+              <option value="online">🌐 在线发音</option>
+              <option value="local">💻 系统发音</option>
             </select>
           </div>
-          <!-- 语速调节 -->
-          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
-            <input 
-              type="range" 
-              v-model.number="voiceSettings.rate" 
-              min="0.5" 
-              max="1.8" 
-              step="0.1" 
+
+          <!-- 在线真人参数展示 -->
+          <div v-if="voiceSettings.engine === 'online'" class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">口音选择:</label>
+            <select 
+              v-model="voiceSettings.onlineAccent" 
               @change="saveVoiceSettings"
-              style="width: 60%; cursor: pointer;"
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+            >
+              <option :value="2">🇺🇸 美音</option>
+              <option :value="1">🇬🇧 英音</option>
+            </select>
+          </div>
+
+          <!-- 离线系统参数展示 -->
+          <template v-else>
+            <!-- 发音人选择 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+              <select 
+                v-model="voiceSettings.voiceName" 
+                @change="saveVoiceSettings"
+                style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+              >
+                <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                  {{ voice.name }}
+                </option>
+                <option v-if="availableVoices.length === 0" value="">默认</option>
+              </select>
+            </div>
+            <!-- 语速调节 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
+              <input 
+                type="range" 
+                v-model.number="voiceSettings.rate" 
+                min="0.5" 
+                max="1.8" 
+                step="0.1" 
+                @change="saveVoiceSettings"
+                style="width: 60%; cursor: pointer;"
+              />
+            </div>
+            <!-- 音调调节 -->
+            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+              <label style="font-size: 0.75em; color: var(--text-muted);">音调: {{ voiceSettings.pitch.toFixed(1) }}</label>
+              <input 
+                type="range" 
+                v-model.number="voiceSettings.pitch" 
+                min="0.5" 
+                max="1.5" 
+                step="0.1" 
+                @change="saveVoiceSettings"
+                style="width: 60%; cursor: pointer;"
+              />
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div style="align-self: stretch; width: 1px; background-color: var(--background-modifier-border); margin: 4px 0;"></div>
+
+      <!-- AI 教师配置区 -->
+      <div class="lang-learner-panel-section lang-learner-ai-settings-section" style="flex: 1; margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+        <div 
+          class="lang-learner-ai-settings-header" 
+          @click="showAiConfig = !showAiConfig"
+          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
+        >
+          <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">🤖 AI 教师配置</span>
+          <span style="font-size: 0.75em; color: var(--text-muted);">{{ showAiConfig ? '▼' : '▶' }}</span>
+        </div>
+        <div v-show="showAiConfig" class="lang-learner-ai-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto; padding-right: 4px;">
+          <div class="lang-learner-ai-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">API Key:</label>
+            <input 
+              type="password" 
+              v-model="aiSettings.apiKey" 
+              @change="saveAiSettings"
+              placeholder="sk-..."
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
             />
           </div>
-          <!-- 音调调节 -->
-          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">音调: {{ voiceSettings.pitch.toFixed(1) }}</label>
+          <div class="lang-learner-ai-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">Base URL:</label>
             <input 
-              type="range" 
-              v-model.number="voiceSettings.pitch" 
-              min="0.5" 
-              max="1.5" 
-              step="0.1" 
-              @change="saveVoiceSettings"
-              style="width: 60%; cursor: pointer;"
+              type="text" 
+              v-model="aiSettings.baseUrl" 
+              @change="saveAiSettings"
+              placeholder="https://api.deepseek.com/v1"
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
             />
           </div>
-        </template>
+          <div class="lang-learner-ai-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">Model:</label>
+            <input 
+              type="text" 
+              v-model="aiSettings.model" 
+              @change="saveAiSettings"
+              placeholder="deepseek-chat"
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -218,6 +267,43 @@
           </ul>
           <div v-else class="lang-learner-examples-empty">
             暂无相关例句
+          </div>
+        </div>
+
+        <!-- 🤖 AI 教师解析模块 -->
+        <div class="lang-learner-ai-teacher-container" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="lang-learner-examples-title">🤖 AI 教师深度解析</div>
+            <button 
+              @click="askAITeacher" 
+              :disabled="isAiLoading"
+              style="font-size: 0.8em; padding: 4px 8px; border-radius: 4px; background-color: var(--interactive-accent); color: var(--text-on-accent); border: none; cursor: pointer; opacity: 0.9;"
+            >
+              {{ isAiLoading ? '思考中...' : '询问 AI 教师' }}
+            </button>
+          </div>
+          
+          <div v-if="aiResponse" class="lang-learner-ai-response-box" style="margin-top: 8px;">
+            <!-- 词汇结构展示 (如词根/词缀) -->
+            <div v-if="aiResponse.root" style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center; background-color: rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.1); padding: 4px 8px; border-radius: 4px;">
+              <span style="font-size: 0.8em; color: var(--text-muted);">词根枢纽:</span>
+              <span style="font-size: 0.85em; font-weight: bold; color: var(--text-accent);">{{ aiResponse.root }} ({{ aiResponse.rootMeaning }})</span>
+            </div>
+            
+            <!-- AI 生成的具体解析渲染 -->
+            <div 
+              ref="aiMarkdownEl"
+              class="lang-learner-ai-markdown markdown-preview-view markdown-rendered" 
+              style="font-size: 0.85em; color: var(--text-normal); line-height: 1.5; background-color: var(--background-secondary); padding: 8px; border-radius: 6px; max-height: 300px; overflow-y: auto;"
+            >
+            </div>
+            
+            <button 
+              @click="exportAIResponse" 
+              style="margin-top: 8px; width: 100%; padding: 6px; background-color: var(--background-secondary-alt); border: 1px solid var(--interactive-accent); color: var(--interactive-accent); border-radius: 4px; cursor: pointer; font-size: 0.85em;"
+            >
+              ✍️ 一键归纳并构建词根网络
+            </button>
           </div>
         </div>
       </div>
@@ -1020,7 +1106,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
-import { Notice, MarkdownView } from 'obsidian';
+import { Notice, MarkdownView, MarkdownRenderer } from 'obsidian';
 // @ts-ignore
 import createHyphenator from 'hyphen';
 // @ts-ignore
@@ -1031,7 +1117,9 @@ import { HIGH_FREQUENCY_WORDS, OFFLINE_DICT } from '../data/static_data';
 import { tokenize } from '../tokenizer/tokenizer';
 import type { VocabularyManager } from '../db/vocabulary';
 import type { WordInfo, WordStatus } from '../types';
-
+import { fetchAITeacher, type AISettings } from '../services/aiService';
+import { updateAIContextNote } from '../generator/contextNote';
+import { ensureRootNoteLinked } from '../generator/rootNote';
 const hyphenator = createHyphenator(hyphenationPatternsEnUs);
 
 export default defineComponent({
@@ -1040,6 +1128,7 @@ export default defineComponent({
     // 通过 provide/inject 获取核心依赖
     const vocabManager = inject<VocabularyManager>('vocabManager')!;
     const plugin = inject<any>('plugin')!;
+    const app = plugin.app;
 
     // 使用 Set 加速高频词查询 (O(1))
     const highFreqSet = new Set<string>(HIGH_FREQUENCY_WORDS);
@@ -1285,6 +1374,7 @@ export default defineComponent({
     function selectWord(info: WordInfo) {
         selectedWord.value = { ...info };
         showSyllableSplit.value = false;
+        aiResponse.value = null;
         loadExamples(info.word);
     }
 
@@ -1735,6 +1825,7 @@ export default defineComponent({
             searchResultsList.value = [];
         }
         showSyllableSplit.value = false;
+        aiResponse.value = null;
         loadExamples(word);
         const info = vocabManager.getInfo(word);
         if (info) {
@@ -1829,6 +1920,7 @@ export default defineComponent({
         });
 
         loadVoiceSettings();
+        loadAiSettings();
         updateVoices();
         if (typeof window !== 'undefined' && window.speechSynthesis) {
             window.speechSynthesis.onvoiceschanged = updateVoices;
@@ -1895,6 +1987,109 @@ export default defineComponent({
 
     function saveVoiceSettings() {
         localStorage.setItem('lang-learner-voice-settings', JSON.stringify(voiceSettings.value));
+    }
+
+    // ========== AI 教师配置与状态 ==========
+    const showAiConfig = ref(false);
+    const aiSettings = ref<AISettings>({
+        apiKey: '',
+        baseUrl: 'https://api.deepseek.com/v1',
+        model: 'deepseek-chat'
+    });
+    const isAiLoading = ref(false);
+    const aiResponse = ref<{ root?: string; rootMeaning?: string; phrases?: string[]; markdown: string } | null>(null);
+    const aiMarkdownEl = ref<HTMLElement | null>(null);
+
+    watch([aiResponse, aiMarkdownEl], () => {
+        // 当 aiResponse 改变且元素已挂载，调用 Obsidian 的 MarkdownRenderer 渲染出精美排版的 HTML
+        if (aiMarkdownEl.value) {
+            aiMarkdownEl.value.innerHTML = '';
+            if (aiResponse.value && aiResponse.value.markdown) {
+                MarkdownRenderer.renderMarkdown(
+                    aiResponse.value.markdown,
+                    aiMarkdownEl.value,
+                    '',
+                    plugin
+                );
+            }
+        }
+    }, { flush: 'post' }); // 使用 post 确保 DOM 已渲染更新
+
+    function loadAiSettings() {
+        try {
+            const stored = localStorage.getItem('lang-learner-ai-settings');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed) {
+                    if (parsed.apiKey !== undefined) aiSettings.value.apiKey = parsed.apiKey;
+                    if (parsed.baseUrl !== undefined) aiSettings.value.baseUrl = parsed.baseUrl;
+                    if (parsed.model !== undefined) aiSettings.value.model = parsed.model;
+                }
+            }
+        } catch (e) {
+            console.error('载入 AI 配置失败:', e);
+        }
+    }
+
+    function saveAiSettings() {
+        localStorage.setItem('lang-learner-ai-settings', JSON.stringify(aiSettings.value));
+    }
+
+    /** 触发 AI 教师查询 */
+    async function askAITeacher() {
+        if (!selectedWord.value) return;
+        const word = selectedWord.value.word;
+        // 尝试从本地词库拿一下当前保存的历史例句作为上下文，如果有的话
+        const info = vocabManager.getInfo(word);
+        let contextSentence = info?.sentence;
+        
+        isAiLoading.value = true;
+        aiResponse.value = null;
+        try {
+            const result = await fetchAITeacher(word, contextSentence, aiSettings.value);
+            aiResponse.value = result;
+        } catch (e: any) {
+            new Notice(`AI 教师请求失败: ${e.message}`);
+        } finally {
+            isAiLoading.value = false;
+        }
+    }
+
+    /** 导出 AI 结果到卡片与图谱 */
+    async function exportAIResponse() {
+        if (!selectedWord.value || !aiResponse.value) return;
+        
+        const word = selectedWord.value.word;
+        const { root, rootMeaning, markdown } = aiResponse.value;
+        
+        try {
+            // 1. 更新内存与磁盘影子词库
+            vocabManager.updateRootInfo(word, root || '', rootMeaning || '', aiResponse.value.phrases || []);
+            
+            // 2. 调用生成器，强制追加到当前词汇笔记卡片，并自动挂载双链
+            // @ts-ignore (We pass root safely)
+            await updateAIContextNote(app, word, root || '', rootMeaning || '', markdown);
+            
+            // 3. 确保词根星形图谱连线聚合文件存在并双向绑定
+            if (root) {
+                await ensureRootNoteLinked(app, root, rootMeaning || '', word);
+            }
+            
+            // 4. 将内容光标导出到当前活动的 Markdown 视图
+            const activeView = app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView && activeView.editor) {
+                const editor = activeView.editor;
+                const cursor = editor.getCursor();
+                editor.replaceRange(`\n\n### 🤖 AI 教师解析: ${word}\n${markdown}\n`, cursor);
+            } else {
+                new Notice("提示：未能识别到可编辑的活动文档。仅自动保存到生词本卡片。");
+            }
+            
+            new Notice(`[${word}] AI 解析与词根双链已成功落盘！`);
+        } catch (e) {
+            console.error("导出AI解析失败:", e);
+            new Notice("导出 AI 解析时发生错误，请查看控制台。");
+        }
     }
 
     function updateVoices() {
@@ -3516,6 +3711,14 @@ export default defineComponent({
       getWordTranslation,
       toggleAddWord,
       copyCardContent,
+      showAiConfig,
+      aiSettings,
+      saveAiSettings,
+      isAiLoading,
+      aiResponse,
+      aiMarkdownEl,
+      askAITeacher,
+      exportAIResponse,
       dueWords,
       currentReviewWord,
       showReviewAnswer,

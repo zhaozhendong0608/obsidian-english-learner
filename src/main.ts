@@ -108,6 +108,36 @@ export default class EnglishLearnerPlugin extends Plugin {
             this.activateView();
         });
 
+        // 监听打开笔记事件：若打开的是生词卡片（位于 LangLearner/Cards 目录下），自动同步选中详情展示
+        this.registerEvent(
+            this.app.workspace.on('file-open', (file) => {
+                if (file && file.path.startsWith('LangLearner/Cards/')) {
+                    const word = file.basename.toLowerCase().trim();
+                    if (word) {
+                        eventBus.emit('lang-learner:word-selected', word);
+                    }
+                }
+            })
+        );
+
+        // 监听全局编辑器/双击事件：双击单词时提取单词并触发选中展示
+        this.registerDomEvent(document, 'dblclick', (evt: MouseEvent) => {
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView && activeView.editor) {
+                const editor = activeView.editor;
+                const selection = editor.getSelection().trim();
+                if (selection) {
+                    // 如果选中的字串仅包含英文字符、连字符或撇号
+                    if (/^[a-zA-Z\s\-'\.]+$/.test(selection)) {
+                        const cleanWord = selection.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/gi, '');
+                        if (cleanWord) {
+                            eventBus.emit('lang-learner:word-selected', cleanWord);
+                        }
+                    }
+                }
+            }
+        });
+
         // 监听批量标熟事件：F5 估算完成或 F8 一键学完后，触发全页重渲染
         eventBus.on('lang-learner:batch-known', (_count: number) => {
             // 通知 Obsidian 触发布局变更，让 MarkdownPostProcessor 对可见文档重新渲染

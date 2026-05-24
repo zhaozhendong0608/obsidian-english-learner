@@ -32,6 +32,14 @@ export interface WordInfo {
     repetitions?: number;
     /** 下一次复习的时间戳 (可选) */
     nextReview?: number;
+    
+    // ======= AI 教师词根衍生扩展 =======
+    /** 词根（如 "spect"） */
+    root?: string;
+    /** 词根含义（如 "看"） */
+    rootMeaning?: string;
+    /** 衍生常用词组列表 */
+    phrases?: string[];
 }
 
 /**

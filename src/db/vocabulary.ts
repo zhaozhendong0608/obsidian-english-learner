@@ -123,7 +123,36 @@ export class VocabularyManager {
             });
         }
 
-        // 触发合并写节流 (每 2 秒最多发生一次物理 I/O 写入)
+    // 触发合并写节流 (每 2 秒最多发生一次物理 I/O 写入)
+        this.triggerSave();
+    }
+
+    /**
+     * 更新单词的 AI 词根解析数据，并触发节流落盘
+     */
+    public updateRootInfo(word: string, root: string, rootMeaning: string, phrases: string[]): void {
+        if (!word) return;
+        const cleanWord = word.trim().toLowerCase();
+        const existing = this.cache.get(cleanWord);
+        
+        const now = Date.now();
+        if (existing) {
+            existing.root = root;
+            existing.rootMeaning = rootMeaning;
+            existing.phrases = phrases;
+            existing.updated = now;
+        } else {
+            // 如果生词本中不存在，不应该发生，但作为防守可以新建
+            this.set(cleanWord, 'UNKNOWN', '');
+            const newlyCreated = this.cache.get(cleanWord);
+            if (newlyCreated) {
+                newlyCreated.root = root;
+                newlyCreated.rootMeaning = rootMeaning;
+                newlyCreated.phrases = phrases;
+                newlyCreated.updated = now;
+            }
+        }
+        
         this.triggerSave();
     }
 
