@@ -30880,7 +30880,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-c53261cd";
+Panel_default.__scopeId = "data-v-be7f13d4";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
