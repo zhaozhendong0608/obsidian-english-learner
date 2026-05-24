@@ -211,13 +211,77 @@ Obsidian `ItemView` 包装类，用于初始化、挂载和卸载 Vue 3 的 `Pan
    - 调整 `handleWordSelected`：从文章高亮点击或直接搜索英文词时，清空 `searchResultsList`；若从中文匹配列表中点击，则保持 `searchResultsList`（传入 `keepSearchResults = true`），以便后续“返回列表”。
    - 在详情卡片顶部条件渲染 “⬅️ 返回列表” 按钮，点击时将 `selectedWord` 置空，自动呈现列表。
 
-### 验证计划
 1. **构建编译**：运行 `npm run build`，确保无模板或者类型错误。
 2. **功能验证**：
    - 搜索 "学习"：确认弹出匹配的多个英文单词列表（study, learn 等）及其离线中文释义。
    - 点击列表中的 "learn"：确认右侧面板正常展示 "learn" 的释义、音标、音源以及例句，且详情头部出现 "⬅️ 返回列表" 按钮。
-   - 点击 "⬅️ 返回列表"：详情面板隐藏，列表重新展现。
+   - 点击 "⬅️ 返回列表"：详情面板隐藏，列表重新展现.
    - 搜索 "the" 或在文章中点击任何英文单词：确认搜索结果列表清空，直接展示其单词详情，并且没有 "返回列表" 按钮。
    - 搜索一个没有匹配项的中文：确认弹出 Notice 提示未找到匹配词。
+
+---
+
+## 视频扩展精读补强（单句循环、快速跳转与听力遮罩）
+
+### 变更目标
+在侧边栏视频播放面板中，针对 HTML5 视频和 YouTube 播放器引入以下高频英语听力训练核心交互工具：
+1. **单句循环 (Repeat Current Sentence)**：开启后，播放器在当前句的 `[start, start + duration]` 时间段内无限循环播放，直到关闭或主动切换句子。
+2. **快捷跨句跳转 (Prev/Next Sentence Navigation)**：在控制栏或当前播放句卡片中，提供“⏮️ 上一句”与“⏭️ 下一句”按钮，点击后一键跳转定位。
+3. **听力遮罩模式 (Subtitle Blur/Toggle)**：提供一个“👁️ 遮罩/显示字幕”的开关。开启后，字幕列表与当前播放句的文字将被模糊处理（通过 CSS 高斯模糊实现），用户需要通过盲听进行训练，只有当鼠标 hover 到对应字幕行上时才临时清除模糊展示。
+
+### 核心实现逻辑
+
+#### 1. 单句循环控制
+- 增加响应式状态 `isLoopingCurrentSentence` (Boolean, 默认 `false`)。
+- 在 `watch(currentVideoTime, (t) => { ... })` 监听函数中：
+  - 若 `isLoopingCurrentSentence.value` 为 `true` 且 `activeSubtitleIndex.value !== -1`：
+    - 获取当前活动字幕句：`const sub = subtitlesList.value[activeSubtitleIndex.value];`
+    - 当播放进度临近结束边界（例如 `t >= sub.start + sub.duration - 0.1` 且 `t < sub.start + sub.duration + 1.0`）时，自动触发：
+      `seekToSubtitleTime(sub.start);`
+      为了防止在 seek 过程中因为定时器回调时滞引起短时间内的二次触发，可以维护一个短暂的 `seekThrottler` 或时间锚点。
+
+#### 2. 快捷跨句跳转
+- 实现 `goToPrevSubtitle()`：
+  - 判断 `activeSubtitleIndex.value > 0`。
+  - 若满足，定位到 `const prevSub = subtitlesList.value[activeSubtitleIndex.value - 1]`。
+  - 调用 `seekToSubtitleTime(prevSub.start)`。
+- 实现 `goToNextSubtitle()`：
+  - 判断 `activeSubtitleIndex.value < subtitlesList.value.length - 1`。
+  - 若满足，定位到 `const nextSub = subtitlesList.value[activeSubtitleIndex.value + 1]`。
+  - 调用 `seekToSubtitleTime(nextSub.start)`。
+
+#### 3. 听力遮罩模式
+- 增加响应式状态 `isSubtitleMasked` (Boolean, 默认 `false`)。
+- 在 Vue 模板中，若 `isSubtitleMasked` 为 `true`，给字幕列表容器 `.lang-learner-subtitles-container` 和当前句卡片添加类名 `.lang-learner-subtitles-masked`。
+- 编写 CSS 样式：
+  ```css
+  .lang-learner-subtitles-masked .lang-learner-sub-text,
+  .lang-learner-subtitles-masked .lang-learner-word {
+      filter: blur(5px);
+      transition: filter 0.2s ease;
+  }
+  /* 鼠标 hover 时临时清除模糊，方便快速核对 */
+  .lang-learner-subtitles-masked .lang-learner-sub-line:hover .lang-learner-sub-text,
+  .lang-learner-subtitles-masked .lang-learner-sub-line:hover .lang-learner-word {
+      filter: none;
+  }
+  ```
+
+### Pizza Slicing 计划
+*   **S1-Bone (核心跳转与循环逻辑)**：
+    *   在 `src/ui/Panel.vue` 的 `setup()` 中定义 `isLoopingCurrentSentence`、`isSubtitleMasked`。
+    *   实现 `goToPrevSubtitle()`、`goToNextSubtitle()` 及 `toggleLoopCurrentSentence()` 逻辑。
+    *   在 `watch(currentVideoTime)` 中注入越界 seek 重播逻辑。
+*   **S2-Muscle (UI呈现与样式嵌入)**：
+    *   在视频控制栏及“当前播放句”面板上增加控制按钮（单句循环、上一句、下一句、听力遮罩）。
+    *   在 `src/ui/Panel.vue` (或对应的 CSS 部分) 插入遮罩高斯模糊的 CSS 规则，确保样式过渡平滑。
+
+### 验证计划
+1. **编译测试**：运行 `npm run build`，确保无打包与类型定义错误。
+2. **手动/交互验证**：
+   - 载入一个带字幕 of HTML5 视频，开启 `🔂 单句循环`，验证当视频播完该句时是否能精准且不卡顿地返回句首重新播放。
+   - 点击 `⏮️ 上一句` 和 `⏭️ 下一句`，确认视频进度条能瞬时跳转到前一句/后一句的起点，且字幕行高亮及视图滚动自动同步。
+   - 开启 `👁️ 遮罩字幕`，验证字幕是否进入高斯模糊状态；将鼠标悬停在某行字幕上，确认模糊被清除。
+   - 测试 YouTube 视频在上述场景下的表现（通过 Iframe Player API），确保在 250ms 轮询下循环逻辑工作正常。
 
 

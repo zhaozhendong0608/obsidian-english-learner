@@ -751,11 +751,11 @@
             :src="activeVideoSrc" 
             controls 
             @timeupdate="onVideoTimeUpdate"
-            style="width: 100%; max-height: 240px; display: block; border-radius: 6px;"
+            style="width: 100%; max-height: 280px; aspect-ratio: 16/9; display: block; border-radius: 6px;"
           ></video>
 
           <!-- YouTube 嵌入容器 -->
-          <div v-else-if="mediaType === 'youtube'" id="youtube-player-container" style="width: 100%; height: 200px; display: block; border-radius: 6px; background: #000;">
+          <div v-else-if="mediaType === 'youtube'" id="youtube-player-container" style="width: 100%; height: 240px; display: block; border-radius: 6px; background: #000;">
             <div id="youtube-player-el"></div>
           </div>
 
@@ -763,7 +763,7 @@
           <iframe 
             v-else-if="mediaType === 'bilibili'"
             :src="activeVideoSrc" 
-            style="width: 100%; height: 200px; border: none; border-radius: 6px; display: block;" 
+            style="width: 100%; height: 240px; border: none; border-radius: 6px; display: block;" 
             allowfullscreen
           ></iframe>
         </div>
@@ -810,8 +810,41 @@
           class="lang-learner-panel-section" 
           style="padding: 12px; border-radius: 8px; border: 1.5px solid var(--interactive-accent); background: var(--background-primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); text-align: center;"
         >
-          <div style="font-size: 0.75em; color: var(--interactive-accent); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px;">📢 当前播放句</div>
-          <div style="font-size: 1.08em; font-weight: 600; line-height: 1.5; color: var(--text-normal);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed var(--background-modifier-border); padding-bottom: 6px;">
+            <div style="display: flex; gap: 4px;">
+              <button 
+                @click="goToPrevSubtitle" 
+                class="lang-learner-btn-status-mini" 
+                style="padding: 2px 5px; font-size: 0.7em;"
+                title="上一句"
+              >
+                ⏮️ 上一句
+              </button>
+              <button 
+                @click="goToNextSubtitle" 
+                class="lang-learner-btn-status-mini" 
+                style="padding: 2px 5px; font-size: 0.7em;"
+                title="下一句"
+              >
+                下一句 ⏭️
+              </button>
+            </div>
+            <div style="font-size: 0.75em; color: var(--interactive-accent); font-weight: 700; letter-spacing: 0.5px;">📢 当前播放句</div>
+            <div style="display: flex; gap: 4px;">
+              <button 
+                @click="toggleLoopCurrentSentence" 
+                class="lang-learner-btn-status-mini"
+                :class="{ active: isLoopingCurrentSentence }"
+                style="padding: 2px 6px; font-size: 0.7em; font-weight: 600;"
+                :title="isLoopingCurrentSentence ? '点击关闭单句循环' : '点击开启单句循环'"
+              >
+                🔂 {{ isLoopingCurrentSentence ? '循环中' : '单句循环' }}
+              </button>
+            </div>
+          </div>
+          <div 
+            style="font-size: 1.08em; font-weight: 600; line-height: 1.5; color: var(--text-normal);"
+          >
             <template v-for="(token, index) in subtitlesList[activeSubtitleIndex].segments" :key="index">
               <span v-if="token.type === 'text'">{{ token.text }}</span>
               <span
@@ -834,6 +867,13 @@
               </span>
             </template>
           </div>
+          <!-- 第二行译文 (独立一行，仅在译文模式开启时展示) -->
+          <div 
+            v-if="subtitlesList[activeSubtitleIndex].translation && showTranslation" 
+            style="font-size: 0.88em; color: var(--text-muted); margin-top: 8px; font-weight: normal; border-top: 1px dashed var(--background-modifier-border); padding-top: 6px; text-align: center;"
+          >
+            {{ subtitlesList[activeSubtitleIndex].translation }}
+          </div>
         </div>
 
         <!-- 💬 视频字幕卡片 (独立面板，脱离嵌套) -->
@@ -843,6 +883,16 @@
               💬 字幕列表 ({{ subtitlesList.length }} 句)
             </span>
             <div style="display: flex; gap: 4px;">
+              <button 
+                v-if="subtitlesList.length > 0"
+                @click="showTranslation = !showTranslation" 
+                class="lang-learner-btn-status-mini"
+                :class="{ active: showTranslation }"
+                style="padding: 2px 5px; font-size: 0.7em; font-weight: 600;"
+                :title="showTranslation ? '点击显示原文，隐藏翻译' : '点击双语对照显示'"
+              >
+                👁️ {{ showTranslation ? '双语模式 (译文显示)' : '原文模式 (译文隐藏)' }}
+              </button>
               <button 
                 v-if="mediaType === 'youtube'" 
                 @click="loadYouTubeCaptions" 
@@ -880,13 +930,13 @@
               :id="'sub-line-' + idx"
               class="lang-learner-sub-line"
               :class="{ 'lang-learner-active-sub': activeSubtitleIndex === idx }"
-              style="padding: 5px 8px; border-radius: 6px; line-height: 1.45; font-size: 0.88em; transition: all 0.15s ease; cursor: pointer;"
+              style="padding: 5px 8px; border-radius: 6px; line-height: 1.45; font-size: 0.88em; transition: all 0.15s ease; cursor: pointer; display: flex; flex-direction: column;"
               @click="seekToSubtitleTime(sub.start)"
             >
               <span style="font-size: 0.72em; color: var(--text-muted); font-family: monospace; display: block; margin-bottom: 2px;">
                 {{ formatTime(sub.start) }}
               </span>
-              <span class="lang-learner-sub-text" style="color: var(--text-normal);">
+              <span class="lang-learner-sub-text" style="color: var(--text-normal); display: block;">
                 <template v-for="(token, index) in sub.segments" :key="index">
                   <span v-if="token.type === 'text'">{{ token.text }}</span>
                   <span
@@ -908,6 +958,14 @@
                   </span>
                 </template>
               </span>
+              <!-- 第二行：译文 (只在译文开启时展示) -->
+              <div 
+                v-if="sub.translation && showTranslation" 
+                class="lang-learner-sub-translation" 
+                style="font-size: 0.8em; color: var(--text-muted); margin-top: 3px; font-weight: normal; display: block;"
+              >
+                {{ sub.translation }}
+              </div>
             </div>
           </div>
           <div v-else style="font-size: 0.78em; color: var(--text-muted); text-align: center; padding: 16px; font-style: italic;">
@@ -2971,9 +3029,56 @@ export default defineComponent({
     }
 
     // ========== 新增：视频字幕学习模块 ==========
-    const subtitlesList = ref<{ start: number; duration: number; text: string; segments: any[] }[]>([]);
+    const subtitlesList = ref<{ start: number; duration: number; text: string; translation: string; segments: any[] }[]>([]);
     const activeSubtitleIndex = ref(-1);
     const isLoadingSubtitles = ref(false);
+    const isLoopingCurrentSentence = ref(false);
+    const isSubtitleMasked = ref(false); 
+    const showTranslation = ref(true);
+
+    // 辅助函数：分离字幕中的英文原文和中文译文
+    function formatSubtitleItem(rawText: string) {
+        if (!rawText) return { text: '', translation: '' };
+        const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) {
+            return { text: '', translation: '' };
+        }
+        if (lines.length === 1) {
+            return { text: lines[0], translation: '' };
+        }
+        // 寻找包含中文的行作为译文
+        const chineseIdx = lines.findIndex(line => /[\u4e00-\u9fa5]/.test(line));
+        if (chineseIdx !== -1) {
+            const trans = lines[chineseIdx];
+            const orig = lines.filter((_, idx) => idx !== chineseIdx).join(' ');
+            return { text: orig, translation: trans };
+        }
+        // 默认第一行为原文，其余为译文
+        return { text: lines[0], translation: lines.slice(1).join(' ') };
+    }
+
+    function toggleLoopCurrentSentence() {
+        isLoopingCurrentSentence.value = !isLoopingCurrentSentence.value;
+        if (isLoopingCurrentSentence.value) {
+            new Notice('已开启单句循环');
+        } else {
+            new Notice('已关闭单句循环');
+        }
+    }
+
+    function goToPrevSubtitle() {
+        if (subtitlesList.value.length === 0) return;
+        let targetIdx = activeSubtitleIndex.value - 1;
+        if (targetIdx < 0) targetIdx = 0;
+        seekToSubtitleTime(subtitlesList.value[targetIdx].start);
+    }
+
+    function goToNextSubtitle() {
+        if (subtitlesList.value.length === 0) return;
+        let targetIdx = activeSubtitleIndex.value + 1;
+        if (targetIdx >= subtitlesList.value.length) targetIdx = subtitlesList.value.length - 1;
+        seekToSubtitleTime(subtitlesList.value[targetIdx].start);
+    }
 
     // 视频定位跳转
     function seekToSubtitleTime(seconds: number) {
@@ -3236,12 +3341,16 @@ export default defineComponent({
             }
 
             // 将 rawList 转换为带 segments 的完整字幕列表
-            const list: any[] = rawList.map((item: any) => ({
-                start: item.start,
-                duration: item.duration,
-                text: item.text,
-                segments: processTextToSegments(item.text)
-            }));
+            const list: any[] = rawList.map((item: any) => {
+                const formatted = formatSubtitleItem(item.text);
+                return {
+                    start: item.start,
+                    duration: item.duration,
+                    text: formatted.text,
+                    translation: formatted.translation,
+                    segments: processTextToSegments(formatted.text)
+                };
+            });
 
             subtitlesList.value = list;
             new Notice(`成功加载在线字幕：共 ${list.length} 句`);
@@ -3292,17 +3401,19 @@ export default defineComponent({
             const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
             if (lines.length >= 3) {
                 const timeLine = lines[1];
-                const text = lines.slice(2).join(' ');
+                const text = lines.slice(2).join('\n');
                 
                 const timeMatch = timeLine.match(/(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/);
                 if (timeMatch) {
                     const startSec = parseInt(timeMatch[1]) * 3600 + parseInt(timeMatch[2]) * 60 + parseInt(timeMatch[3]) + parseInt(timeMatch[4]) / 1000;
                     const endSec = parseInt(timeMatch[5]) * 3600 + parseInt(timeMatch[6]) * 60 + parseInt(timeMatch[7]) + parseInt(timeMatch[8]) / 1000;
+                    const formatted = formatSubtitleItem(text);
                     list.push({
                         start: startSec,
                         duration: endSec - startSec,
-                        text: text,
-                        segments: processTextToSegments(text)
+                        text: formatted.text,
+                        translation: formatted.translation,
+                        segments: processTextToSegments(formatted.text)
                     });
                 }
             }
@@ -3328,7 +3439,7 @@ export default defineComponent({
                 }
 
                 if (timeLine.includes('-->')) {
-                    const text = textLines.join(' ');
+                    const text = textLines.join('\n');
                     const timeMatch = timeLine.match(/(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})/);
                     if (timeMatch) {
                         const startH = timeMatch[1] ? parseInt(timeMatch[1]) : 0;
@@ -3343,11 +3454,13 @@ export default defineComponent({
                         const endMs = parseInt(timeMatch[8]);
                         const endSec = endH * 3600 + endM * 60 + endS + endMs / 1000;
 
+                        const formatted = formatSubtitleItem(text);
                         list.push({
                             start: startSec,
                             duration: endSec - startSec,
-                            text: text,
-                            segments: processTextToSegments(text)
+                            text: formatted.text,
+                            translation: formatted.translation,
+                            segments: processTextToSegments(formatted.text)
                         });
                     }
                 }
@@ -3357,8 +3470,23 @@ export default defineComponent({
     }
 
     // 监听播放时间，动态计算当前字幕行（更鲁棒的区间算法，防止小间隙卡死）
-    watch(currentVideoTime, (t) => {
+    watch(currentVideoTime, (t, oldT) => {
         if (subtitlesList.value.length === 0) return;
+
+        // 检测是否是大幅度手动 Seek (超过 1.5 秒)
+        const isManualSeek = oldT !== undefined && Math.abs(t - oldT) > 1.5;
+
+        // 如果开启了单句循环，且有活动字幕，且不是大幅度的手动 Seek
+        if (isLoopingCurrentSentence.value && activeSubtitleIndex.value !== -1 && !isManualSeek) {
+            const sub = subtitlesList.value[activeSubtitleIndex.value];
+            const end = sub.start + sub.duration;
+            // 临近结束时，重置播放进度到单句起点
+            if (t >= end - 0.1 && t <= end + 2.0) {
+                seekToSubtitleTime(sub.start);
+                return;
+            }
+        }
+
         const idx = subtitlesList.value.findIndex(sub => t >= sub.start && t <= (sub.start + sub.duration));
         if (idx !== -1) {
             if (idx !== activeSubtitleIndex.value) {
@@ -3416,7 +3544,11 @@ export default defineComponent({
         subtitlesList.value.forEach(sub => {
             const formatted = formatTime(sub.start);
             const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(videoUrl)}&t=${Math.floor(sub.start)}`;
-            output += `- [🎬 ${formatted}](${uri}) ${sub.text}\n`;
+            if (sub.translation) {
+                output += `- [🎬 ${formatted}](${uri}) ${sub.text}\n  * 译：${sub.translation}\n`;
+            } else {
+                output += `- [🎬 ${formatted}](${uri}) ${sub.text}\n`;
+            }
         });
         output += `\n`;
 
@@ -3763,7 +3895,13 @@ export default defineComponent({
       seekToSubtitleTime,
       loadYouTubeCaptions,
       handleLocalSubtitleUpload,
-      exportSubtitlesToNote
+      exportSubtitlesToNote,
+      isLoopingCurrentSentence,
+      isSubtitleMasked,
+      showTranslation,
+      toggleLoopCurrentSentence,
+      goToPrevSubtitle,
+      goToNextSubtitle
     };
   }
 });
@@ -4424,5 +4562,7 @@ export default defineComponent({
     line-height: 1.6;
     letter-spacing: 0.01em;
 }
+
+
 </style>
 

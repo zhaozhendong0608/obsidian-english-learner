@@ -27621,6 +27621,51 @@ ${markdown}
     const subtitlesList = ref([]);
     const activeSubtitleIndex = ref(-1);
     const isLoadingSubtitles = ref(false);
+    const isLoopingCurrentSentence = ref(false);
+    const isSubtitleMasked = ref(false);
+    const showTranslation = ref(true);
+    function formatSubtitleItem(rawText) {
+      if (!rawText)
+        return { text: "", translation: "" };
+      const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        return { text: "", translation: "" };
+      }
+      if (lines.length === 1) {
+        return { text: lines[0], translation: "" };
+      }
+      const chineseIdx = lines.findIndex((line) => /[\u4e00-\u9fa5]/.test(line));
+      if (chineseIdx !== -1) {
+        const trans = lines[chineseIdx];
+        const orig = lines.filter((_, idx) => idx !== chineseIdx).join(" ");
+        return { text: orig, translation: trans };
+      }
+      return { text: lines[0], translation: lines.slice(1).join(" ") };
+    }
+    function toggleLoopCurrentSentence() {
+      isLoopingCurrentSentence.value = !isLoopingCurrentSentence.value;
+      if (isLoopingCurrentSentence.value) {
+        new import_obsidian3.Notice("\u5DF2\u5F00\u542F\u5355\u53E5\u5FAA\u73AF");
+      } else {
+        new import_obsidian3.Notice("\u5DF2\u5173\u95ED\u5355\u53E5\u5FAA\u73AF");
+      }
+    }
+    function goToPrevSubtitle() {
+      if (subtitlesList.value.length === 0)
+        return;
+      let targetIdx = activeSubtitleIndex.value - 1;
+      if (targetIdx < 0)
+        targetIdx = 0;
+      seekToSubtitleTime(subtitlesList.value[targetIdx].start);
+    }
+    function goToNextSubtitle() {
+      if (subtitlesList.value.length === 0)
+        return;
+      let targetIdx = activeSubtitleIndex.value + 1;
+      if (targetIdx >= subtitlesList.value.length)
+        targetIdx = subtitlesList.value.length - 1;
+      seekToSubtitleTime(subtitlesList.value[targetIdx].start);
+    }
     function seekToSubtitleTime(seconds) {
       if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.seekTo === "function") {
         ytPlayer.seekTo(seconds, true);
@@ -27849,12 +27894,16 @@ ${markdown}
           console.log("\u6240\u6709\u53EF\u7528\u5B57\u5E55\u97F3\u8F68:", captionTracks);
           throw new Error('\u65E0\u6CD5\u83B7\u53D6 YouTube \u5B57\u5E55\uFF08YouTube \u9700\u8981\u767B\u5F55\u9A8C\u8BC1\uFF09\u3002\u8BF7\u4F7F\u7528"\u{1F4C1} \u5BFC\u5165 SRT/VTT"\u529F\u80FD\u624B\u52A8\u5BFC\u5165\u5B57\u5E55\u6587\u4EF6\uFF0C\u6216\u5728 YouTube \u7F51\u7AD9\u4E0A\u6253\u5F00\u89C6\u9891\u5E76\u624B\u52A8\u4E0B\u8F7D\u5B57\u5E55\u3002');
         }
-        const list = rawList.map((item) => ({
-          start: item.start,
-          duration: item.duration,
-          text: item.text,
-          segments: processTextToSegments(item.text)
-        }));
+        const list = rawList.map((item) => {
+          const formatted = formatSubtitleItem(item.text);
+          return {
+            start: item.start,
+            duration: item.duration,
+            text: formatted.text,
+            translation: formatted.translation,
+            segments: processTextToSegments(formatted.text)
+          };
+        });
         subtitlesList.value = list;
         new import_obsidian3.Notice(`\u6210\u529F\u52A0\u8F7D\u5728\u7EBF\u5B57\u5E55\uFF1A\u5171 ${list.length} \u53E5`);
       } catch (e) {
@@ -27897,16 +27946,18 @@ ${markdown}
         const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
         if (lines.length >= 3) {
           const timeLine = lines[1];
-          const text = lines.slice(2).join(" ");
+          const text = lines.slice(2).join("\n");
           const timeMatch = timeLine.match(/(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/);
           if (timeMatch) {
             const startSec = parseInt(timeMatch[1]) * 3600 + parseInt(timeMatch[2]) * 60 + parseInt(timeMatch[3]) + parseInt(timeMatch[4]) / 1e3;
             const endSec = parseInt(timeMatch[5]) * 3600 + parseInt(timeMatch[6]) * 60 + parseInt(timeMatch[7]) + parseInt(timeMatch[8]) / 1e3;
+            const formatted = formatSubtitleItem(text);
             list.push({
               start: startSec,
               duration: endSec - startSec,
-              text,
-              segments: processTextToSegments(text)
+              text: formatted.text,
+              translation: formatted.translation,
+              segments: processTextToSegments(formatted.text)
             });
           }
         }
@@ -27927,7 +27978,7 @@ ${markdown}
             textLines = lines.slice(2);
           }
           if (timeLine.includes("-->")) {
-            const text = textLines.join(" ");
+            const text = textLines.join("\n");
             const timeMatch = timeLine.match(/(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})/);
             if (timeMatch) {
               const startH = timeMatch[1] ? parseInt(timeMatch[1]) : 0;
@@ -27940,11 +27991,13 @@ ${markdown}
               const endS = parseInt(timeMatch[7]);
               const endMs = parseInt(timeMatch[8]);
               const endSec = endH * 3600 + endM * 60 + endS + endMs / 1e3;
+              const formatted = formatSubtitleItem(text);
               list.push({
                 start: startSec,
                 duration: endSec - startSec,
-                text,
-                segments: processTextToSegments(text)
+                text: formatted.text,
+                translation: formatted.translation,
+                segments: processTextToSegments(formatted.text)
               });
             }
           }
@@ -27952,9 +28005,18 @@ ${markdown}
       });
       return list;
     }
-    watch2(currentVideoTime, (t) => {
+    watch2(currentVideoTime, (t, oldT) => {
       if (subtitlesList.value.length === 0)
         return;
+      const isManualSeek = oldT !== void 0 && Math.abs(t - oldT) > 1.5;
+      if (isLoopingCurrentSentence.value && activeSubtitleIndex.value !== -1 && !isManualSeek) {
+        const sub = subtitlesList.value[activeSubtitleIndex.value];
+        const end = sub.start + sub.duration;
+        if (t >= end - 0.1 && t <= end + 2) {
+          seekToSubtitleTime(sub.start);
+          return;
+        }
+      }
       const idx = subtitlesList.value.findIndex((sub) => t >= sub.start && t <= sub.start + sub.duration);
       if (idx !== -1) {
         if (idx !== activeSubtitleIndex.value) {
@@ -28006,8 +28068,14 @@ ${markdown}
       subtitlesList.value.forEach((sub) => {
         const formatted = formatTime(sub.start);
         const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(videoUrl)}&t=${Math.floor(sub.start)}`;
-        output += `- [\u{1F3AC} ${formatted}](${uri}) ${sub.text}
+        if (sub.translation) {
+          output += `- [\u{1F3AC} ${formatted}](${uri}) ${sub.text}
+  * \u8BD1\uFF1A${sub.translation}
 `;
+        } else {
+          output += `- [\u{1F3AC} ${formatted}](${uri}) ${sub.text}
+`;
+        }
       });
       output += `
 `;
@@ -28336,7 +28404,13 @@ ${markdown}
       seekToSubtitleTime,
       loadYouTubeCaptions,
       handleLocalSubtitleUpload,
-      exportSubtitlesToNote
+      exportSubtitlesToNote,
+      isLoopingCurrentSentence,
+      isSubtitleMasked,
+      showTranslation,
+      toggleLoopCurrentSentence,
+      goToPrevSubtitle,
+      goToNextSubtitle
     };
   }
 });
@@ -28681,7 +28755,7 @@ var _hoisted_141 = ["src"];
 var _hoisted_142 = {
   key: 1,
   id: "youtube-player-container",
-  style: { "width": "100%", "height": "200px", "display": "block", "border-radius": "6px", "background": "#000" }
+  style: { "width": "100%", "height": "240px", "display": "block", "border-radius": "6px", "background": "#000" }
 };
 var _hoisted_143 = ["src"];
 var _hoisted_144 = {
@@ -28704,93 +28778,107 @@ var _hoisted_150 = {
   class: "lang-learner-panel-section",
   style: { "padding": "12px", "border-radius": "8px", "border": "1.5px solid var(--interactive-accent)", "background": "var(--background-primary)", "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.05)", "text-align": "center" }
 };
-var _hoisted_151 = { style: { "font-size": "1.08em", "font-weight": "600", "line-height": "1.5", "color": "var(--text-normal)" } };
-var _hoisted_152 = { key: 0 };
-var _hoisted_153 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_154 = {
+var _hoisted_151 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px", "border-bottom": "1px dashed var(--background-modifier-border)", "padding-bottom": "6px" } };
+var _hoisted_152 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_153 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_154 = ["title"];
+var _hoisted_155 = { style: { "font-size": "1.08em", "font-weight": "600", "line-height": "1.5", "color": "var(--text-normal)" } };
+var _hoisted_156 = { key: 0 };
+var _hoisted_157 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_158 = {
+  key: 0,
+  style: { "font-size": "0.88em", "color": "var(--text-muted)", "margin-top": "8px", "font-weight": "normal", "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "6px", "text-align": "center" }
+};
+var _hoisted_159 = {
   class: "lang-learner-panel-section",
   style: { "padding": "10px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)" }
 };
-var _hoisted_155 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px" } };
-var _hoisted_156 = { style: { "font-size": "0.82em", "font-weight": "700", "color": "var(--text-muted)", "display": "flex", "align-items": "center", "gap": "4px" } };
-var _hoisted_157 = { style: { "display": "flex", "gap": "4px" } };
-var _hoisted_158 = ["disabled"];
-var _hoisted_159 = {
+var _hoisted_160 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px" } };
+var _hoisted_161 = { style: { "font-size": "0.82em", "font-weight": "700", "color": "var(--text-muted)", "display": "flex", "align-items": "center", "gap": "4px" } };
+var _hoisted_162 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_163 = ["title"];
+var _hoisted_164 = ["disabled"];
+var _hoisted_165 = {
   class: "lang-learner-btn-status-mini",
   style: { "padding": "2px 5px", "font-size": "0.7em", "cursor": "pointer", "display": "inline-block", "margin": "0" }
 };
-var _hoisted_160 = {
+var _hoisted_166 = {
   key: 0,
   class: "lang-learner-subtitles-container",
   style: { "max-height": "220px", "overflow-y": "auto", "border": "1px solid var(--background-modifier-border)", "border-radius": "6px", "padding": "6px", "background": "var(--background-primary)", "display": "flex", "flex-direction": "column", "gap": "6px" }
 };
-var _hoisted_161 = ["id", "onClick"];
-var _hoisted_162 = { style: { "font-size": "0.72em", "color": "var(--text-muted)", "font-family": "monospace", "display": "block", "margin-bottom": "2px" } };
-var _hoisted_163 = {
+var _hoisted_167 = ["id", "onClick"];
+var _hoisted_168 = { style: { "font-size": "0.72em", "color": "var(--text-muted)", "font-family": "monospace", "display": "block", "margin-bottom": "2px" } };
+var _hoisted_169 = {
   class: "lang-learner-sub-text",
-  style: { "color": "var(--text-normal)" }
+  style: { "color": "var(--text-normal)", "display": "block" }
 };
-var _hoisted_164 = { key: 0 };
-var _hoisted_165 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_166 = {
+var _hoisted_170 = { key: 0 };
+var _hoisted_171 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_172 = {
+  key: 0,
+  class: "lang-learner-sub-translation",
+  style: { "font-size": "0.8em", "color": "var(--text-muted)", "margin-top": "3px", "font-weight": "normal", "display": "block" }
+};
+var _hoisted_173 = {
   key: 1,
   style: { "font-size": "0.78em", "color": "var(--text-muted)", "text-align": "center", "padding": "16px", "font-style": "italic" }
 };
-var _hoisted_167 = {
+var _hoisted_174 = {
   key: 1,
   class: "lang-learner-empty-hint",
   style: { "padding": "40px 0", "text-align": "center", "background": "var(--background-secondary)", "border-radius": "8px", "border": "1px dashed var(--background-modifier-border)", "margin-top": "10px" }
 };
-var _hoisted_168 = { class: "lang-learner-tab-content" };
-var _hoisted_169 = {
+var _hoisted_175 = { class: "lang-learner-tab-content" };
+var _hoisted_176 = {
   class: "lang-learner-panel-section",
   style: { "margin-bottom": "12px", "padding": "12px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)" }
 };
-var _hoisted_170 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_171 = { style: { "padding-top": "10px", "display": "flex", "flex-direction": "column", "gap": "8px" } };
-var _hoisted_172 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px" } };
-var _hoisted_173 = { style: { "display": "flex", "gap": "6px" } };
-var _hoisted_174 = { style: { "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "8px", "margin-top": "4px" } };
-var _hoisted_175 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px", "max-height": "120px", "overflow-y": "auto" } };
-var _hoisted_176 = { style: { "font-size": "0.8em", "color": "var(--text-normal)", "font-weight": "500", "overflow": "hidden", "text-overflow": "ellipsis", "white-space": "nowrap", "max-width": "150px" } };
-var _hoisted_177 = ["onClick"];
-var _hoisted_178 = {
+var _hoisted_177 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
+var _hoisted_178 = { style: { "padding-top": "10px", "display": "flex", "flex-direction": "column", "gap": "8px" } };
+var _hoisted_179 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px" } };
+var _hoisted_180 = { style: { "display": "flex", "gap": "6px" } };
+var _hoisted_181 = { style: { "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "8px", "margin-top": "4px" } };
+var _hoisted_182 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px", "max-height": "120px", "overflow-y": "auto" } };
+var _hoisted_183 = { style: { "font-size": "0.8em", "color": "var(--text-normal)", "font-weight": "500", "overflow": "hidden", "text-overflow": "ellipsis", "white-space": "nowrap", "max-width": "150px" } };
+var _hoisted_184 = ["onClick"];
+var _hoisted_185 = {
   class: "lang-learner-panel-section",
   style: { "margin-bottom": "12px", "display": "flex", "flex-direction": "column", "gap": "6px" }
 };
-var _hoisted_179 = ["value"];
-var _hoisted_180 = {
+var _hoisted_186 = ["value"];
+var _hoisted_187 = {
   class: "lang-learner-panel-section",
   style: { "min-height": "200px" }
 };
-var _hoisted_181 = {
+var _hoisted_188 = {
   key: 0,
   class: "lang-learner-loading-text",
   style: { "padding": "30px 0", "text-align": "center" }
 };
-var _hoisted_182 = {
+var _hoisted_189 = {
   key: 1,
   class: "lang-learner-rss-article-detail"
 };
-var _hoisted_183 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "10px", "border-bottom": "1px solid var(--background-modifier-border)", "padding-bottom": "8px" } };
-var _hoisted_184 = ["href"];
-var _hoisted_185 = { style: { "font-size": "1.2em", "font-weight": "bold", "margin": "0 0 6px 0", "line-height": "1.3", "color": "var(--text-normal)" } };
-var _hoisted_186 = { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin": "0 0 16px 0" } };
-var _hoisted_187 = {
+var _hoisted_190 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "10px", "border-bottom": "1px solid var(--background-modifier-border)", "padding-bottom": "8px" } };
+var _hoisted_191 = ["href"];
+var _hoisted_192 = { style: { "font-size": "1.2em", "font-weight": "bold", "margin": "0 0 6px 0", "line-height": "1.3", "color": "var(--text-normal)" } };
+var _hoisted_193 = { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin": "0 0 16px 0" } };
+var _hoisted_194 = {
   class: "lang-learner-rss-article-body",
   style: { "line-height": "1.6", "font-size": "0.95em", "color": "var(--text-normal)", "display": "flex", "flex-direction": "column", "gap": "14px" }
 };
-var _hoisted_188 = { key: 0 };
-var _hoisted_189 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_190 = {
+var _hoisted_195 = { key: 0 };
+var _hoisted_196 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_197 = {
   key: 2,
   class: "lang-learner-rss-items-list",
   style: { "display": "flex", "flex-direction": "column", "gap": "8px" }
 };
-var _hoisted_191 = ["onClick"];
-var _hoisted_192 = { style: { "font-weight": "600", "font-size": "0.95em", "color": "var(--text-normal)", "line-height": "1.3", "text-align": "left" } };
-var _hoisted_193 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_194 = {
+var _hoisted_198 = ["onClick"];
+var _hoisted_199 = { style: { "font-weight": "600", "font-size": "0.95em", "color": "var(--text-normal)", "line-height": "1.3", "text-align": "left" } };
+var _hoisted_200 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
+var _hoisted_201 = {
   key: 3,
   class: "lang-learner-empty-hint",
   style: { "padding": "40px 0", "text-align": "center", "background": "var(--background-secondary)", "border-radius": "8px", "border": "1px dashed var(--background-modifier-border)" }
@@ -28833,7 +28921,7 @@ function render(_ctx, _cache) {
           onClick: _cache[4] || (_cache[4] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig),
           style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
         }, [
-          _cache[71] || (_cache[71] = createBaseVNode(
+          _cache[75] || (_cache[75] = createBaseVNode(
             "span",
             { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
             "\u2699\uFE0F \u53D1\u97F3\u914D\u7F6E",
@@ -28853,7 +28941,7 @@ function render(_ctx, _cache) {
           _hoisted_6,
           [
             createBaseVNode("div", _hoisted_7, [
-              _cache[73] || (_cache[73] = createBaseVNode(
+              _cache[77] || (_cache[77] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                 "\u53D1\u97F3\u5F15\u64CE:",
@@ -28867,7 +28955,7 @@ function render(_ctx, _cache) {
                   onChange: _cache[6] || (_cache[6] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                   style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                 },
-                [..._cache[72] || (_cache[72] = [
+                [..._cache[76] || (_cache[76] = [
                   createBaseVNode(
                     "option",
                     { value: "online" },
@@ -28890,7 +28978,7 @@ function render(_ctx, _cache) {
               ])
             ]),
             _ctx.voiceSettings.engine === "online" ? (openBlock(), createElementBlock("div", _hoisted_8, [
-              _cache[75] || (_cache[75] = createBaseVNode(
+              _cache[79] || (_cache[79] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                 "\u53E3\u97F3\u9009\u62E9:",
@@ -28904,7 +28992,7 @@ function render(_ctx, _cache) {
                   onChange: _cache[8] || (_cache[8] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
                   style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
                 },
-                [..._cache[74] || (_cache[74] = [
+                [..._cache[78] || (_cache[78] = [
                   createBaseVNode(
                     "option",
                     { value: 2 },
@@ -28930,7 +29018,7 @@ function render(_ctx, _cache) {
               { key: 1 },
               [
                 createBaseVNode("div", _hoisted_9, [
-                  _cache[76] || (_cache[76] = createBaseVNode(
+                  _cache[80] || (_cache[80] = createBaseVNode(
                     "label",
                     { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                     "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
@@ -29038,7 +29126,7 @@ function render(_ctx, _cache) {
           [vShow, _ctx.showVoiceConfig]
         ])
       ]),
-      _cache[81] || (_cache[81] = createBaseVNode(
+      _cache[85] || (_cache[85] = createBaseVNode(
         "div",
         { style: { "align-self": "stretch", "width": "1px", "background-color": "var(--background-modifier-border)", "margin": "4px 0" } },
         null,
@@ -29051,7 +29139,7 @@ function render(_ctx, _cache) {
           onClick: _cache[15] || (_cache[15] = ($event) => _ctx.showAiConfig = !_ctx.showAiConfig),
           style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
         }, [
-          _cache[77] || (_cache[77] = createBaseVNode(
+          _cache[81] || (_cache[81] = createBaseVNode(
             "span",
             { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
             "\u{1F916} AI \u6559\u5E08\u914D\u7F6E",
@@ -29071,7 +29159,7 @@ function render(_ctx, _cache) {
           _hoisted_18,
           [
             createBaseVNode("div", _hoisted_19, [
-              _cache[78] || (_cache[78] = createBaseVNode(
+              _cache[82] || (_cache[82] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                 "API Key:",
@@ -29095,7 +29183,7 @@ function render(_ctx, _cache) {
               ])
             ]),
             createBaseVNode("div", _hoisted_20, [
-              _cache[79] || (_cache[79] = createBaseVNode(
+              _cache[83] || (_cache[83] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                 "Base URL:",
@@ -29119,7 +29207,7 @@ function render(_ctx, _cache) {
               ])
             ]),
             createBaseVNode("div", _hoisted_21, [
-              _cache[80] || (_cache[80] = createBaseVNode(
+              _cache[84] || (_cache[84] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
                 "Model:",
@@ -29203,7 +29291,7 @@ function render(_ctx, _cache) {
             style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1em", "padding": "0 4px", "display": "inline-flex", "align-items": "center" },
             title: "\u8FD4\u56DE\u641C\u7D22\u5217\u8868"
           }, " \u2B05\uFE0F ")) : createCommentVNode("v-if", true),
-          _cache[82] || (_cache[82] = createBaseVNode(
+          _cache[86] || (_cache[86] = createBaseVNode(
             "span",
             null,
             "\u{1F4DD} \u5355\u8BCD\u8BE6\u60C5",
@@ -29268,7 +29356,7 @@ function render(_ctx, _cache) {
           /* TEXT */
         ),
         _ctx.selectedWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_38, [
-          _cache[83] || (_cache[83] = createBaseVNode(
+          _cache[87] || (_cache[87] = createBaseVNode(
             "div",
             {
               class: "lang-learner-etymology-title",
@@ -29289,7 +29377,7 @@ function render(_ctx, _cache) {
           )
         ])) : createCommentVNode("v-if", true),
         createBaseVNode("div", _hoisted_40, [
-          _cache[84] || (_cache[84] = createBaseVNode(
+          _cache[88] || (_cache[88] = createBaseVNode(
             "div",
             { class: "lang-learner-examples-title" },
             " \u{1F4A1} \u4F8B\u53E5\u8054\u60F3 ",
@@ -29319,7 +29407,7 @@ function render(_ctx, _cache) {
         ]),
         createBaseVNode("div", _hoisted_44, [
           createBaseVNode("div", _hoisted_45, [
-            _cache[85] || (_cache[85] = createBaseVNode(
+            _cache[89] || (_cache[89] = createBaseVNode(
               "div",
               { class: "lang-learner-examples-title" },
               "\u{1F916} AI \u6559\u5E08\u6DF1\u5EA6\u89E3\u6790",
@@ -29334,7 +29422,7 @@ function render(_ctx, _cache) {
           ]),
           _ctx.aiResponse ? (openBlock(), createElementBlock("div", _hoisted_47, [
             _ctx.aiResponse.root ? (openBlock(), createElementBlock("div", _hoisted_48, [
-              _cache[86] || (_cache[86] = createBaseVNode(
+              _cache[90] || (_cache[90] = createBaseVNode(
                 "span",
                 { style: { "font-size": "0.8em", "color": "var(--text-muted)" } },
                 "\u8BCD\u6839\u67A2\u7EBD:",
@@ -29437,7 +29525,7 @@ function render(_ctx, _cache) {
       _hoisted_52,
       [
         createBaseVNode("div", _hoisted_53, [
-          _cache[91] || (_cache[91] = createBaseVNode(
+          _cache[95] || (_cache[95] = createBaseVNode(
             "h3",
             { class: "lang-learner-panel-title" },
             "\u{1F4D6} \u8BED\u8A00\u5B66\u4E60\u52A9\u624B",
@@ -29453,7 +29541,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[87] || (_cache[87] = createBaseVNode(
+              _cache[91] || (_cache[91] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u603B\u8BCD\u91CF",
@@ -29469,7 +29557,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[88] || (_cache[88] = createBaseVNode(
+              _cache[92] || (_cache[92] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5DF2\u638C\u63E1",
@@ -29485,7 +29573,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[89] || (_cache[89] = createBaseVNode(
+              _cache[93] || (_cache[93] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u5B66\u4E60\u4E2D",
@@ -29501,7 +29589,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[90] || (_cache[90] = createBaseVNode(
+              _cache[94] || (_cache[94] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u751F\u8BCD",
@@ -29512,7 +29600,7 @@ function render(_ctx, _cache) {
           ])
         ]),
         createBaseVNode("div", _hoisted_63, [
-          _cache[92] || (_cache[92] = createBaseVNode(
+          _cache[96] || (_cache[96] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4CB} \u751F\u8BCD\u672C",
@@ -29591,7 +29679,7 @@ function render(_ctx, _cache) {
             class: "lang-learner-btn lang-learner-btn-accent lang-learner-btn-full",
             onClick: _cache[39] || (_cache[39] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
           }, " \u26A1 \u4E00\u952E\u5B66\u5B8C\u5F53\u524D\u6587\u7AE0 "),
-          _cache[93] || (_cache[93] = createBaseVNode(
+          _cache[97] || (_cache[97] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u5C06\u5F53\u524D\u6587\u7AE0\u4E2D\u9AD8\u9891\u8BCD\u8868\u5185\u7684\u672A\u6807\u8BB0\u8BCD\u6279\u91CF\u6807\u4E3A\u5DF2\u638C\u63E1",
@@ -29614,7 +29702,7 @@ function render(_ctx, _cache) {
             class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
             onClick: _cache[40] || (_cache[40] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
           }, " \u{1F3AF} \u5F00\u59CB\u8BCD\u6C47\u91CF\u4F30\u7B97 "),
-          _cache[94] || (_cache[94] = createBaseVNode(
+          _cache[98] || (_cache[98] = createBaseVNode(
             "p",
             { class: "lang-learner-hint-text" },
             "\u901A\u8FC7\u7EA6 20 \u9053\u9898\u5FEB\u901F\u6D4B\u5B9A\u4F60\u7684\u82F1\u8BED\u8BCD\u6C47\u6C34\u4F4D\u7EBF",
@@ -29653,7 +29741,7 @@ function render(_ctx, _cache) {
               /* TEXT */
             )
           ]),
-          _cache[95] || (_cache[95] = createBaseVNode(
+          _cache[99] || (_cache[99] = createBaseVNode(
             "p",
             { class: "lang-learner-estimation-prompt" },
             "\u4F60\u8BA4\u8BC6\u8FD9\u4E2A\u5355\u8BCD\u5417\uFF1F",
@@ -29672,7 +29760,7 @@ function render(_ctx, _cache) {
           ])
         ])) : createCommentVNode("v-if", true),
         _ctx.estimationState === "done" ? (openBlock(), createElementBlock("div", _hoisted_83, [
-          _cache[98] || (_cache[98] = createBaseVNode(
+          _cache[102] || (_cache[102] = createBaseVNode(
             "p",
             { class: "lang-learner-result-title" },
             "\u{1F389} \u4F30\u7B97\u5B8C\u6210\uFF01",
@@ -29680,7 +29768,7 @@ function render(_ctx, _cache) {
             /* CACHED */
           )),
           createBaseVNode("p", _hoisted_84, [
-            _cache[96] || (_cache[96] = createTextVNode(
+            _cache[100] || (_cache[100] = createTextVNode(
               "\u4F60\u7684\u8BCD\u6C47\u91CF\u7EA6\u4E3A ",
               -1
               /* CACHED */
@@ -29692,7 +29780,7 @@ function render(_ctx, _cache) {
               1
               /* TEXT */
             ),
-            _cache[97] || (_cache[97] = createTextVNode(
+            _cache[101] || (_cache[101] = createTextVNode(
               " \u8BCD",
               -1
               /* CACHED */
@@ -29721,7 +29809,7 @@ function render(_ctx, _cache) {
       _hoisted_86,
       [
         createBaseVNode("div", _hoisted_87, [
-          _cache[99] || (_cache[99] = createBaseVNode(
+          _cache[103] || (_cache[103] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F50D} \u8F93\u5165\u5F85\u5206\u6790\u53E5\u5B50",
@@ -29757,7 +29845,7 @@ function render(_ctx, _cache) {
           ])
         ]),
         _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_90, [
-          _cache[103] || (_cache[103] = createBaseVNode(
+          _cache[107] || (_cache[107] = createBaseVNode(
             "h4",
             { class: "lang-learner-section-title" },
             "\u{1F4D6} \u5206\u6790\u7ED3\u679C",
@@ -29766,7 +29854,7 @@ function render(_ctx, _cache) {
           )),
           createBaseVNode("div", _hoisted_91, [
             createBaseVNode("div", _hoisted_92, [
-              _cache[100] || (_cache[100] = createBaseVNode(
+              _cache[104] || (_cache[104] = createBaseVNode(
                 "span",
                 null,
                 "\u{1F310} \u673A\u5668\u7FFB\u8BD1",
@@ -29790,7 +29878,7 @@ function render(_ctx, _cache) {
             ))
           ]),
           createBaseVNode("div", _hoisted_95, [
-            _cache[101] || (_cache[101] = createBaseVNode(
+            _cache[105] || (_cache[105] = createBaseVNode(
               "div",
               { class: "lang-learner-box-title" },
               "\u{1F3A8} \u53E5\u5B50\u9AD8\u4EAE\u4E0E\u4EA4\u4E92",
@@ -29836,7 +29924,7 @@ function render(_ctx, _cache) {
                 /* KEYED_FRAGMENT */
               ))
             ]),
-            _cache[102] || (_cache[102] = createBaseVNode(
+            _cache[106] || (_cache[106] = createBaseVNode(
               "p",
               {
                 class: "lang-learner-hint-text",
@@ -29928,7 +30016,7 @@ function render(_ctx, _cache) {
       _hoisted_111,
       [
         createBaseVNode("div", _hoisted_112, [
-          _cache[105] || (_cache[105] = createBaseVNode(
+          _cache[109] || (_cache[109] = createBaseVNode(
             "h3",
             { class: "lang-learner-panel-title" },
             "\u{1F4C5} \u95F4\u9694\u590D\u4E60",
@@ -29944,7 +30032,7 @@ function render(_ctx, _cache) {
                 1
                 /* TEXT */
               ),
-              _cache[104] || (_cache[104] = createBaseVNode(
+              _cache[108] || (_cache[108] = createBaseVNode(
                 "span",
                 { class: "lang-learner-stat-label" },
                 "\u4ECA\u65E5\u5F85\u590D\u4E60",
@@ -29988,7 +30076,7 @@ function render(_ctx, _cache) {
               /* TEXT */
             ),
             _ctx.currentReviewWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_123, [
-              _cache[106] || (_cache[106] = createBaseVNode(
+              _cache[110] || (_cache[110] = createBaseVNode(
                 "div",
                 {
                   class: "lang-learner-etymology-title",
@@ -30007,7 +30095,7 @@ function render(_ctx, _cache) {
               )
             ])) : createCommentVNode("v-if", true),
             createBaseVNode("div", _hoisted_125, [
-              _cache[107] || (_cache[107] = createBaseVNode(
+              _cache[111] || (_cache[111] = createBaseVNode(
                 "div",
                 {
                   class: "lang-learner-examples-title",
@@ -30069,7 +30157,7 @@ function render(_ctx, _cache) {
               }, " \u26A1 \u719F\u7EC3 ")
             ]))
           ])
-        ])) : (openBlock(), createElementBlock("div", _hoisted_131, [..._cache[108] || (_cache[108] = [
+        ])) : (openBlock(), createElementBlock("div", _hoisted_131, [..._cache[112] || (_cache[112] = [
           createBaseVNode(
             "div",
             { style: { "font-size": "3em", "margin-bottom": "12px" } },
@@ -30102,7 +30190,7 @@ function render(_ctx, _cache) {
       "div",
       _hoisted_132,
       [
-        _cache[117] || (_cache[117] = createBaseVNode(
+        _cache[121] || (_cache[121] = createBaseVNode(
           "div",
           {
             class: "lang-learner-panel-dashboard",
@@ -30118,7 +30206,7 @@ function render(_ctx, _cache) {
         createBaseVNode("div", _hoisted_133, [
           createBaseVNode("div", _hoisted_134, [
             createBaseVNode("div", _hoisted_135, [
-              _cache[109] || (_cache[109] = createBaseVNode(
+              _cache[113] || (_cache[113] = createBaseVNode(
                 "label",
                 { style: { "font-size": "0.8em", "font-weight": "600", "color": "var(--text-muted)" } },
                 "\u{1F4C1} \u8F7D\u5165\u5E93\u5185\u5A92\u4F53\u6587\u4EF6",
@@ -30140,7 +30228,7 @@ function render(_ctx, _cache) {
                 style: { "width": "100%", "padding": "5px 8px", "border-radius": "6px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.82em", "cursor": "pointer" }
               },
               [
-                _cache[110] || (_cache[110] = createBaseVNode(
+                _cache[114] || (_cache[114] = createBaseVNode(
                   "option",
                   { value: "" },
                   "-- \u8BF7\u9009\u62E9\u672C\u5730\u5A92\u4F53 --",
@@ -30167,7 +30255,7 @@ function render(_ctx, _cache) {
             ])
           ]),
           createBaseVNode("div", _hoisted_137, [
-            _cache[111] || (_cache[111] = createBaseVNode(
+            _cache[115] || (_cache[115] = createBaseVNode(
               "label",
               { style: { "font-size": "0.8em", "font-weight": "600", "color": "var(--text-muted)" } },
               "\u{1F310} \u5916\u90E8\u76F4\u94FE / YouTube / B\u7AD9\u94FE\u63A5",
@@ -30204,8 +30292,8 @@ function render(_ctx, _cache) {
               src: _ctx.activeVideoSrc,
               controls: "",
               onTimeupdate: _cache[59] || (_cache[59] = (...args) => _ctx.onVideoTimeUpdate && _ctx.onVideoTimeUpdate(...args)),
-              style: { "width": "100%", "max-height": "240px", "display": "block", "border-radius": "6px" }
-            }, null, 40, _hoisted_141)) : _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_142, [..._cache[112] || (_cache[112] = [
+              style: { "width": "100%", "max-height": "280px", "aspect-ratio": "16/9", "display": "block", "border-radius": "6px" }
+            }, null, 40, _hoisted_141)) : _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_142, [..._cache[116] || (_cache[116] = [
               createBaseVNode(
                 "div",
                 { id: "youtube-player-el" },
@@ -30216,7 +30304,7 @@ function render(_ctx, _cache) {
             ])])) : _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("iframe", {
               key: 2,
               src: _ctx.activeVideoSrc,
-              style: { "width": "100%", "height": "200px", "border": "none", "border-radius": "6px", "display": "block" },
+              style: { "width": "100%", "height": "240px", "border": "none", "border-radius": "6px", "display": "block" },
               allowfullscreen: ""
             }, null, 8, _hoisted_143)) : createCommentVNode("v-if", true)
           ]),
@@ -30230,7 +30318,7 @@ function render(_ctx, _cache) {
                 /* TEXT */
               ),
               _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_147, [
-                _cache[113] || (_cache[113] = createBaseVNode(
+                _cache[117] || (_cache[117] = createBaseVNode(
                   "span",
                   { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin-right": "2px" } },
                   "\u500D\u901F:",
@@ -30262,14 +30350,38 @@ function render(_ctx, _cache) {
             }, " \u{1F4CC} \u63D2\u5165\u5F53\u524D\u89C6\u9891\u65F6\u95F4\u6233\u81F3\u6587\u6863 ")) : createCommentVNode("v-if", true)
           ]),
           _ctx.activeSubtitleIndex !== -1 && _ctx.subtitlesList[_ctx.activeSubtitleIndex] ? (openBlock(), createElementBlock("div", _hoisted_150, [
-            _cache[114] || (_cache[114] = createBaseVNode(
-              "div",
-              { style: { "font-size": "0.75em", "color": "var(--interactive-accent)", "font-weight": "700", "margin-bottom": "6px", "letter-spacing": "0.5px" } },
-              "\u{1F4E2} \u5F53\u524D\u64AD\u653E\u53E5",
-              -1
-              /* CACHED */
-            )),
             createBaseVNode("div", _hoisted_151, [
+              createBaseVNode("div", _hoisted_152, [
+                createBaseVNode("button", {
+                  onClick: _cache[61] || (_cache[61] = (...args) => _ctx.goToPrevSubtitle && _ctx.goToPrevSubtitle(...args)),
+                  class: "lang-learner-btn-status-mini",
+                  style: { "padding": "2px 5px", "font-size": "0.7em" },
+                  title: "\u4E0A\u4E00\u53E5"
+                }, " \u23EE\uFE0F \u4E0A\u4E00\u53E5 "),
+                createBaseVNode("button", {
+                  onClick: _cache[62] || (_cache[62] = (...args) => _ctx.goToNextSubtitle && _ctx.goToNextSubtitle(...args)),
+                  class: "lang-learner-btn-status-mini",
+                  style: { "padding": "2px 5px", "font-size": "0.7em" },
+                  title: "\u4E0B\u4E00\u53E5"
+                }, " \u4E0B\u4E00\u53E5 \u23ED\uFE0F ")
+              ]),
+              _cache[118] || (_cache[118] = createBaseVNode(
+                "div",
+                { style: { "font-size": "0.75em", "color": "var(--interactive-accent)", "font-weight": "700", "letter-spacing": "0.5px" } },
+                "\u{1F4E2} \u5F53\u524D\u64AD\u653E\u53E5",
+                -1
+                /* CACHED */
+              )),
+              createBaseVNode("div", _hoisted_153, [
+                createBaseVNode("button", {
+                  onClick: _cache[63] || (_cache[63] = (...args) => _ctx.toggleLoopCurrentSentence && _ctx.toggleLoopCurrentSentence(...args)),
+                  class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.isLoopingCurrentSentence }]),
+                  style: { "padding": "2px 6px", "font-size": "0.7em", "font-weight": "600" },
+                  title: _ctx.isLoopingCurrentSentence ? "\u70B9\u51FB\u5173\u95ED\u5355\u53E5\u5FAA\u73AF" : "\u70B9\u51FB\u5F00\u542F\u5355\u53E5\u5FAA\u73AF"
+                }, " \u{1F502} " + toDisplayString(_ctx.isLoopingCurrentSentence ? "\u5FAA\u73AF\u4E2D" : "\u5355\u53E5\u5FAA\u73AF"), 11, _hoisted_154)
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_155, [
               (openBlock(true), createElementBlock(
                 Fragment,
                 null,
@@ -30280,7 +30392,7 @@ function render(_ctx, _cache) {
                     [
                       token.type === "text" ? (openBlock(), createElementBlock(
                         "span",
-                        _hoisted_152,
+                        _hoisted_156,
                         toDisplayString(token.text),
                         1
                         /* TEXT */
@@ -30298,7 +30410,7 @@ function render(_ctx, _cache) {
                         onClick: withModifiers(($event) => _ctx.onSentenceWordClick(token.lemma), ["stop"]),
                         onDblclick: withModifiers(($event) => _ctx.onSentenceWordDblClick(token), ["stop"]),
                         style: { "border-bottom": "1.5px dashed var(--text-accent)", "padding": "0 1px", "margin": "0 1px", "cursor": "pointer" }
-                      }, toDisplayString(token.text), 43, _hoisted_153))
+                      }, toDisplayString(token.text), 43, _hoisted_157))
                     ],
                     64
                     /* STABLE_FRAGMENT */
@@ -30307,27 +30419,41 @@ function render(_ctx, _cache) {
                 128
                 /* KEYED_FRAGMENT */
               ))
-            ])
+            ]),
+            _ctx.subtitlesList[_ctx.activeSubtitleIndex].translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
+              "div",
+              _hoisted_158,
+              toDisplayString(_ctx.subtitlesList[_ctx.activeSubtitleIndex].translation),
+              1
+              /* TEXT */
+            )) : createCommentVNode("v-if", true)
           ])) : createCommentVNode("v-if", true),
-          createBaseVNode("div", _hoisted_154, [
-            createBaseVNode("div", _hoisted_155, [
+          createBaseVNode("div", _hoisted_159, [
+            createBaseVNode("div", _hoisted_160, [
               createBaseVNode(
                 "span",
-                _hoisted_156,
+                _hoisted_161,
                 " \u{1F4AC} \u5B57\u5E55\u5217\u8868 (" + toDisplayString(_ctx.subtitlesList.length) + " \u53E5) ",
                 1
                 /* TEXT */
               ),
-              createBaseVNode("div", _hoisted_157, [
-                _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
+              createBaseVNode("div", _hoisted_162, [
+                _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("button", {
                   key: 0,
-                  onClick: _cache[61] || (_cache[61] = (...args) => _ctx.loadYouTubeCaptions && _ctx.loadYouTubeCaptions(...args)),
+                  onClick: _cache[64] || (_cache[64] = ($event) => _ctx.showTranslation = !_ctx.showTranslation),
+                  class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.showTranslation }]),
+                  style: { "padding": "2px 5px", "font-size": "0.7em", "font-weight": "600" },
+                  title: _ctx.showTranslation ? "\u70B9\u51FB\u663E\u793A\u539F\u6587\uFF0C\u9690\u85CF\u7FFB\u8BD1" : "\u70B9\u51FB\u53CC\u8BED\u5BF9\u7167\u663E\u793A"
+                }, " \u{1F441}\uFE0F " + toDisplayString(_ctx.showTranslation ? "\u53CC\u8BED\u6A21\u5F0F (\u8BD1\u6587\u663E\u793A)" : "\u539F\u6587\u6A21\u5F0F (\u8BD1\u6587\u9690\u85CF)"), 11, _hoisted_163)) : createCommentVNode("v-if", true),
+                _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
+                  key: 1,
+                  onClick: _cache[65] || (_cache[65] = (...args) => _ctx.loadYouTubeCaptions && _ctx.loadYouTubeCaptions(...args)),
                   class: "lang-learner-btn-status-mini",
                   style: { "padding": "2px 5px", "font-size": "0.7em" },
                   disabled: _ctx.isLoadingSubtitles
-                }, toDisplayString(_ctx.isLoadingSubtitles ? "\u6293\u53D6\u4E2D..." : "\u{1F310} \u6293\u53D6\u5B57\u5E55"), 9, _hoisted_158)) : createCommentVNode("v-if", true),
-                createBaseVNode("label", _hoisted_159, [
-                  _cache[115] || (_cache[115] = createTextVNode(
+                }, toDisplayString(_ctx.isLoadingSubtitles ? "\u6293\u53D6\u4E2D..." : "\u{1F310} \u6293\u53D6\u5B57\u5E55"), 9, _hoisted_164)) : createCommentVNode("v-if", true),
+                createBaseVNode("label", _hoisted_165, [
+                  _cache[119] || (_cache[119] = createTextVNode(
                     " \u{1F4C1} \u5BFC\u5165 ",
                     -1
                     /* CACHED */
@@ -30337,7 +30463,7 @@ function render(_ctx, _cache) {
                     {
                       type: "file",
                       accept: ".srt,.vtt",
-                      onChange: _cache[62] || (_cache[62] = (...args) => _ctx.handleLocalSubtitleUpload && _ctx.handleLocalSubtitleUpload(...args)),
+                      onChange: _cache[66] || (_cache[66] = (...args) => _ctx.handleLocalSubtitleUpload && _ctx.handleLocalSubtitleUpload(...args)),
                       style: { "display": "none" }
                     },
                     null,
@@ -30346,15 +30472,15 @@ function render(_ctx, _cache) {
                   )
                 ]),
                 _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("button", {
-                  key: 1,
-                  onClick: _cache[63] || (_cache[63] = (...args) => _ctx.exportSubtitlesToNote && _ctx.exportSubtitlesToNote(...args)),
+                  key: 2,
+                  onClick: _cache[67] || (_cache[67] = (...args) => _ctx.exportSubtitlesToNote && _ctx.exportSubtitlesToNote(...args)),
                   class: "lang-learner-btn-status-mini active",
                   style: { "padding": "2px 5px", "font-size": "0.7em" },
                   title: "\u5BFC\u51FA\u5B8C\u6574\u5B57\u5E55\u81F3\u6B63\u5728\u7F16\u8F91\u7684\u6587\u6863\u533A"
                 }, " \u{1F4E4} \u5BFC\u51FA ")) : createCommentVNode("v-if", true)
               ])
             ]),
-            _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_160, [
+            _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_166, [
               (openBlock(true), createElementBlock(
                 Fragment,
                 null,
@@ -30363,17 +30489,17 @@ function render(_ctx, _cache) {
                     key: idx,
                     id: "sub-line-" + idx,
                     class: normalizeClass(["lang-learner-sub-line", { "lang-learner-active-sub": _ctx.activeSubtitleIndex === idx }]),
-                    style: { "padding": "5px 8px", "border-radius": "6px", "line-height": "1.45", "font-size": "0.88em", "transition": "all 0.15s ease", "cursor": "pointer" },
+                    style: { "padding": "5px 8px", "border-radius": "6px", "line-height": "1.45", "font-size": "0.88em", "transition": "all 0.15s ease", "cursor": "pointer", "display": "flex", "flex-direction": "column" },
                     onClick: ($event) => _ctx.seekToSubtitleTime(sub.start)
                   }, [
                     createBaseVNode(
                       "span",
-                      _hoisted_162,
+                      _hoisted_168,
                       toDisplayString(_ctx.formatTime(sub.start)),
                       1
                       /* TEXT */
                     ),
-                    createBaseVNode("span", _hoisted_163, [
+                    createBaseVNode("span", _hoisted_169, [
                       (openBlock(true), createElementBlock(
                         Fragment,
                         null,
@@ -30384,7 +30510,7 @@ function render(_ctx, _cache) {
                             [
                               token.type === "text" ? (openBlock(), createElementBlock(
                                 "span",
-                                _hoisted_164,
+                                _hoisted_170,
                                 toDisplayString(token.text),
                                 1
                                 /* TEXT */
@@ -30401,7 +30527,7 @@ function render(_ctx, _cache) {
                                 "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
                                 onClick: withModifiers(($event) => _ctx.onSentenceWordClick(token.lemma), ["stop"]),
                                 onDblclick: withModifiers(($event) => _ctx.onSentenceWordDblClick(token), ["stop"])
-                              }, toDisplayString(token.text), 43, _hoisted_165))
+                              }, toDisplayString(token.text), 43, _hoisted_171))
                             ],
                             64
                             /* STABLE_FRAGMENT */
@@ -30410,15 +30536,22 @@ function render(_ctx, _cache) {
                         128
                         /* KEYED_FRAGMENT */
                       ))
-                    ])
-                  ], 10, _hoisted_161);
+                    ]),
+                    sub.translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
+                      "div",
+                      _hoisted_172,
+                      toDisplayString(sub.translation),
+                      1
+                      /* TEXT */
+                    )) : createCommentVNode("v-if", true)
+                  ], 10, _hoisted_167);
                 }),
                 128
                 /* KEYED_FRAGMENT */
               ))
-            ])) : (openBlock(), createElementBlock("div", _hoisted_166, " \u6682\u65E0\u5B57\u5E55\uFF0C\u8BF7\u6293\u53D6\u5728\u7EBF\u5B57\u5E55\u6216\u5BFC\u5165\u672C\u5730 SRT/VTT \u6587\u4EF6 "))
+            ])) : (openBlock(), createElementBlock("div", _hoisted_173, " \u6682\u65E0\u5B57\u5E55\uFF0C\u8BF7\u6293\u53D6\u5728\u7EBF\u5B57\u5E55\u6216\u5BFC\u5165\u672C\u5730 SRT/VTT \u6587\u4EF6 "))
           ])
-        ])) : (openBlock(), createElementBlock("div", _hoisted_167, [..._cache[116] || (_cache[116] = [
+        ])) : (openBlock(), createElementBlock("div", _hoisted_174, [..._cache[120] || (_cache[120] = [
           createBaseVNode(
             "div",
             { style: { "font-size": "2.5em", "margin-bottom": "10px", "filter": "grayscale(0.2)" } },
@@ -30449,9 +30582,9 @@ function render(_ctx, _cache) {
     ]),
     withDirectives(createBaseVNode(
       "div",
-      _hoisted_168,
+      _hoisted_175,
       [
-        _cache[123] || (_cache[123] = createBaseVNode(
+        _cache[127] || (_cache[127] = createBaseVNode(
           "div",
           { class: "lang-learner-panel-dashboard" },
           [
@@ -30461,13 +30594,13 @@ function render(_ctx, _cache) {
           -1
           /* CACHED */
         )),
-        createBaseVNode("div", _hoisted_169, [
+        createBaseVNode("div", _hoisted_176, [
           createBaseVNode("div", {
             class: "lang-learner-voice-settings-header",
-            onClick: _cache[64] || (_cache[64] = ($event) => _ctx.showRssConfig = !_ctx.showRssConfig),
+            onClick: _cache[68] || (_cache[68] = ($event) => _ctx.showRssConfig = !_ctx.showRssConfig),
             style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
           }, [
-            _cache[118] || (_cache[118] = createBaseVNode(
+            _cache[122] || (_cache[122] = createBaseVNode(
               "span",
               { style: { "font-weight": "600", "font-size": "0.85em", "color": "var(--text-muted)" } },
               "\u2795 \u7BA1\u7406 RSS \u8BA2\u9605\u6E90",
@@ -30476,7 +30609,7 @@ function render(_ctx, _cache) {
             )),
             createBaseVNode(
               "span",
-              _hoisted_170,
+              _hoisted_177,
               toDisplayString(_ctx.showRssConfig ? "\u25BC \u6536\u8D77" : "\u25B6 \u5C55\u5F00"),
               1
               /* TEXT */
@@ -30484,13 +30617,13 @@ function render(_ctx, _cache) {
           ]),
           withDirectives(createBaseVNode(
             "div",
-            _hoisted_171,
+            _hoisted_178,
             [
-              createBaseVNode("div", _hoisted_172, [
+              createBaseVNode("div", _hoisted_179, [
                 withDirectives(createBaseVNode(
                   "input",
                   {
-                    "onUpdate:modelValue": _cache[65] || (_cache[65] = ($event) => _ctx.newFeedName = $event),
+                    "onUpdate:modelValue": _cache[69] || (_cache[69] = ($event) => _ctx.newFeedName = $event),
                     placeholder: "\u8BA2\u9605\u6E90\u540D\u79F0 (\u5982: Hacker News)",
                     style: { "width": "100%", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em" }
                   },
@@ -30500,11 +30633,11 @@ function render(_ctx, _cache) {
                 ), [
                   [vModelText, _ctx.newFeedName]
                 ]),
-                createBaseVNode("div", _hoisted_173, [
+                createBaseVNode("div", _hoisted_180, [
                   withDirectives(createBaseVNode(
                     "input",
                     {
-                      "onUpdate:modelValue": _cache[66] || (_cache[66] = ($event) => _ctx.newFeedUrl = $event),
+                      "onUpdate:modelValue": _cache[70] || (_cache[70] = ($event) => _ctx.newFeedUrl = $event),
                       placeholder: "\u8BA2\u9605\u6E90 RSS URL",
                       style: { "flex": "1", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em" }
                     },
@@ -30515,21 +30648,21 @@ function render(_ctx, _cache) {
                     [vModelText, _ctx.newFeedUrl]
                   ]),
                   createBaseVNode("button", {
-                    onClick: _cache[67] || (_cache[67] = (...args) => _ctx.addRssFeed && _ctx.addRssFeed(...args)),
+                    onClick: _cache[71] || (_cache[71] = (...args) => _ctx.addRssFeed && _ctx.addRssFeed(...args)),
                     class: "lang-learner-btn lang-learner-btn-primary",
                     style: { "padding": "6px 12px", "font-size": "0.85em", "font-weight": "500" }
                   }, " \u6DFB\u52A0 ")
                 ])
               ]),
-              createBaseVNode("div", _hoisted_174, [
-                _cache[119] || (_cache[119] = createBaseVNode(
+              createBaseVNode("div", _hoisted_181, [
+                _cache[123] || (_cache[123] = createBaseVNode(
                   "label",
                   { style: { "font-size": "0.75em", "color": "var(--text-muted)", "font-weight": "600", "display": "block", "margin-bottom": "4px" } },
                   "\u5DF2\u8BA2\u9605\u6E90\u5217\u8868:",
                   -1
                   /* CACHED */
                 )),
-                createBaseVNode("div", _hoisted_175, [
+                createBaseVNode("div", _hoisted_182, [
                   (openBlock(true), createElementBlock(
                     Fragment,
                     null,
@@ -30540,7 +30673,7 @@ function render(_ctx, _cache) {
                       }, [
                         createBaseVNode(
                           "span",
-                          _hoisted_176,
+                          _hoisted_183,
                           toDisplayString(feed.name),
                           1
                           /* TEXT */
@@ -30550,7 +30683,7 @@ function render(_ctx, _cache) {
                           class: "lang-learner-btn-icon",
                           title: "\u5220\u9664\u8BE5\u6E90",
                           style: { "padding": "2px 4px", "font-size": "0.8em", "opacity": "0.7" }
-                        }, " \u274C ", 8, _hoisted_177)
+                        }, " \u274C ", 8, _hoisted_184)
                       ]);
                     }),
                     128
@@ -30565,8 +30698,8 @@ function render(_ctx, _cache) {
             [vShow, _ctx.showRssConfig]
           ])
         ]),
-        createBaseVNode("div", _hoisted_178, [
-          _cache[121] || (_cache[121] = createBaseVNode(
+        createBaseVNode("div", _hoisted_185, [
+          _cache[125] || (_cache[125] = createBaseVNode(
             "label",
             { style: { "font-size": "0.85em", "font-weight": "600", "color": "var(--text-muted)" } },
             "\u{1F4F0} \u9009\u62E9\u8BA2\u9605\u6E90\u8FDB\u884C\u9605\u8BFB",
@@ -30576,12 +30709,12 @@ function render(_ctx, _cache) {
           withDirectives(createBaseVNode(
             "select",
             {
-              "onUpdate:modelValue": _cache[68] || (_cache[68] = ($event) => _ctx.selectedFeedUrl = $event),
-              onChange: _cache[69] || (_cache[69] = (...args) => _ctx.handleSelectFeed && _ctx.handleSelectFeed(...args)),
+              "onUpdate:modelValue": _cache[72] || (_cache[72] = ($event) => _ctx.selectedFeedUrl = $event),
+              onChange: _cache[73] || (_cache[73] = (...args) => _ctx.handleSelectFeed && _ctx.handleSelectFeed(...args)),
               style: { "width": "100%", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em", "cursor": "pointer" }
             },
             [
-              _cache[120] || (_cache[120] = createBaseVNode(
+              _cache[124] || (_cache[124] = createBaseVNode(
                 "option",
                 { value: "" },
                 "-- \u8BF7\u9009\u62E9 RSS \u8BA2\u9605\u6E90 --",
@@ -30595,7 +30728,7 @@ function render(_ctx, _cache) {
                   return openBlock(), createElementBlock("option", {
                     key: feed.url,
                     value: feed.url
-                  }, toDisplayString(feed.name), 9, _hoisted_179);
+                  }, toDisplayString(feed.name), 9, _hoisted_186);
                 }),
                 128
                 /* KEYED_FRAGMENT */
@@ -30607,11 +30740,11 @@ function render(_ctx, _cache) {
             [vModelSelect, _ctx.selectedFeedUrl]
           ])
         ]),
-        createBaseVNode("div", _hoisted_180, [
-          _ctx.isLoadingFeeds ? (openBlock(), createElementBlock("div", _hoisted_181, " \u6B63\u5728\u62C9\u53D6 RSS \u6570\u636E\u5E76\u5206\u8BCD\u9AD8\u4EAE\uFF0C\u8BF7\u7A0D\u5019... ")) : _ctx.selectedArticle ? (openBlock(), createElementBlock("div", _hoisted_182, [
-            createBaseVNode("div", _hoisted_183, [
+        createBaseVNode("div", _hoisted_187, [
+          _ctx.isLoadingFeeds ? (openBlock(), createElementBlock("div", _hoisted_188, " \u6B63\u5728\u62C9\u53D6 RSS \u6570\u636E\u5E76\u5206\u8BCD\u9AD8\u4EAE\uFF0C\u8BF7\u7A0D\u5019... ")) : _ctx.selectedArticle ? (openBlock(), createElementBlock("div", _hoisted_189, [
+            createBaseVNode("div", _hoisted_190, [
               createBaseVNode("button", {
-                onClick: _cache[70] || (_cache[70] = ($event) => _ctx.selectedArticle = null),
+                onClick: _cache[74] || (_cache[74] = ($event) => _ctx.selectedArticle = null),
                 class: "lang-learner-btn",
                 style: { "padding": "4px 10px", "font-size": "0.8em", "display": "flex", "align-items": "center", "gap": "4px" }
               }, " \u2B05\uFE0F \u8FD4\u56DE\u6587\u7AE0\u5217\u8868 "),
@@ -30621,23 +30754,23 @@ function render(_ctx, _cache) {
                 class: "lang-learner-btn-icon",
                 title: "\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00\u539F\u6587",
                 style: { "text-decoration": "none", "font-size": "1.1em" }
-              }, " \u{1F310} ", 8, _hoisted_184)
+              }, " \u{1F310} ", 8, _hoisted_191)
             ]),
             createBaseVNode(
               "h3",
-              _hoisted_185,
+              _hoisted_192,
               toDisplayString(_ctx.selectedArticle.title),
               1
               /* TEXT */
             ),
             createBaseVNode(
               "p",
-              _hoisted_186,
+              _hoisted_193,
               " \u53D1\u5E03\u65E5\u671F: " + toDisplayString(_ctx.selectedArticle.date),
               1
               /* TEXT */
             ),
-            createBaseVNode("div", _hoisted_187, [
+            createBaseVNode("div", _hoisted_194, [
               (openBlock(true), createElementBlock(
                 Fragment,
                 null,
@@ -30656,7 +30789,7 @@ function render(_ctx, _cache) {
                           [
                             token.type === "text" ? (openBlock(), createElementBlock(
                               "span",
-                              _hoisted_188,
+                              _hoisted_195,
                               toDisplayString(token.text),
                               1
                               /* TEXT */
@@ -30673,7 +30806,7 @@ function render(_ctx, _cache) {
                               "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
                               onClick: ($event) => _ctx.onSentenceWordClick(token.lemma),
                               onDblclick: ($event) => _ctx.onSentenceWordDblClick(token)
-                            }, toDisplayString(token.text), 43, _hoisted_189))
+                            }, toDisplayString(token.text), 43, _hoisted_196))
                           ],
                           64
                           /* STABLE_FRAGMENT */
@@ -30688,7 +30821,7 @@ function render(_ctx, _cache) {
                 /* KEYED_FRAGMENT */
               ))
             ])
-          ])) : _ctx.feedItems.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_190, [
+          ])) : _ctx.feedItems.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_197, [
             (openBlock(true), createElementBlock(
               Fragment,
               null,
@@ -30701,24 +30834,24 @@ function render(_ctx, _cache) {
                 }, [
                   createBaseVNode(
                     "span",
-                    _hoisted_192,
+                    _hoisted_199,
                     toDisplayString(item.title),
                     1
                     /* TEXT */
                   ),
                   createBaseVNode(
                     "span",
-                    _hoisted_193,
+                    _hoisted_200,
                     toDisplayString(item.date),
                     1
                     /* TEXT */
                   )
-                ], 8, _hoisted_191);
+                ], 8, _hoisted_198);
               }),
               128
               /* KEYED_FRAGMENT */
             ))
-          ])) : (openBlock(), createElementBlock("div", _hoisted_194, [..._cache[122] || (_cache[122] = [
+          ])) : (openBlock(), createElementBlock("div", _hoisted_201, [..._cache[126] || (_cache[126] = [
             createBaseVNode(
               "div",
               { style: { "font-size": "2.5em", "margin-bottom": "8px" } },
@@ -30747,7 +30880,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-a63c6472";
+Panel_default.__scopeId = "data-v-c53261cd";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
