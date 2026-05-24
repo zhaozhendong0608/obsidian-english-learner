@@ -1,14 +1,24 @@
 <template>
   <div class="lang-learner-panel">
     <!-- 全局自主查词输入框 -->
-    <div class="lang-learner-search-bar">
+    <div class="lang-learner-search-bar" style="display: flex; gap: 6px; width: 100%;">
       <input
         v-model="searchQuery"
         @keyup.enter="performSearch"
-        placeholder="输入单词查询..."
+        placeholder="输入单词/中文查询..."
         class="lang-learner-search-input"
+        style="flex: 1; min-width: 0;"
       />
-      <button @click="performSearch" class="lang-learner-btn lang-learner-btn-primary lang-learner-search-btn">🔍 查询</button>
+      <button @click="performSearch" class="lang-learner-btn lang-learner-btn-primary lang-learner-search-btn" style="flex-shrink: 0;">🔍 查询</button>
+      <button 
+        v-if="searchQuery.trim()"
+        @click="lookupInSystemDict(searchQuery)" 
+        class="lang-learner-btn" 
+        style="flex-shrink: 0; padding: 4px 8px; font-size: 0.85em; display: inline-flex; align-items: center; justify-content: center;"
+        title="在 macOS 系统词典中查询"
+      >
+        📖 系统
+      </button>
     </div>
 
     <!-- 语音发音配置区 -->
@@ -94,10 +104,54 @@
       </div>
     </div>
 
+    <!-- 搜索结果单词列表 -->
+    <div v-if="searchResultsList.length > 0 && !selectedWord" class="lang-learner-panel-section lang-learner-search-results" style="margin-bottom: 12px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 12px;">
+      <h4 class="lang-learner-section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span>🔍 搜索结果 ({{ searchResultsList.length }} 个)</span>
+        <button 
+          @click="searchResultsList = []" 
+          style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; color: var(--text-muted);"
+          title="关闭列表"
+        >
+          ✕
+        </button>
+      </h4>
+      <div 
+        class="lang-learner-search-results-list" 
+        style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px;"
+      >
+        <div 
+          v-for="word in searchResultsList" 
+          :key="word" 
+          class="lang-learner-search-result-item" 
+          @click="selectResultWord(word)"
+          style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 6px; background-color: var(--background-secondary); cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s ease;"
+        >
+          <span style="font-weight: 600; color: var(--text-accent);">{{ word }}</span>
+          <span 
+            style="font-size: 0.85em; color: var(--text-muted); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;"
+            :title="getWordTranslation(word)"
+          >
+            {{ getWordTranslation(word) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
     <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
       <h4 class="lang-learner-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>📝 单词详情</span>
+        <span style="display: flex; align-items: center; gap: 6px;">
+          <button 
+            v-if="searchResultsList.length > 0" 
+            @click="backToSearchResults" 
+            style="background: transparent; border: none; cursor: pointer; font-size: 1em; padding: 0 4px; display: inline-flex; align-items: center;"
+            title="返回搜索列表"
+          >
+            ⬅️
+          </button>
+          <span>📝 单词详情</span>
+        </span>
         <button
           class="lang-learner-btn-icon"
           title="复制卡片内容"
@@ -118,6 +172,14 @@
               style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
             >
               🔊
+            </button>
+            <button 
+              class="lang-learner-btn-voice-word" 
+              title="在系统词典中查看" 
+              @click="lookupInSystemDict(selectedWord.word)"
+              style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+            >
+              📖
             </button>
             <button 
               class="lang-learner-btn-add-word" 
@@ -1030,6 +1092,7 @@ export default defineComponent({
 
     // ========== 单词详情 ==========
     const selectedWord = ref<WordInfo | null>(null);
+    const searchResultsList = ref<string[]>([]);
     const showSyllableSplit = ref(false);
     const exampleSentences = ref<string[]>([]);
     const isLoadingExamples = ref(false);
@@ -1667,7 +1730,10 @@ export default defineComponent({
     }
 
     /** 响应主窗口的单词单击选中事件，更新侧边栏详情 */
-    function handleWordSelected(word: string) {
+    function handleWordSelected(word: string, keepSearchResults = false) {
+        if (!keepSearchResults) {
+            searchResultsList.value = [];
+        }
         showSyllableSplit.value = false;
         loadExamples(word);
         const info = vocabManager.getInfo(word);
@@ -2150,13 +2216,165 @@ export default defineComponent({
 
     // ========== 全局自主查词 ==========
     const searchQuery = ref('');
+    const onlineTransCache = new Map<string, string>();
 
-    /** 执行自主查词：将输入词还原为原型后触发 handleWordSelected */
-    function performSearch() {
-        const query = searchQuery.value.trim().toLowerCase();
+    /** 异步在线获取有道中文词汇推荐 */
+    async function fetchOnlineChineseSuggestions(query: string): Promise<Array<{ word: string, trans: string }>> {
+        console.log(`[Language Learner] 开始异步在线获取有道中文词汇联想，查询词: "${query}"`);
+        const url = `https://dict.youdao.com/suggest?q=${encodeURIComponent(query)}&num=20&doctype=json`;
+        try {
+            // 尝试使用 obsidian.requestUrl 绕过 CORS
+            try {
+                const obsidian = require('obsidian');
+                if (obsidian && obsidian.requestUrl) {
+                    console.log(`[Language Learner] 正在使用 obsidian.requestUrl 抓取: ${url}`);
+                    const res = await obsidian.requestUrl({ url });
+                    const data = typeof res.json === 'object' ? res.json : JSON.parse(res.text || '{}');
+                    console.log(`[Language Learner] obsidian.requestUrl 获取成功，数据条数:`, data?.data?.entries?.length || 0);
+                    if (data?.data?.entries) {
+                        return data.data.entries
+                            .filter((e: any) => e.entry && e.explain)
+                            .map((e: any) => ({ word: e.entry, trans: e.explain }));
+                    }
+                }
+            } catch (obsError) {
+                console.warn('[Language Learner] 使用 Obsidian requestUrl 获取在线推荐失败，回退到 fetch:', obsError);
+            }
+
+            console.log(`[Language Learner] 正在使用 window.fetch 抓取: ${url}`);
+            const res = await fetch(url);
+            if (!res.ok) {
+                console.error(`[Language Learner] fetch 网络请求返回错误，状态码: ${res.status}`);
+                return [];
+            }
+            const data = await res.json();
+            console.log(`[Language Learner] fetch 获取成功，数据条数:`, data?.data?.entries?.length || 0);
+            if (data?.data?.entries) {
+                return data.data.entries
+                    .filter((e: any) => e.entry && e.explain)
+                    .map((e: any) => ({ word: e.entry, trans: e.explain }));
+            }
+        } catch (e) {
+            console.error('[Language Learner] 获取在线中文查词推荐发生异常:', e);
+        }
+        return [];
+    }
+
+    /** 获取单词释义（用于搜索列表展示） */
+    function getWordTranslation(word: string): string {
+        const info = vocabManager.getInfo(word);
+        if (info && info.trans) {
+            return info.trans;
+        }
+        const cached = onlineTransCache.get(word);
+        if (cached) {
+            return cached;
+        }
+        const dictEntry = OFFLINE_DICT[word];
+        if (dictEntry) {
+            return dictEntry.trans;
+        }
+        return '暂无释义';
+    }
+
+    /** 选中搜索结果列表中的一个单词 */
+    function selectResultWord(word: string) {
+        handleWordSelected(word, true);
+    }
+
+    /** 从单词详情返回搜索结果列表 */
+    function backToSearchResults() {
+        selectedWord.value = null;
+    }
+
+    /** 在 macOS 系统词典中查询 */
+    function lookupInSystemDict(query: string) {
+        const cleanQuery = query.trim();
+        console.log(`[Language Learner] 唤起 macOS 系统词典，查询词: "${cleanQuery}"`);
+        if (!cleanQuery) return;
+        const dictUrl = `dict://${encodeURIComponent(cleanQuery)}`;
+        console.log(`[Language Learner] 正在通过 window.open 打开 URI: ${dictUrl}`);
+        window.open(dictUrl);
+    }
+
+    /** 执行自主查词：支持输入英文或中文查询 */
+    async function performSearch() {
+        const query = searchQuery.value.trim();
+        console.log(`[Language Learner] 执行 performSearch，输入内容: "${query}"`);
         if (!query) return;
-        const result = lemmatize(query);
-        handleWordSelected(result.lemma);
+
+        // 检查输入是否包含中文
+        const hasChinese = /[\u4e00-\u9fa5]/.test(query);
+        console.log(`[Language Learner] 输入分析：hasChinese = ${hasChinese}`);
+
+        if (hasChinese) {
+            const queryLower = query.toLowerCase();
+            let matches: string[] = [];
+
+            // 1. 扫描内存影子词库
+            const customEntries = vocabManager.getAllEntries();
+            console.log(`[Language Learner] 1. 开始扫描自定义影子词库...`);
+            for (const entry of customEntries.values()) {
+                if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
+                    matches.push(entry.word);
+                }
+            }
+            console.log(`[Language Learner] 影子词库扫描完毕，当前匹配数: ${matches.length}`);
+
+            // 2. 扫描本地离线词典
+            console.log(`[Language Learner] 2. 开始扫描本地极简离线字典...`);
+            for (const [word, entry] of Object.entries(OFFLINE_DICT)) {
+                if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
+                    if (!matches.includes(word)) {
+                        matches.push(word);
+                    }
+                }
+            }
+            console.log(`[Language Learner] 本地字典扫描完毕，当前累计匹配数: ${matches.length}`);
+
+            // 3. 异步在线获取建议词
+            console.log(`[Language Learner] 3. 开始异步在线获取建议词...`);
+            const onlineResults = await fetchOnlineChineseSuggestions(query);
+            console.log(`[Language Learner] 在线建议词返回条数: ${onlineResults.length}`);
+            for (const item of onlineResults) {
+                const wordLower = item.word.toLowerCase();
+                const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
+                if (isEnglishWord && !matches.includes(wordLower)) {
+                    matches.push(wordLower);
+                    onlineTransCache.set(wordLower, item.trans);
+                }
+            }
+            console.log(`[Language Learner] 异步提取处理完毕，最终匹配单词列表:`, matches);
+
+            if (matches.length === 0) {
+                new Notice(`未找到包含 "${query}" 释义的英文单词`);
+                return;
+            }
+
+            if (matches.length === 1) {
+                console.log(`[Language Learner] 单个匹配项: ${matches[0]}，直接打开详情。`);
+                searchResultsList.value = [];
+                handleWordSelected(matches[0]);
+            } else {
+                let totalMatches = matches.length;
+                if (totalMatches > 100) {
+                    matches = matches.slice(0, 100);
+                    new Notice(`找到 ${totalMatches} 个结果，仅展示前 100 个`);
+                } else {
+                    new Notice(`找到 ${totalMatches} 个匹配的英文单词`);
+                }
+                console.log(`[Language Learner] 多个匹配项，渲染结果列表，前100个:`, matches);
+                selectedWord.value = null;
+                searchResultsList.value = matches;
+            }
+        } else {
+            // 英文查词
+            console.log(`[Language Learner] 英文查词流程，进行词形还原并打开详情。`);
+            searchResultsList.value = [];
+            const result = lemmatize(query.toLowerCase());
+            console.log(`[Language Learner] 还原结果: lemma = ${result.lemma}`);
+            handleWordSelected(result.lemma);
+        }
         searchQuery.value = '';
     }
 
@@ -3291,6 +3509,11 @@ export default defineComponent({
       isLoadingExamples,
       searchQuery,
       performSearch,
+      searchResultsList,
+      selectResultWord,
+      backToSearchResults,
+      lookupInSystemDict,
+      getWordTranslation,
       toggleAddWord,
       copyCardContent,
       dueWords,
