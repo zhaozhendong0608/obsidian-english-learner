@@ -530,3 +530,31 @@
 .lang-learner-review-answer-section {
   animation: langLearnerFadeIn 0.2s ease-out;
 }
+.lang-learner-sub-line {
+  background: transparent;
+  border-left: 3px solid transparent;
+}
+.lang-learner-sub-line:hover {
+  background: var(--background-secondary-alt);
+}
+.lang-learner-active-sub {
+  background: rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.12) !important;
+  border-left: 3px solid var(--interactive-accent) !important;
+  font-weight: 500;
+}
+.lang-learner-subtitles-container::-webkit-scrollbar {
+  width: 6px;
+}
+.lang-learner-subtitles-container::-webkit-scrollbar-thumb {
+  background-color: var(--background-modifier-border);
+  border-radius: 3px;
+}
+.lang-learner-rss-article-body p {
+  margin-bottom: 1.2em;
+  font-family: var(--font-text, Georgia, serif);
+  font-size: 1.05em;
+}
+.lang-learner-rss-para {
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}

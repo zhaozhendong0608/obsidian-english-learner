@@ -2,6 +2,7 @@ import { Plugin, MarkdownPostProcessorContext, MarkdownView, Notice } from 'obsi
 import { VocabularyManager, DataAdapter } from './db/vocabulary';
 import { processElement, refreshWordsInDOM } from './renderer/postProcessor';
 import { LangLearnerSidebarView, VIEW_TYPE_LANG_LEARNER } from './ui/SidebarView';
+import { WordSuggest } from './ui/WordSuggest';
 import { eventBus } from './event/EventBus';
 import { OFFLINE_DICT } from './data/static_data';
 import { appendContextNote } from './generator/contextNote';
@@ -35,6 +36,9 @@ export default class EnglishLearnerPlugin extends Plugin {
             VIEW_TYPE_LANG_LEARNER,
             (leaf) => new LangLearnerSidebarView(leaf, this.vocabManager, this)
         );
+
+        // 注册单词输入联想建议器
+        this.registerEditorSuggest(new WordSuggest(this.app, this));
 
         // 添加侧边栏功能功能入口 Ribbon 图标
         this.addRibbonIcon('book-open', '打开语言学习助手', () => {

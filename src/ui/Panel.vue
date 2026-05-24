@@ -37,6 +37,13 @@
       >
         🎬 视频笔记
       </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'reader' }"
+        @click="mainTab = 'reader'; loadRssFeeds();"
+      >
+        📰 RSS 阅读
+      </button>
     </div>
 
     <!-- 全局自主查词输入框 -->
@@ -519,56 +526,54 @@
     </div>
 
     <!-- Tab 5: 视频戳笔记 -->
-    <div v-show="mainTab === 'media'" class="lang-learner-tab-content">
-      <div class="lang-learner-panel-dashboard">
+    <div v-show="mainTab === 'media'" class="lang-learner-tab-content" style="display: flex; flex-direction: column; gap: 12px;">
+      <div class="lang-learner-panel-dashboard" style="margin-bottom: 0;">
         <h3 class="lang-learner-panel-title">🎬 视频戳笔记 (Media Extended)</h3>
-        <p style="font-size: 0.82em; color: var(--text-muted); margin: -4px 0 12px 0;">
-          在此处播放本地或在线视频，随时插入带有时间戳跳转功能的媒体链接。
+        <p style="font-size: 0.82em; color: var(--text-muted); margin: -4px 0 0 0;">
+          在侧边栏播放媒体文件，并可通过时间戳与 Obsidian 笔记实现双向跳转定位。
         </p>
       </div>
 
-      <!-- 媒体文件选择与输入 -->
-      <div class="lang-learner-panel-section" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary);">
+      <!-- 媒体文件选择与输入 (无框扁平布局) -->
+      <div class="lang-learner-panel-section" style="padding: 10px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); display: flex; flex-direction: column; gap: 8px;">
         <!-- 本地文件选择 -->
-        <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 0.85em; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
-            📁 载入库内媒体文件
-          </label>
-          <div style="display: flex; gap: 6px;">
-            <select 
-              v-model="selectedMediaFile" 
-              @change="handleSelectLocalMedia"
-              style="flex: 1; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em; cursor: pointer;"
-            >
-              <option value="">-- 请选择本地媒体 --</option>
-              <option v-for="file in mediaFiles" :key="file.path" :value="file.path">
-                {{ file.name }}
-              </option>
-            </select>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.8em; font-weight: 600; color: var(--text-muted);">📁 载入库内媒体文件</label>
             <button 
               @click="scanMediaFiles" 
-              class="lang-learner-btn" 
-              style="padding: 6px 10px; font-size: 0.85em; display: flex; align-items: center; justify-content: center;"
+              class="lang-learner-btn-status-mini" 
+              style="padding: 1px 4px; font-size: 0.7em;"
               title="重新扫描 Vault 媒体文件"
             >
-              🔄
+              🔄 扫描
             </button>
           </div>
+          <select 
+            v-model="selectedMediaFile" 
+            @change="handleSelectLocalMedia"
+            style="width: 100%; padding: 5px 8px; border-radius: 6px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.82em; cursor: pointer;"
+          >
+            <option value="">-- 请选择本地媒体 --</option>
+            <option v-for="file in mediaFiles" :key="file.path" :value="file.path">
+              {{ file.name }}
+            </option>
+          </select>
         </div>
 
         <!-- 外部 URL 输入 -->
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <label style="font-size: 0.85em; font-weight: 600; color: var(--text-muted);">🌐 外部直链媒体 URL</label>
+        <div style="display: flex; flex-direction: column; gap: 4px; border-top: 1px dashed var(--background-modifier-border); padding-top: 8px;">
+          <label style="font-size: 0.8em; font-weight: 600; color: var(--text-muted);">🌐 外部直链 / YouTube / B站链接</label>
           <div style="display: flex; gap: 6px;">
             <input 
               v-model="currentVideoUrl" 
-              placeholder="输入 http://...mp4 等直链"
-              style="flex: 1; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em;"
+              placeholder="输入视频网址或文件直链"
+              style="flex: 1; padding: 5px 8px; border-radius: 6px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.82em;"
             />
             <button 
               @click="loadMediaSource(currentVideoUrl)" 
               class="lang-learner-btn lang-learner-btn-primary" 
-              style="padding: 6px 12px; font-size: 0.85em; font-weight: 500;"
+              style="padding: 5px 12px; font-size: 0.82em; font-weight: 600; border-radius: 6px;"
             >
               载入
             </button>
@@ -576,73 +581,363 @@
         </div>
       </div>
 
-      <!-- 视频播放区域 -->
-      <div v-if="mediaType !== 'none'" class="lang-learner-panel-section" style="margin-bottom: 12px; text-align: center; background: #000; border-radius: 8px; padding: 4px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);">
-        <!-- HTML5 播放器 -->
-        <video 
-          v-if="mediaType === 'html5'"
-          ref="mediaVideoRef" 
-          :src="activeVideoSrc" 
-          controls 
-          @timeupdate="onVideoTimeUpdate"
-          style="width: 100%; max-height: 240px; display: block; border-radius: 4px;"
-        ></video>
+      <!-- 视频播放与控制区域 -->
+      <div v-if="mediaType !== 'none'" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- 视频播放框 -->
+        <div class="lang-learner-panel-section" style="text-align: center; background: #000; border-radius: 8px; padding: 2px; overflow: hidden; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);">
+          <!-- HTML5 播放器 -->
+          <video 
+            v-if="mediaType === 'html5'"
+            ref="mediaVideoRef" 
+            :src="activeVideoSrc" 
+            controls 
+            @timeupdate="onVideoTimeUpdate"
+            style="width: 100%; max-height: 240px; display: block; border-radius: 6px;"
+          ></video>
 
-        <!-- YouTube 嵌入容器 -->
-        <div v-else-if="mediaType === 'youtube'" id="youtube-player-container" style="width: 100%; height: 200px; display: block; border-radius: 4px; background: #000;">
-          <div id="youtube-player-el"></div>
+          <!-- YouTube 嵌入容器 -->
+          <div v-else-if="mediaType === 'youtube'" id="youtube-player-container" style="width: 100%; height: 200px; display: block; border-radius: 6px; background: #000;">
+            <div id="youtube-player-el"></div>
+          </div>
+
+          <!-- Bilibili 嵌入网页 -->
+          <iframe 
+            v-else-if="mediaType === 'bilibili'"
+            :src="activeVideoSrc" 
+            style="width: 100%; height: 200px; border: none; border-radius: 6px; display: block;" 
+            allowfullscreen
+          ></iframe>
         </div>
 
-        <!-- Bilibili 嵌入网页 -->
-        <iframe 
-          v-else-if="mediaType === 'bilibili'"
-          :src="activeVideoSrc" 
-          style="width: 100%; height: 200px; border: none; border-radius: 4px;" 
-          allowfullscreen
-        ></iframe>
-      </div>
+        <!-- 播放控制行 (整合紧凑的控制栏) -->
+        <div class="lang-learner-panel-section" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85em; font-weight: 600; color: var(--text-accent); display: flex; align-items: center; gap: 4px;">
+              🕒 {{ formatTime(currentVideoTime) }}
+            </span>
+            <!-- 速度调节 -->
+            <div v-if="mediaType === 'html5' || mediaType === 'youtube'" style="display: flex; gap: 3px; align-items: center;">
+              <span style="font-size: 0.75em; color: var(--text-muted); margin-right: 2px;">倍速:</span>
+              <button 
+                v-for="rate in [0.8, 1.0, 1.25, 1.5]" 
+                :key="rate" 
+                @click="setPlaybackRate(rate)" 
+                class="lang-learner-btn-status-mini"
+                :class="{ active: mediaPlaybackRate === rate }"
+                style="padding: 1px 4px; font-size: 0.7em; font-weight: 600;"
+              >
+                {{ rate }}x
+              </button>
+            </div>
+          </div>
 
-      <!-- 视频控制与快捷操作 -->
-      <div v-if="mediaType !== 'none'" class="lang-learner-panel-section" style="padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 12px; background: var(--background-secondary);">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 0.9em; font-weight: 600; color: var(--text-accent); display: flex; align-items: center; gap: 4px;">
-            🕒 进度: {{ formatTime(currentVideoTime) }}
-          </span>
-          <!-- 速度调节 (仅 HTML5 和 YouTube 支持) -->
-          <div v-if="mediaType === 'html5' || mediaType === 'youtube'" style="display: flex; gap: 4px; align-items: center;">
-            <span style="font-size: 0.8em; color: var(--text-muted); margin-right: 4px;">倍速:</span>
-            <button 
-              v-for="rate in [0.8, 1.0, 1.25, 1.5]" 
-              :key="rate" 
-              @click="setPlaybackRate(rate)" 
-              class="lang-learner-btn-status-mini"
-              :class="{ active: mediaPlaybackRate === rate }"
-              style="padding: 2px 6px; font-size: 0.75em; font-weight: 500;"
-            >
-              {{ rate }}x
-            </button>
+          <div v-if="mediaType === 'bilibili'" style="font-size: 0.72em; color: var(--text-warning); line-height: 1.3;">
+            ⚠️ 提示：B站内嵌页由于跨域限制无法抓取时间进度或支持双向定位。
+          </div>
+
+          <button 
+            v-if="mediaType === 'html5' || mediaType === 'youtube'"
+            @click="insertVideoTimestamp" 
+            class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
+            style="font-size: 0.85em; padding: 7px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 4px; border-radius: 6px;"
+          >
+            📌 插入当前视频时间戳至文档
+          </button>
+        </div>
+
+        <!-- 💡 实时高亮字幕 (当前播放的大字精读看句，支持直接划词查词) -->
+        <div 
+          v-if="activeSubtitleIndex !== -1 && subtitlesList[activeSubtitleIndex]" 
+          class="lang-learner-panel-section" 
+          style="padding: 12px; border-radius: 8px; border: 1.5px solid var(--interactive-accent); background: var(--background-primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); text-align: center;"
+        >
+          <div style="font-size: 0.75em; color: var(--interactive-accent); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.5px;">📢 当前播放句</div>
+          <div style="font-size: 1.08em; font-weight: 600; line-height: 1.5; color: var(--text-normal);">
+            <template v-for="(token, index) in subtitlesList[activeSubtitleIndex].segments" :key="index">
+              <span v-if="token.type === 'text'">{{ token.text }}</span>
+              <span
+                v-else
+                class="lang-learner-word"
+                :class="{
+                  'lang-learner-unknown': token.status === 'UNKNOWN',
+                  'lang-learner-learning': token.status === 'LEARNING',
+                  'lang-learner-known': token.status === 'KNOWN',
+                  'lang-learner-phrase': token.isPhrase
+                }"
+                :data-lemma="token.lemma"
+                :data-trans="token.trans"
+                :data-phonetic="token.phonetic ? '/' + token.phonetic + '/' : ''"
+                @click.stop="onSentenceWordClick(token.lemma)"
+                @dblclick.stop="onSentenceWordDblClick(token)"
+                style="border-bottom: 1.5px dashed var(--text-accent); padding: 0 1px; margin: 0 1px; cursor: pointer;"
+              >
+                {{ token.text }}
+              </span>
+            </template>
           </div>
         </div>
 
-        <!-- B站提示信息 -->
-        <div v-if="mediaType === 'bilibili'" style="font-size: 0.75em; color: var(--text-warning); margin-bottom: 4px; line-height: 1.3;">
-          ⚠️ 提示：B站内嵌页存在跨域限制，无法抓取当前进度或使用自动跳转，建议使用库内媒体或 YouTube 链接。
+        <!-- 💬 视频字幕卡片 (独立面板，脱离嵌套) -->
+        <div class="lang-learner-panel-section" style="padding: 10px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 0.82em; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+              💬 字幕列表 ({{ subtitlesList.length }} 句)
+            </span>
+            <div style="display: flex; gap: 4px;">
+              <button 
+                v-if="mediaType === 'youtube'" 
+                @click="loadYouTubeCaptions" 
+                class="lang-learner-btn-status-mini" 
+                style="padding: 2px 5px; font-size: 0.7em;"
+                :disabled="isLoadingSubtitles"
+              >
+                {{ isLoadingSubtitles ? '抓取中...' : '🌐 抓取字幕' }}
+              </button>
+              <label class="lang-learner-btn-status-mini" style="padding: 2px 5px; font-size: 0.7em; cursor: pointer; display: inline-block; margin: 0;">
+                📁 导入
+                <input type="file" accept=".srt,.vtt" @change="handleLocalSubtitleUpload" style="display: none;" />
+              </label>
+              <button 
+                v-if="subtitlesList.length > 0"
+                @click="exportSubtitlesToNote" 
+                class="lang-learner-btn-status-mini active" 
+                style="padding: 2px 5px; font-size: 0.7em;"
+                title="导出完整字幕至正在编辑的文档区"
+              >
+                📤 导出
+              </button>
+            </div>
+          </div>
+          
+          <!-- 字幕列表容器 -->
+          <div 
+            v-if="subtitlesList.length > 0" 
+            class="lang-learner-subtitles-container" 
+            style="max-height: 220px; overflow-y: auto; border: 1px solid var(--background-modifier-border); border-radius: 6px; padding: 6px; background: var(--background-primary); display: flex; flex-direction: column; gap: 6px;"
+          >
+            <div 
+              v-for="(sub, idx) in subtitlesList" 
+              :key="idx" 
+              :id="'sub-line-' + idx"
+              class="lang-learner-sub-line"
+              :class="{ 'lang-learner-active-sub': activeSubtitleIndex === idx }"
+              style="padding: 5px 8px; border-radius: 6px; line-height: 1.45; font-size: 0.88em; transition: all 0.15s ease; cursor: pointer;"
+              @click="seekToSubtitleTime(sub.start)"
+            >
+              <span style="font-size: 0.72em; color: var(--text-muted); font-family: monospace; display: block; margin-bottom: 2px;">
+                {{ formatTime(sub.start) }}
+              </span>
+              <span class="lang-learner-sub-text" style="color: var(--text-normal);">
+                <template v-for="(token, index) in sub.segments" :key="index">
+                  <span v-if="token.type === 'text'">{{ token.text }}</span>
+                  <span
+                    v-else
+                    class="lang-learner-word"
+                    :class="{
+                      'lang-learner-unknown': token.status === 'UNKNOWN',
+                      'lang-learner-learning': token.status === 'LEARNING',
+                      'lang-learner-known': token.status === 'KNOWN',
+                      'lang-learner-phrase': token.isPhrase
+                    }"
+                    :data-lemma="token.lemma"
+                    :data-trans="token.trans"
+                    :data-phonetic="token.phonetic ? '/' + token.phonetic + '/' : ''"
+                    @click.stop="onSentenceWordClick(token.lemma)"
+                    @dblclick.stop="onSentenceWordDblClick(token)"
+                  >
+                    {{ token.text }}
+                  </span>
+                </template>
+              </span>
+            </div>
+          </div>
+          <div v-else style="font-size: 0.78em; color: var(--text-muted); text-align: center; padding: 16px; font-style: italic;">
+            暂无字幕，请抓取在线字幕或导入本地 SRT/VTT 文件
+          </div>
         </div>
-
-        <button 
-          v-if="mediaType === 'html5' || mediaType === 'youtube'"
-          @click="insertVideoTimestamp" 
-          class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
-          style="font-size: 0.95em; padding: 10px; font-weight: 600; display: flex; justify-content: center; align-items: center; gap: 6px; border-radius: 6px; transition: transform 0.1s ease;"
-        >
-          📌 插入视频时间戳
-        </button>
       </div>
 
-      <div v-else class="lang-learner-empty-hint" style="padding: 50px 0; text-align: center; background: var(--background-secondary); border-radius: 8px; border: 1px dashed var(--background-modifier-border);">
-        <div style="font-size: 3em; margin-bottom: 12px; filter: grayscale(0.2);">🎬</div>
-        <p style="margin: 0 0 6px 0; font-weight: 600; font-size: 1.05em; color: var(--text-normal);">暂无载入媒体</p>
-        <p style="font-size: 0.85em; color: var(--text-muted); margin: 0; padding: 0 16px;">请在上方下拉列表中选择库内音视频，或输入网络直链 / YouTube / B站视频链接载入播放</p>
+      <div v-else class="lang-learner-empty-hint" style="padding: 40px 0; text-align: center; background: var(--background-secondary); border-radius: 8px; border: 1px dashed var(--background-modifier-border); margin-top: 10px;">
+        <div style="font-size: 2.5em; margin-bottom: 10px; filter: grayscale(0.2);">🎬</div>
+        <p style="margin: 0 0 4px 0; font-weight: 600; font-size: 1em; color: var(--text-normal);">暂无载入媒体</p>
+        <p style="font-size: 0.8em; color: var(--text-muted); margin: 0; padding: 0 16px; line-height: 1.4;">
+          请在上方选择库内媒体，或输入 YouTube 等链接载入播放。载入后即可导入或自动抓取字幕。
+        </p>
+      </div>
+    </div>
+
+    <!-- Tab 6: RSS阅读器 -->
+    <div v-show="mainTab === 'reader'" class="lang-learner-tab-content">
+      <div class="lang-learner-panel-dashboard">
+        <h3 class="lang-learner-panel-title">📰 RSS 订阅阅读</h3>
+        <p style="font-size: 0.82em; color: var(--text-muted); margin: -4px 0 12px 0;">
+          在此处订阅英语文章源，享受即读即划、纳米级查词与发音的阅读体验。
+        </p>
+      </div>
+
+      <!-- RSS 订阅源管理器 -->
+      <div class="lang-learner-panel-section" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary);">
+        <div 
+          class="lang-learner-voice-settings-header" 
+          @click="showRssConfig = !showRssConfig"
+          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
+        >
+          <span style="font-weight: 600; font-size: 0.85em; color: var(--text-muted);">➕ 管理 RSS 订阅源</span>
+          <span style="font-size: 0.75em; color: var(--text-muted);">{{ showRssConfig ? '▼ 收起' : '▶ 展开' }}</span>
+        </div>
+        
+        <div v-show="showRssConfig" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+          <!-- 添加新订阅源 -->
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <input 
+              v-model="newFeedName" 
+              placeholder="订阅源名称 (如: Hacker News)"
+              style="width: 100%; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em;"
+            />
+            <div style="display: flex; gap: 6px;">
+              <input 
+                v-model="newFeedUrl" 
+                placeholder="订阅源 RSS URL"
+                style="flex: 1; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em;"
+              />
+              <button 
+                @click="addRssFeed" 
+                class="lang-learner-btn lang-learner-btn-primary" 
+                style="padding: 6px 12px; font-size: 0.85em; font-weight: 500;"
+              >
+                添加
+              </button>
+            </div>
+          </div>
+          
+          <!-- 已有订阅源列表 -->
+          <div style="border-top: 1px dashed var(--background-modifier-border); padding-top: 8px; margin-top: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px;">已订阅源列表:</label>
+            <div style="display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow-y: auto;">
+              <div 
+                v-for="(feed, idx) in rssFeeds" 
+                :key="idx"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 4px 6px; border-radius: 4px; background: var(--background-primary); border: 1px solid var(--background-modifier-border);"
+              >
+                <span style="font-size: 0.8em; color: var(--text-normal); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">{{ feed.name }}</span>
+                <button 
+                  @click="removeRssFeed(idx)" 
+                  class="lang-learner-btn-icon" 
+                  title="删除该源"
+                  style="padding: 2px 4px; font-size: 0.8em; opacity: 0.7;"
+                >
+                  ❌
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 选择订阅源 -->
+      <div class="lang-learner-panel-section" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 0.85em; font-weight: 600; color: var(--text-muted);">📰 选择订阅源进行阅读</label>
+        <select 
+          v-model="selectedFeedUrl" 
+          @change="handleSelectFeed"
+          style="width: 100%; padding: 6px 8px; border-radius: 4px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); color: var(--text-normal); font-size: 0.85em; cursor: pointer;"
+        >
+          <option value="">-- 请选择 RSS 订阅源 --</option>
+          <option v-for="feed in rssFeeds" :key="feed.url" :value="feed.url">
+            {{ feed.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 文章阅读与列表层 -->
+      <div class="lang-learner-panel-section" style="min-height: 200px;">
+        <!-- 加载中提示 -->
+        <div v-if="isLoadingFeeds" class="lang-learner-loading-text" style="padding: 30px 0; text-align: center;">
+          正在拉取 RSS 数据并分词高亮，请稍候...
+        </div>
+
+        <!-- 详情阅读模式 -->
+        <div v-else-if="selectedArticle" class="lang-learner-rss-article-detail">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--background-modifier-border); padding-bottom: 8px;">
+            <button 
+              @click="selectedArticle = null" 
+              class="lang-learner-btn" 
+              style="padding: 4px 10px; font-size: 0.8em; display: flex; align-items: center; gap: 4px;"
+            >
+              ⬅️ 返回文章列表
+            </button>
+            <a 
+              :href="selectedArticle.link" 
+              target="_blank" 
+              class="lang-learner-btn-icon" 
+              title="在浏览器中打开原文" 
+              style="text-decoration: none; font-size: 1.1em;"
+            >
+              🌐
+            </a>
+          </div>
+
+          <h3 style="font-size: 1.2em; font-weight: bold; margin: 0 0 6px 0; line-height: 1.3; color: var(--text-normal);">
+            {{ selectedArticle.title }}
+          </h3>
+          <p style="font-size: 0.75em; color: var(--text-muted); margin: 0 0 16px 0;">
+            发布日期: {{ selectedArticle.date }}
+          </p>
+
+          <!-- 文章分词正文段落列表 -->
+          <div class="lang-learner-rss-article-body" style="line-height: 1.6; font-size: 0.95em; color: var(--text-normal); display: flex; flex-direction: column; gap: 14px;">
+            <p 
+              v-for="(p, pIdx) in selectedArticleParagraphs" 
+              :key="pIdx" 
+              style="margin: 0; text-indent: 0; text-align: justify; white-space: pre-wrap;"
+            >
+              <template v-for="(token, index) in p.segments" :key="index">
+                <!-- 纯文本 -->
+                <span v-if="token.type === 'text'">{{ token.text }}</span>
+                <!-- 划词高亮字/词组 -->
+                <span
+                  v-else
+                  class="lang-learner-word"
+                  :class="{
+                    'lang-learner-unknown': token.status === 'UNKNOWN',
+                    'lang-learner-learning': token.status === 'LEARNING',
+                    'lang-learner-known': token.status === 'KNOWN',
+                    'lang-learner-phrase': token.isPhrase
+                  }"
+                  :data-lemma="token.lemma"
+                  :data-trans="token.trans"
+                  :data-phonetic="token.phonetic ? '/' + token.phonetic + '/' : ''"
+                  @click="onSentenceWordClick(token.lemma)"
+                  @dblclick="onSentenceWordDblClick(token)"
+                >
+                  {{ token.text }}
+                </span>
+              </template>
+            </p>
+          </div>
+        </div>
+
+        <!-- 列表展示模式 -->
+        <div v-else-if="feedItems.length > 0" class="lang-learner-rss-items-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <div 
+            v-for="(item, idx) in feedItems" 
+            :key="idx" 
+            @click="readArticle(item)"
+            class="lang-learner-wordlist-item"
+            style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; cursor: pointer; transition: background 0.2s;"
+          >
+            <span style="font-weight: 600; font-size: 0.95em; color: var(--text-normal); line-height: 1.3; text-align: left;">{{ item.title }}</span>
+            <span style="font-size: 0.75em; color: var(--text-muted);">{{ item.date }}</span>
+          </div>
+        </div>
+
+        <!-- 空状态提示 -->
+        <div v-else class="lang-learner-empty-hint" style="padding: 40px 0; text-align: center; background: var(--background-secondary); border-radius: 8px; border: 1px dashed var(--background-modifier-border);">
+          <div style="font-size: 2.5em; margin-bottom: 8px;">📰</div>
+          <p style="margin: 0; font-size: 0.85em; color: var(--text-muted); padding: 0 16px;">
+            未拉取到文章列表。请在上方选择或添加 RSS 订阅源并载入。
+          </p>
+        </div>
       </div>
     </div>
 
@@ -2228,6 +2523,694 @@ export default defineComponent({
         }
     }
 
+    // ========== 新增：视频字幕学习模块 ==========
+    const subtitlesList = ref<{ start: number; duration: number; text: string; segments: any[] }[]>([]);
+    const activeSubtitleIndex = ref(-1);
+    const isLoadingSubtitles = ref(false);
+
+    // 视频定位跳转
+    function seekToSubtitleTime(seconds: number) {
+        if (mediaType.value === 'youtube' && ytPlayer && typeof ytPlayer.seekTo === 'function') {
+            ytPlayer.seekTo(seconds, true);
+        } else if (mediaVideoRef.value) {
+            mediaVideoRef.value.currentTime = seconds;
+            mediaVideoRef.value.play().catch(e => console.log('播放失败:', e));
+        }
+    }
+
+    // 在线抓取 YouTube 字幕
+    async function loadYouTubeCaptions() {
+        if (mediaType.value !== 'youtube') return;
+        const { videoId } = parseYouTubeUrl(currentVideoUrl.value);
+        if (!videoId) {
+            new Notice('未能识别 YouTube 视频 ID，请确认 URL 正确');
+            return;
+        }
+
+        isLoadingSubtitles.value = true;
+        subtitlesList.value = [];
+        activeSubtitleIndex.value = -1;
+
+        try {
+            const obsidian = require('obsidian');
+            if (!obsidian || !obsidian.requestUrl) {
+                throw new Error('当前非 Obsidian 环境或 requestUrl 不可用');
+            }
+
+            const headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Referer': `https://www.youtube.com/watch?v=${videoId}`
+            };
+
+            const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            const res = await obsidian.requestUrl({ 
+                url: videoUrl,
+                headers: headers
+            });
+            const html = res.text || '';
+
+            // 正则匹配 ytInitialPlayerResponse 里的 captions 字幕配置
+            let responseMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
+            if (!responseMatch) {
+                const alternateMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*<\/script>/);
+                if (!alternateMatch) {
+                    throw new Error('未能在 YouTube 页面中匹配到 captions 字幕轨道配置');
+                }
+                responseMatch = alternateMatch;
+            }
+
+            const playerResponse = JSON.parse(responseMatch[1]);
+            const captionTracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+            if (!captionTracks || captionTracks.length === 0) {
+                throw new Error('该 YouTube 视频无可用字幕音轨');
+            }
+
+            // 优先查找英文音轨 (包含 en-US, en-GB, en 等不同变体)
+            let track = captionTracks.find((t: any) => t.languageCode && t.languageCode.startsWith('en'));
+            if (!track) {
+                track = captionTracks[0];
+            }
+
+            // ============= 策略一：InnerTube get_transcript API (JSON，最稳定) =============
+            // 从 ytInitialData 的 engagementPanel 中提取 transcript params
+            let transcriptParams: string | null = null;
+            let innerTubeApiKey = '';
+            let visitorData = '';
+            let jsonSubtitles: any[] | null = null;
+
+            try {
+                const apiKeyMatch = html.match(/"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"/);
+                innerTubeApiKey = apiKeyMatch?.[1] || '';
+
+                const visitorDataMatch = html.match(/"VISITOR_DATA"\s*:\s*"([^"]+)"/);
+                visitorData = visitorDataMatch?.[1] || '';
+
+                const ytDataMatch = html.match(/ytInitialData\s*=\s*({.+?});\s*<\/script>/);
+                if (ytDataMatch) {
+                    const ytData = JSON.parse(ytDataMatch[1]);
+                    const panels: any[] = ytData?.engagementPanels || [];
+                    const transcriptPanel = panels.find((p: any) =>
+                        p?.engagementPanelSectionListRenderer?.targetId === 'engagement-panel-searchable-transcript'
+                    );
+                    const contEndpoint = transcriptPanel
+                        ?.engagementPanelSectionListRenderer?.content
+                        ?.continuationItemRenderer?.continuationEndpoint;
+                    transcriptParams = contEndpoint?.getTranscriptEndpoint?.params || null;
+                }
+            } catch (parseErr) {
+                console.warn('提取 transcript params 时出错:', parseErr);
+            }
+
+            if (transcriptParams) {
+                try {
+                    // 关键修复：从 ytInitialData JSON 提取的 params 含有 URL 编码字符（如 %3D 表示 =）
+                    // 必须先解码还原为合法的 base64 字符串才能被 YouTube API 正常解析
+                    const decodedParams = decodeURIComponent(transcriptParams);
+                    console.log('InnerTube params (解码后):', decodedParams.slice(0, 60) + '...');
+
+                    const postUrl = `https://www.youtube.com/youtubei/v1/get_transcript`;
+                    const postBodyObj = {
+                        context: {
+                            client: {
+                                clientName: 'WEB',
+                                clientVersion: '2.20240101.00.00',
+                                hl: 'en',
+                                gl: 'US',
+                                visitorData
+                            }
+                        },
+                        params: decodedParams
+                    };
+
+                    // 使用 obsidian.requestUrl 绕过 CORS（主进程代理）
+                    const transcriptRes = await obsidian.requestUrl({
+                        url: postUrl,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        headers: {
+                            'Referer': `https://www.youtube.com/watch?v=${videoId}`,
+                            'Origin': 'https://www.youtube.com',
+                            'X-Youtube-Client-Name': '1',
+                            'X-Youtube-Client-Version': '2.20240101.00.00'
+                        },
+                        body: JSON.stringify(postBodyObj)
+                    });
+
+                    console.log('InnerTube 响应状态码:', transcriptRes.status);
+
+                    if (transcriptRes.status === 200) {
+                        const json = transcriptRes.json;
+                        const segments = json?.actions?.[0]
+                            ?.updateEngagementPanelAction?.content
+                            ?.transcriptRenderer?.content
+                            ?.transcriptSearchPanelRenderer?.body
+                            ?.transcriptSegmentListRenderer?.initialSegments;
+
+                        if (segments?.length) {
+                            jsonSubtitles = segments.map((seg: any) => {
+                                const r = seg?.transcriptSegmentRenderer;
+                                const startMs = parseInt(r?.startMs || '0');
+                                const endMs = parseInt(r?.endMs || '0');
+                                const text = (r?.snippet?.runs || []).map((run: any) => run.text || '').join('').trim();
+                                return { start: startMs / 1000, duration: (endMs - startMs) / 1000, text };
+                            }).filter((s: any) => s.text);
+                            console.log(`InnerTube API 成功获取 ${jsonSubtitles.length} 条字幕`);
+                        } else {
+                            console.warn('InnerTube segments 为空，完整响应:\n', JSON.stringify(json).slice(0, 600));
+                        }
+                    } else {
+                        console.warn('InnerTube 响应异常，状态码:', transcriptRes.status, '响应体:', transcriptRes.text?.slice(0, 300));
+                    }
+                } catch (innerTubeErr) {
+                    console.warn('InnerTube get_transcript 请求失败:', innerTubeErr);
+                }
+            }
+
+            // ============= 策略二：无签名 fmt=json3 公共接口 (无需 Cookie) =============
+            let xmlSubtitles: any[] | null = null;
+            if (!jsonSubtitles) {
+                const langCode = (track.languageCode || 'en').split('-')[0]; // 取主语言代码 en
+                const kindParam = track.kind === 'asr' ? '&kind=asr' : '';
+
+                // 无签名公共接口 URL 列表（youtube-transcript 库实际使用的路径）
+                const unsignedFetchUrls = [
+                    `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}${kindParam}&fmt=json3`,
+                    `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&kind=asr&fmt=json3`,
+                    `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3`
+                ];
+
+                for (const url of unsignedFetchUrls) {
+                    try {
+                        const r = await obsidian.requestUrl({
+                            url,
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                                'Referer': `https://www.youtube.com/watch?v=${videoId}`,
+                                'Accept': 'application/json, text/plain, */*',
+                                'Accept-Language': 'en-US,en;q=0.9'
+                            }
+                        });
+                        const txt = r.text || '';
+                        console.log(`无签名接口 [${url.slice(-30)}] 状态:${r.status} 长度:${txt.length}`);
+                        if (txt && txt.trim().length > 5) {
+                            // 尝试 JSON3 格式解析
+                            try {
+                                const j3 = JSON.parse(txt);
+                                const events = j3?.events || [];
+                                const segs: any[] = [];
+                                for (const ev of events) {
+                                    if (!ev.segs) continue;
+                                    const startSec = (ev.tStartMs || 0) / 1000;
+                                    const durSec = (ev.dDurationMs || 0) / 1000;
+                                    const text = ev.segs.map((s: any) => s.utf8 || '').join('').replace(/\n/g, ' ').trim();
+                                    if (text && text !== '\n') segs.push({ start: startSec, duration: durSec, text });
+                                }
+                                if (segs.length > 0) {
+                                    xmlSubtitles = segs;
+                                    console.log(`json3 格式解析成功，共 ${segs.length} 条字幕`);
+                                    break;
+                                }
+                            } catch (_) {
+                                // 不是 JSON，尝试 XML 解析
+                                if (txt.trim().startsWith('<')) {
+                                    const parser = new DOMParser();
+                                    const xmlDoc = parser.parseFromString(txt, 'text/xml');
+                                    const nodes = xmlDoc.querySelectorAll('text');
+                                    if (nodes.length > 0) {
+                                        const parsed: any[] = [];
+                                        nodes.forEach((node: any) => {
+                                            const start = parseFloat(node.getAttribute('start') || '0');
+                                            const dur = parseFloat(node.getAttribute('dur') || '0');
+                                            const text = (node.textContent || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\n/g, ' ').trim();
+                                            if (text) parsed.push({ start, duration: dur, text });
+                                        });
+                                        if (parsed.length > 0) { xmlSubtitles = parsed; break; }
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) { /* 继续下一个 */ }
+                }
+
+                // 若无签名接口失败，用 window.fetch 携带 Cookie 尝试有签名 baseUrl
+                if (!xmlSubtitles) {
+                    const baseUrl = (track.baseUrl || '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                    try {
+                        const fetchRes = await window.fetch(baseUrl + '&fmt=json3', { method: 'GET', credentials: 'include' });
+                        if (fetchRes.ok) {
+                            const txt = await fetchRes.text();
+                            if (txt && txt.trim().length > 5) {
+                                try {
+                                    const j3 = JSON.parse(txt);
+                                    const events = j3?.events || [];
+                                    const segs: any[] = [];
+                                    for (const ev of events) {
+                                        if (!ev.segs) continue;
+                                        const startSec = (ev.tStartMs || 0) / 1000;
+                                        const durSec = (ev.dDurationMs || 0) / 1000;
+                                        const text = ev.segs.map((s: any) => s.utf8 || '').join('').replace(/\n/g, ' ').trim();
+                                        if (text && text !== '\n') segs.push({ start: startSec, duration: durSec, text });
+                                    }
+                                    if (segs.length > 0) xmlSubtitles = segs;
+                                } catch (_) { /* 忽略 */ }
+                            }
+                        }
+                    } catch (_) { /* 忽略 CORS 错误 */ }
+                }
+            }
+
+            const rawList = jsonSubtitles || xmlSubtitles;
+            if (!rawList || rawList.length === 0) {
+                console.warn('=== YouTube 字幕拉取失败诊断 ===');
+                console.log('transcriptParams:', transcriptParams);
+                console.log('所有可用字幕音轨:', captionTracks);
+                throw new Error('无法获取 YouTube 字幕（YouTube 需要登录验证）。请使用"📁 导入 SRT/VTT"功能手动导入字幕文件，或在 YouTube 网站上打开视频并手动下载字幕。');
+            }
+
+            // 将 rawList 转换为带 segments 的完整字幕列表
+            const list: any[] = rawList.map((item: any) => ({
+                start: item.start,
+                duration: item.duration,
+                text: item.text,
+                segments: processTextToSegments(item.text)
+            }));
+
+            subtitlesList.value = list;
+            new Notice(`成功加载在线字幕：共 ${list.length} 句`);
+        } catch (e) {
+            console.error('抓取 YouTube 在线字幕失败:', e);
+            new Notice(`抓取字幕失败: ${e.message || e}`);
+        } finally {
+            isLoadingSubtitles.value = false;
+        }
+    }
+
+    // 本地字幕上传解析器
+    function handleLocalSubtitleUpload(event: Event) {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target?.result as string;
+            try {
+                let list: any[] = [];
+                if (file.name.endsWith('.vtt')) {
+                    list = parseVTT(text);
+                } else {
+                    list = parseSRT(text);
+                }
+
+                if (list.length === 0) {
+                    throw new Error('未解析到有效的字幕条目');
+                }
+
+                subtitlesList.value = list;
+                activeSubtitleIndex.value = -1;
+                new Notice(`成功导入本地字幕：共 ${list.length} 句`);
+            } catch (err) {
+                new Notice(`解析字幕文件失败: ${err.message || err}`);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // 简单 SRT 解析器
+    function parseSRT(srtText: string): any[] {
+        const blocks = srtText.replace(/\r\n/g, '\n').split('\n\n');
+        const list: any[] = [];
+
+        blocks.forEach(block => {
+            const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+            if (lines.length >= 3) {
+                const timeLine = lines[1];
+                const text = lines.slice(2).join(' ');
+                
+                const timeMatch = timeLine.match(/(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/);
+                if (timeMatch) {
+                    const startSec = parseInt(timeMatch[1]) * 3600 + parseInt(timeMatch[2]) * 60 + parseInt(timeMatch[3]) + parseInt(timeMatch[4]) / 1000;
+                    const endSec = parseInt(timeMatch[5]) * 3600 + parseInt(timeMatch[6]) * 60 + parseInt(timeMatch[7]) + parseInt(timeMatch[8]) / 1000;
+                    list.push({
+                        start: startSec,
+                        duration: endSec - startSec,
+                        text: text,
+                        segments: processTextToSegments(text)
+                    });
+                }
+            }
+        });
+        return list;
+    }
+
+    // 简单 VTT 解析器
+    function parseVTT(vttText: string): any[] {
+        const cleaned = vttText.replace(/\r\n/g, '\n').replace(/^WEBVTT[^\n]*\n+/, '');
+        const blocks = cleaned.split('\n\n');
+        const list: any[] = [];
+
+        blocks.forEach(block => {
+            const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+            if (lines.length >= 2) {
+                let timeLine = lines[0];
+                let textLines = lines.slice(1);
+                
+                if (!timeLine.includes('-->') && lines.length >= 3) {
+                    timeLine = lines[1];
+                    textLines = lines.slice(2);
+                }
+
+                if (timeLine.includes('-->')) {
+                    const text = textLines.join(' ');
+                    const timeMatch = timeLine.match(/(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})/);
+                    if (timeMatch) {
+                        const startH = timeMatch[1] ? parseInt(timeMatch[1]) : 0;
+                        const startM = parseInt(timeMatch[2]);
+                        const startS = parseInt(timeMatch[3]);
+                        const startMs = parseInt(timeMatch[4]);
+                        const startSec = startH * 3600 + startM * 60 + startS + startMs / 1000;
+
+                        const endH = timeMatch[5] ? parseInt(timeMatch[5]) : 0;
+                        const endM = parseInt(timeMatch[6]);
+                        const endS = parseInt(timeMatch[7]);
+                        const endMs = parseInt(timeMatch[8]);
+                        const endSec = endH * 3600 + endM * 60 + endS + endMs / 1000;
+
+                        list.push({
+                            start: startSec,
+                            duration: endSec - startSec,
+                            text: text,
+                            segments: processTextToSegments(text)
+                        });
+                    }
+                }
+            }
+        });
+        return list;
+    }
+
+    // 监听播放时间，动态计算当前字幕行（更鲁棒的区间算法，防止小间隙卡死）
+    watch(currentVideoTime, (t) => {
+        if (subtitlesList.value.length === 0) return;
+        const idx = subtitlesList.value.findIndex(sub => t >= sub.start && t <= (sub.start + sub.duration));
+        if (idx !== -1) {
+            if (idx !== activeSubtitleIndex.value) {
+                activeSubtitleIndex.value = idx;
+            }
+        } else {
+            // 如果处于间隙，找到在当前时间之前开始的最后一句字幕线
+            let lastStartedIdx = -1;
+            for (let i = 0; i < subtitlesList.value.length; i++) {
+                if (t >= subtitlesList.value[i].start) {
+                    lastStartedIdx = i;
+                } else {
+                    break;
+                }
+            }
+            if (lastStartedIdx !== -1 && lastStartedIdx !== activeSubtitleIndex.value) {
+                activeSubtitleIndex.value = lastStartedIdx;
+            }
+        }
+    });
+
+    // 字幕激活行改变时，平滑滚动聚焦
+    watch(activeSubtitleIndex, (newIdx) => {
+        if (newIdx !== -1) {
+            setTimeout(() => {
+                const el = document.getElementById(`sub-line-${newIdx}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 50);
+        }
+    });
+
+    // 导出完整字幕带时间戳至当前 Markdown 文档编辑区
+    function exportSubtitlesToNote() {
+        if (subtitlesList.value.length === 0) {
+            new Notice('当前没有可导出的字幕');
+            return;
+        }
+
+        const markdownView = getActiveMarkdownView();
+        if (!markdownView) {
+            new Notice('请先在主工作区打开并聚焦一个 Markdown 笔记');
+            return;
+        }
+
+        const editor = markdownView.editor;
+        if (!editor) {
+            new Notice('无法获取编辑器实例，请将光标置于 Markdown 文档中');
+            return;
+        }
+
+        let output = `\n### 🎬 视频字幕记录 - ${formatTime(currentVideoTime.value)}\n`;
+        const videoUrl = currentVideoUrl.value;
+        subtitlesList.value.forEach(sub => {
+            const formatted = formatTime(sub.start);
+            const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(videoUrl)}&t=${Math.floor(sub.start)}`;
+            output += `- [🎬 ${formatted}](${uri}) ${sub.text}\n`;
+        });
+        output += `\n`;
+
+        editor.replaceSelection(output);
+        new Notice(`📤 已成功导出 ${subtitlesList.value.length} 句字幕至文档`);
+    }
+
+
+    // ========== 新增：RSS 订阅阅读器模块 ==========
+    const showRssConfig = ref(false);
+    const newFeedName = ref('');
+    const newFeedUrl = ref('');
+    const rssFeeds = ref<{ name: string; url: string }[]>([]);
+    const selectedFeedUrl = ref('');
+    const isLoadingFeeds = ref(false);
+    const feedItems = ref<{ title: string; link: string; date: string; content: string; description: string }[]>([]);
+    
+    const selectedArticle = ref<{ title: string; link: string; date: string; content: string; description: string } | null>(null);
+    const selectedArticleParagraphs = ref<{ text: string; segments: any[] }[]>([]);
+    const RSS_FEEDS_KEY = 'lang-learner-rss-feeds';
+
+    function loadRssFeeds() {
+        try {
+            const saved = localStorage.getItem(RSS_FEEDS_KEY);
+            if (saved) {
+                rssFeeds.value = JSON.parse(saved);
+            } else {
+                const defaultFeeds = [
+                    { name: 'Hacker News', url: 'https://news.ycombinator.com/rss' },
+                    { name: 'BBC Global News', url: 'http://feeds.bbci.co.uk/news/world/rss.xml' }
+                ];
+                rssFeeds.value = defaultFeeds;
+                localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(defaultFeeds));
+            }
+        } catch (e) {
+            console.error('加载 RSS 列表出错:', e);
+        }
+    }
+
+    function addRssFeed() {
+        const name = newFeedName.value.trim();
+        const url = newFeedUrl.value.trim();
+        if (!name || !url) {
+            new Notice('请输入完整的订阅源名称和链接');
+            return;
+        }
+        if (rssFeeds.value.some(f => f.url === url)) {
+            new Notice('该订阅源已存在');
+            return;
+        }
+        rssFeeds.value.push({ name, url });
+        localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(rssFeeds.value));
+        newFeedName.value = '';
+        newFeedUrl.value = '';
+        new Notice('订阅源添加成功');
+    }
+
+    function removeRssFeed(idx: number) {
+        rssFeeds.value.splice(idx, 1);
+        localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(rssFeeds.value));
+        new Notice('订阅源已删除');
+    }
+
+    async function handleSelectFeed() {
+        if (!selectedFeedUrl.value) {
+            feedItems.value = [];
+            return;
+        }
+        isLoadingFeeds.value = true;
+        selectedArticle.value = null;
+        try {
+            const xmlText = await fetchRssFeedXml(selectedFeedUrl.value);
+            feedItems.value = parseRssXml(xmlText);
+            new Notice(`成功拉取 ${feedItems.value.length} 篇文章`);
+        } catch (e) {
+            console.error(e);
+            new Notice('RSS 订阅源拉取或解析失败，请检查网络或 URL 是否正确');
+        } finally {
+            isLoadingFeeds.value = false;
+        }
+    }
+
+    async function fetchRssFeedXml(url: string): Promise<string> {
+        try {
+            const obsidian = require('obsidian');
+            if (obsidian && obsidian.requestUrl) {
+                const res = await obsidian.requestUrl({ url });
+                return res.text || '';
+            }
+        } catch (e) {
+            console.warn('Obsidian requestUrl 获取 RSS 失败，尝试 fetch:', e);
+        }
+        const res = await fetch(url);
+        return await res.text();
+    }
+
+    function parseRssXml(xmlText: string) {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        const items = xmlDoc.querySelectorAll('item');
+        const parsedItems: any[] = [];
+        
+        items.forEach(item => {
+            const title = item.querySelector('title')?.textContent || '';
+            const link = item.querySelector('link')?.textContent || '';
+            const date = item.querySelector('pubDate')?.textContent || item.querySelector('date')?.textContent || '';
+            
+            let content = '';
+            const contentEncoded = item.getElementsByTagName('content:encoded');
+            if (contentEncoded && contentEncoded.length > 0) {
+                content = contentEncoded[0].textContent || '';
+            }
+            if (!content) {
+                content = item.querySelector('description')?.textContent || '';
+            }
+            
+            parsedItems.push({
+                title: title.trim(),
+                link: link.trim(),
+                date: date.trim(),
+                content: content,
+                description: item.querySelector('description')?.textContent || ''
+            });
+        });
+        
+        if (parsedItems.length === 0) {
+            const entries = xmlDoc.querySelectorAll('entry');
+            entries.forEach(entry => {
+                const title = entry.querySelector('title')?.textContent || '';
+                const link = entry.querySelector('link')?.getAttribute('href') || entry.querySelector('link')?.textContent || '';
+                const date = entry.querySelector('updated')?.textContent || entry.querySelector('published')?.textContent || '';
+                const content = entry.querySelector('content')?.textContent || entry.querySelector('summary')?.textContent || '';
+                parsedItems.push({
+                    title: title.trim(),
+                    link: link.trim(),
+                    date: date.trim(),
+                    content: content,
+                    description: entry.querySelector('summary')?.textContent || ''
+                });
+            });
+        }
+        return parsedItems;
+    }
+
+    function readArticle(item: any) {
+        selectedArticle.value = item;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = item.content || item.description || '';
+        
+        let paragraphs: string[] = [];
+        const pEls = tempDiv.querySelectorAll('p');
+        if (pEls.length > 0) {
+            pEls.forEach(p => {
+                const txt = p.textContent?.trim();
+                if (txt) paragraphs.push(txt);
+            });
+        } else {
+            paragraphs = tempDiv.textContent?.split(/\n+/).map(p => p.trim()).filter(Boolean) || [];
+        }
+
+        if (paragraphs.length === 0 && tempDiv.textContent?.trim()) {
+            paragraphs.push(tempDiv.textContent.trim());
+        }
+
+        selectedArticleParagraphs.value = paragraphs.map(pText => {
+            return {
+                text: pText,
+                segments: processTextToSegments(pText)
+            };
+        });
+    }
+
+
+    // ========== 新增：公共分词渲染助手 ==========
+    function processTextToSegments(text: string): any[] {
+        if (!text) return [];
+        const tokens = tokenize(text);
+        const phraseRanges: Array<{ start: number; end: number }> = [];
+        for (const token of tokens) {
+            if (token.isPhrase) {
+                phraseRanges.push({ start: token.start, end: token.end });
+            }
+        }
+        function isCoveredByPhrase(token: any): boolean {
+            if (token.isPhrase) return false;
+            for (const range of phraseRanges) {
+                if (token.start >= range.start && token.end <= range.end) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        const segments: any[] = [];
+        let lastIndex = 0;
+        for (const token of tokens) {
+            if (isCoveredByPhrase(token)) continue;
+            if (token.start > lastIndex) {
+                segments.push({
+                    type: 'text',
+                    text: text.slice(lastIndex, token.start),
+                    lemma: '',
+                    start: lastIndex,
+                    end: token.start
+                });
+            }
+            const status = vocabManager.get(token.lemma);
+            const info = vocabManager.getInfo(token.lemma);
+            let trans = info?.trans || '';
+            let phonetic = info?.phonetic || '';
+            if (!trans) {
+                const dictEntry = OFFLINE_DICT[token.lemma];
+                if (dictEntry) {
+                    trans = dictEntry.trans;
+                    phonetic = phonetic || dictEntry.phonetic || '';
+                }
+            }
+            segments.push({
+                type: 'word',
+                text: text.slice(token.start, token.end),
+                lemma: token.lemma,
+                isPhrase: token.isPhrase,
+                status,
+                trans,
+                phonetic,
+                start: token.start,
+                end: token.end
+            });
+            lastIndex = token.end;
+        }
+        if (lastIndex < text.length) {
+            segments.push({
+                type: 'text',
+                text: text.slice(lastIndex),
+                lemma: '',
+                start: lastIndex,
+                end: text.length
+            });
+        }
+        return segments;
+    }
+
     return {
       speak,
       availableVoices,
@@ -2296,7 +3279,30 @@ export default defineComponent({
       insertVideoTimestamp,
       setPlaybackRate,
       onVideoTimeUpdate,
-      mediaType
+      mediaType,
+      // RSS
+      showRssConfig,
+      newFeedName,
+      newFeedUrl,
+      rssFeeds,
+      selectedFeedUrl,
+      isLoadingFeeds,
+      feedItems,
+      selectedArticle,
+      selectedArticleParagraphs,
+      loadRssFeeds,
+      addRssFeed,
+      removeRssFeed,
+      handleSelectFeed,
+      readArticle,
+      // 字幕
+      subtitlesList,
+      activeSubtitleIndex,
+      isLoadingSubtitles,
+      seekToSubtitleTime,
+      loadYouTubeCaptions,
+      handleLocalSubtitleUpload,
+      exportSubtitlesToNote
     };
   }
 });
@@ -2920,6 +3926,42 @@ export default defineComponent({
 
 .lang-learner-review-answer-section {
     animation: langLearnerFadeIn 0.2s ease-out;
+}
+
+/* ---- 14. 视频字幕高亮与RSS排版 ---- */
+.lang-learner-sub-line {
+    background: transparent;
+    border-left: 3px solid transparent;
+}
+
+.lang-learner-sub-line:hover {
+    background: var(--background-secondary-alt);
+}
+
+.lang-learner-active-sub {
+    background: rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.12) !important;
+    border-left: 3px solid var(--interactive-accent) !important;
+    font-weight: 500;
+}
+
+.lang-learner-subtitles-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lang-learner-subtitles-container::-webkit-scrollbar-thumb {
+    background-color: var(--background-modifier-border);
+    border-radius: 3px;
+}
+
+.lang-learner-rss-article-body p {
+    margin-bottom: 1.2em;
+    font-family: var(--font-text, Georgia, serif);
+    font-size: 1.05em;
+}
+
+.lang-learner-rss-para {
+    line-height: 1.6;
+    letter-spacing: 0.01em;
 }
 </style>
 
