@@ -29981,7 +29981,7 @@ function render(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-6bf369b6";
+Panel_default.__scopeId = "data-v-8a586a71";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts

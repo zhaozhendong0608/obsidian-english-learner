@@ -24,6 +24,7 @@
 | ADR-015 | 2026-05-23 | obsidian:// 协议驱动的视频戳笔记系统 (Media Extended) | 🟢 Accepted | -                  |
 | ADR-016 | 2026-05-23 | 焦点偏置自动修正的 Markdown 编辑器插入机制 (Focus Shift Correction) | 🟢 Accepted | -                  |
 | ADR-017 | 2026-05-24 | 实时高亮字幕看板、音频同步纠偏与 Markdown 字幕文本双向协议导出 | 🟢 Accepted | -                  |
+| ADR-018 | 2026-05-24 | 重构插件注册元数据以支持 Obsidian English Immersion Reader 命名定位 | 🟢 Accepted | -                  |
 
 
 ---
@@ -218,4 +219,14 @@
 - **后果**:
   - 正面：彻底根治了视频静音/空白期的字幕闪烁问题，听音与认词体验极其丝滑；实时高亮看板让查词无需在长字幕列表中费力搜寻；Markdown 导出建立起了极强的内容连接与二次复习链路；
   - 负面：无明显负面影响。
+
+### ADR-018 重构插件注册元数据以支持 Obsidian English Immersion Reader 命名定位
+- **上下文**:
+  为了更好地体现该插件“只针对英语提供分词还原与翻译”并且“专注于沉浸式阅读器与听力精读”的产品定位，指挥官决定将插件名称变更为 `Obsidian English Immersion Reader`。此项修改涉及核心配置文件（`manifest.json` 与 `package.json`），需要评估改名后对用户历史资产（如时间戳超链接 `obsidian://lang-learner-media`）的兼容性。
+- **决策**:
+  1. **Solid-Strict 资产修改**: 修改 `manifest.json` 中的 `id` 为 `obsidian-english-immersion-reader`，`name` 为 `Obsidian English Immersion Reader`；修改 `package.json` 中的 `name` 为 `obsidian-english-immersion-reader`；
+  2. **协议与样式兼容隔离 (保留旧标识)**: 代码内部全局使用的样式前缀 `.lang-learner-` 以及自定义 URL 协议前缀 `obsidian://lang-learner-media` 保持不变，防止破坏用户历史笔记中的跳转链接。
+- **后果**:
+  - 正面：更准确的命名定位，在官方社区市场或手动安装时提供极佳的产品辨识度；完全保留了内部跳转协议兼容性，用户旧笔记的时间戳超链接仍旧 100% 正常工作。
+  - 负面：用户更新插件后，若采用手动安装，其插件所在的文件夹名称需要从 `obsidian-english-learner` 重命名为新 ID `obsidian-english-immersion-reader` 以免冲突。
 
