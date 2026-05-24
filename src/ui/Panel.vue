@@ -1,5 +1,166 @@
 <template>
   <div class="lang-learner-panel">
+    <!-- 全局自主查词输入框 -->
+    <div class="lang-learner-search-bar">
+      <input
+        v-model="searchQuery"
+        @keyup.enter="performSearch"
+        placeholder="输入单词查询..."
+        class="lang-learner-search-input"
+      />
+      <button @click="performSearch" class="lang-learner-btn lang-learner-btn-primary lang-learner-search-btn">🔍 查询</button>
+    </div>
+
+    <!-- 语音发音配置区 -->
+    <div class="lang-learner-panel-section lang-learner-voice-settings-section" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border);">
+      <div 
+        class="lang-learner-voice-settings-header" 
+        @click="showVoiceConfig = !showVoiceConfig"
+        style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
+      >
+        <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">⚙️ 发音配置 (美音/英音)</span>
+        <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼ 收起' : '▶ 展开' }}</span>
+      </div>
+      <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <!-- 引擎选择 -->
+        <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.75em; color: var(--text-muted);">发音引擎:</label>
+          <select 
+            v-model="voiceSettings.engine" 
+            @change="saveVoiceSettings"
+            style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+          >
+            <option value="online">🌐 在线真人发音 (推荐)</option>
+            <option value="local">💻 系统原生离线发音</option>
+          </select>
+        </div>
+
+        <!-- 在线真人参数展示 -->
+        <div v-if="voiceSettings.engine === 'online'" class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.75em; color: var(--text-muted);">口音选择:</label>
+          <select 
+            v-model="voiceSettings.onlineAccent" 
+            @change="saveVoiceSettings"
+            style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+          >
+            <option :value="2">🇺🇸 美式发音 (General American)</option>
+            <option :value="1">🇬🇧 英式发音 (Received Pronunciation)</option>
+          </select>
+        </div>
+
+        <!-- 离线系统参数展示 -->
+        <template v-else>
+          <!-- 发音人选择 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
+            <select 
+              v-model="voiceSettings.voiceName" 
+              @change="saveVoiceSettings"
+              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
+            >
+              <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                {{ voice.name }} ({{ voice.lang }})
+              </option>
+              <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
+            </select>
+          </div>
+          <!-- 语速调节 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
+            <input 
+              type="range" 
+              v-model.number="voiceSettings.rate" 
+              min="0.5" 
+              max="1.8" 
+              step="0.1" 
+              @change="saveVoiceSettings"
+              style="width: 60%; cursor: pointer;"
+            />
+          </div>
+          <!-- 音调调节 -->
+          <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+            <label style="font-size: 0.75em; color: var(--text-muted);">音调: {{ voiceSettings.pitch.toFixed(1) }}</label>
+            <input 
+              type="range" 
+              v-model.number="voiceSettings.pitch" 
+              min="0.5" 
+              max="1.5" 
+              step="0.1" 
+              @change="saveVoiceSettings"
+              style="width: 60%; cursor: pointer;"
+            />
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
+    <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
+      <h4 class="lang-learner-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📝 单词详情</span>
+        <button
+          class="lang-learner-btn-icon"
+          title="复制卡片内容"
+          @click="copyCardContent"
+        >📋</button>
+      </h4>
+      <div class="lang-learner-word-info-card">
+        <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
+            <span class="lang-learner-word-lemma">{{ displayWord }}</span>
+            <span v-if="selectedWord.phonetic" class="lang-learner-word-phonetic-inline">/{{ selectedWord.phonetic }}/</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button 
+              class="lang-learner-btn-voice-word" 
+              title="朗读单词" 
+              @click="speak(selectedWord.word)"
+              style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+            >
+              🔊
+            </button>
+            <button 
+              class="lang-learner-btn-add-word" 
+              :title="selectedWord.status === 'LEARNING' ? '已在生词本，点击移出' : '添加到生词本'" 
+              @click="toggleAddWord(selectedWord.word)"
+              style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
+            >
+              {{ selectedWord.status === 'LEARNING' ? '📌' : '➕' }}
+            </button>
+          </div>
+        </div>
+        <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
+        
+        <!-- 词源与记忆法辅助 -->
+        <div v-if="selectedWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
+          <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <span>💡 词源与记忆辅助</span>
+          </div>
+          <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent); white-space: pre-wrap;">
+            {{ selectedWord.etymology }}
+          </div>
+        </div>
+        
+        <!-- 例句联想模块 -->
+        <div class="lang-learner-word-examples-container">
+          <div class="lang-learner-examples-title">
+            💡 例句联想
+          </div>
+          <div v-if="isLoadingExamples" class="lang-learner-examples-loading">
+            正在获取例句...
+          </div>
+          <ul v-else-if="exampleSentences.length > 0" class="lang-learner-example-list">
+            <li v-for="(sentence, idx) in exampleSentences" :key="idx" class="lang-learner-example-item">
+              {{ sentence }}
+            </li>
+          </ul>
+          <div v-else class="lang-learner-examples-empty">
+            暂无相关例句
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 顶部主导航 Tab -->
     <div class="lang-learner-main-tabs">
       <button
@@ -44,74 +205,6 @@
       >
         📰 RSS 阅读
       </button>
-    </div>
-
-    <!-- 全局自主查词输入框 -->
-    <div class="lang-learner-search-bar">
-      <input
-        v-model="searchQuery"
-        @keyup.enter="performSearch"
-        placeholder="输入单词查询..."
-        class="lang-learner-search-input"
-      />
-      <button @click="performSearch" class="lang-learner-btn lang-learner-btn-primary lang-learner-search-btn">🔍 查询</button>
-    </div>
-
-    <!-- 单词详情与熟悉度微调区 (全局共享，当有选中单词时浮现) -->
-    <div v-if="selectedWord" class="lang-learner-panel-section lang-learner-word-detail">
-      <h4 class="lang-learner-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>📝 单词详情</span>
-        <button
-          class="lang-learner-btn-icon"
-          title="复制卡片内容"
-          @click="copyCardContent"
-        >📋</button>
-      </h4>
-      <div class="lang-learner-word-info-card">
-        <div class="lang-learner-word-detail-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
-            <span class="lang-learner-word-lemma">{{ displayWord }}</span>
-            <span v-if="selectedWord.phonetic" class="lang-learner-word-phonetic-inline">/{{ selectedWord.phonetic }}/</span>
-          </div>
-          <button 
-            class="lang-learner-btn-voice-word" 
-            title="朗读单词" 
-            @click="speak(selectedWord.word)"
-            style="background: transparent; border: none; cursor: pointer; font-size: 1.1em; padding: 2px 6px; opacity: 0.85;"
-          >
-            🔊
-          </button>
-        </div>
-        <div class="lang-learner-word-trans">{{ selectedWord.trans || '暂无释义' }}</div>
-        
-        <!-- 词源与记忆法辅助 -->
-        <div v-if="selectedWord.etymology" class="lang-learner-word-etymology-container" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--background-modifier-border);">
-          <div class="lang-learner-etymology-title" style="font-weight: 500; font-size: 0.85em; color: var(--text-accent); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-            <span>💡 词源与记忆辅助</span>
-          </div>
-          <div class="lang-learner-etymology-content" style="font-size: 0.85em; color: var(--text-normal); line-height: 1.4; background-color: var(--background-secondary-alt); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-accent); white-space: pre-wrap;">
-            {{ selectedWord.etymology }}
-          </div>
-        </div>
-        
-        <!-- 例句联想模块 -->
-        <div class="lang-learner-word-examples-container">
-          <div class="lang-learner-examples-title">
-            💡 例句联想
-          </div>
-          <div v-if="isLoadingExamples" class="lang-learner-examples-loading">
-            正在获取例句...
-          </div>
-          <ul v-else-if="exampleSentences.length > 0" class="lang-learner-example-list">
-            <li v-for="(sentence, idx) in exampleSentences" :key="idx" class="lang-learner-example-item">
-              {{ sentence }}
-            </li>
-          </ul>
-          <div v-else class="lang-learner-examples-empty">
-            暂无相关例句
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Tab 1: 词汇库 -->
@@ -226,88 +319,6 @@
 
     <!-- Tab 3: 整句分析 -->
     <div v-show="mainTab === 'sentence'" class="lang-learner-tab-content">
-      <!-- 语音发音配置区 -->
-      <div class="lang-learner-panel-section lang-learner-voice-settings-section" style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--background-modifier-border);">
-        <div 
-          class="lang-learner-voice-settings-header" 
-          @click="showVoiceConfig = !showVoiceConfig"
-          style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;"
-        >
-          <span style="font-weight: 500; font-size: 0.85em; color: var(--text-muted);">⚙️ 发音配置 (美音/英音)</span>
-          <span style="font-size: 0.75em; color: var(--text-muted);">{{ showVoiceConfig ? '▼ 收起' : '▶ 展开' }}</span>
-        </div>
-        <div v-show="showVoiceConfig" class="lang-learner-voice-settings-body" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-          <!-- 引擎选择 -->
-          <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">发音引擎:</label>
-            <select 
-              v-model="voiceSettings.engine" 
-              @change="saveVoiceSettings"
-              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
-            >
-              <option value="online">🌐 在线真人发音 (推荐)</option>
-              <option value="local">💻 系统原生离线发音</option>
-            </select>
-          </div>
-
-          <!-- 在线真人参数展示 -->
-          <div v-if="voiceSettings.engine === 'online'" class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 0.75em; color: var(--text-muted);">口音选择:</label>
-            <select 
-              v-model="voiceSettings.onlineAccent" 
-              @change="saveVoiceSettings"
-              style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
-            >
-              <option :value="2">🇺🇸 美式发音 (General American)</option>
-              <option :value="1">🇬🇧 英式发音 (Received Pronunciation)</option>
-            </select>
-          </div>
-
-          <!-- 离线系统参数展示 -->
-          <template v-else>
-            <!-- 发音人选择 -->
-            <div class="lang-learner-voice-setting-item" style="display: flex; flex-direction: column; gap: 4px;">
-              <label style="font-size: 0.75em; color: var(--text-muted);">系统音色选择:</label>
-              <select 
-                v-model="voiceSettings.voiceName" 
-                @change="saveVoiceSettings"
-                style="width: 100%; padding: 4px; font-size: 0.85em; border-radius: 4px; border: 1px solid var(--background-modifier-border); background-color: var(--background-primary); color: var(--text-normal);"
-              >
-                <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
-                  {{ voice.name }} ({{ voice.lang }})
-                </option>
-                <option v-if="availableVoices.length === 0" value="">系统默认发音人</option>
-              </select>
-            </div>
-            <!-- 语速调节 -->
-            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-              <label style="font-size: 0.75em; color: var(--text-muted);">语速: {{ voiceSettings.rate.toFixed(1) }}x</label>
-              <input 
-                type="range" 
-                v-model.number="voiceSettings.rate" 
-                min="0.5" 
-                max="1.8" 
-                step="0.1" 
-                @change="saveVoiceSettings"
-                style="width: 60%; cursor: pointer;"
-              />
-            </div>
-            <!-- 音调调节 -->
-            <div class="lang-learner-voice-setting-item" style="display: flex; align-items: center; justify-content: space-between;">
-              <label style="font-size: 0.75em; color: var(--text-muted);">音调: {{ voiceSettings.pitch.toFixed(1) }}</label>
-              <input 
-                type="range" 
-                v-model.number="voiceSettings.pitch" 
-                min="0.5" 
-                max="1.5" 
-                step="0.1" 
-                @change="saveVoiceSettings"
-                style="width: 60%; cursor: pointer;"
-              />
-            </div>
-          </template>
-        </div>
-      </div>
 
       <div class="lang-learner-panel-section">
         <h4 class="lang-learner-section-title">🔍 输入待分析句子</h4>
@@ -1657,8 +1668,6 @@ export default defineComponent({
 
     /** 响应主窗口的单词单击选中事件，更新侧边栏详情 */
     function handleWordSelected(word: string) {
-        // 自动切换到词汇本 Tab，确保用户能立即看到单词详情
-        mainTab.value = 'vocabulary';
         showSyllableSplit.value = false;
         loadExamples(word);
         const info = vocabManager.getInfo(word);
@@ -1712,6 +1721,31 @@ export default defineComponent({
         } catch (err) {
             console.error('在线异步更新释义与详情失败:', err);
         }
+    }
+
+    /** 将单词快速添加到生词本或从生词本中移出 */
+    function toggleAddWord(word: string) {
+        const info = vocabManager.getInfo(word);
+        const currentStatus = info?.status || 'UNKNOWN';
+        const newStatus = currentStatus === 'LEARNING' ? 'UNKNOWN' : 'LEARNING';
+        
+        const trans = info?.trans || OFFLINE_DICT[word]?.trans || selectedWord.value?.trans || '';
+        const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || selectedWord.value?.phonetic || '';
+        const etymology = info?.etymology || selectedWord.value?.etymology || '';
+        
+        vocabManager.set(word, newStatus, trans, phonetic, etymology);
+        
+        // 广播事件以触发全屏 DOM 刷新与样式重绘
+        eventBus.emit('lang-learner:word-changed', word, newStatus);
+        
+        // 实时更新已选中单词的详情面板
+        if (selectedWord.value && selectedWord.value.word === word) {
+            selectedWord.value.status = newStatus;
+        }
+        
+        // 刷新列表和统计
+        refreshStats();
+        refreshWordList();
     }
 
     onMounted(() => {
@@ -3257,6 +3291,7 @@ export default defineComponent({
       isLoadingExamples,
       searchQuery,
       performSearch,
+      toggleAddWord,
       copyCardContent,
       dueWords,
       currentReviewWord,
