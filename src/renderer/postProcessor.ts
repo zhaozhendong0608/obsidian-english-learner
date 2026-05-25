@@ -125,9 +125,7 @@ export function wrapTextNode(textNode: Text, vocabManager: VocabularyManager): v
         span.textContent = text.slice(token.start, token.end);
 
         // 添加状态类名
-        if (status === 'KNOWN') {
-            span.classList.add('lang-learner-known');
-        } else if (status === 'LEARNING') {
+        if (status === 'LEARNING') {
             span.classList.add('lang-learner-learning');
         } else {
             span.classList.add('lang-learner-unknown');

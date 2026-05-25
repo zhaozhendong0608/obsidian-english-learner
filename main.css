@@ -1,5 +1,5 @@
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SettingsHeader.vue?type=style&index=0 */
-.lang-learner-settings-row[data-v-4867bcb3] {
+.lang-learner-settings-row[data-v-6f515981] {
   display: flex;
   gap: 12px;
   margin-bottom: 12px;
@@ -7,32 +7,32 @@
   padding-bottom: 8px;
   align-items: flex-start;
 }
-.lang-learner-voice-settings-section[data-v-4867bcb3],
-.lang-learner-ai-settings-section[data-v-4867bcb3] {
+.lang-learner-voice-settings-section[data-v-6f515981],
+.lang-learner-ai-settings-section[data-v-6f515981] {
   flex: 1;
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
 }
-.lang-learner-voice-settings-header[data-v-4867bcb3],
-.lang-learner-ai-settings-header[data-v-4867bcb3] {
+.lang-learner-voice-settings-header[data-v-6f515981],
+.lang-learner-ai-settings-header[data-v-6f515981] {
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   padding: 4px 0;
 }
-.lang-learner-settings-title-text[data-v-4867bcb3] {
+.lang-learner-settings-title-text[data-v-6f515981] {
   font-weight: 500;
   font-size: 0.85em;
   color: var(--text-muted);
 }
-.lang-learner-settings-arrow-text[data-v-4867bcb3] {
+.lang-learner-settings-arrow-text[data-v-6f515981] {
   font-size: 0.75em;
   color: var(--text-muted);
 }
-.lang-learner-voice-settings-body[data-v-4867bcb3],
-.lang-learner-ai-settings-body[data-v-4867bcb3] {
+.lang-learner-voice-settings-body[data-v-6f515981],
+.lang-learner-ai-settings-body[data-v-6f515981] {
   padding-top: 10px;
   display: flex;
   flex-direction: column;
@@ -41,20 +41,20 @@
   overflow-y: auto;
   padding-right: 4px;
 }
-.lang-learner-voice-setting-item[data-v-4867bcb3],
-.lang-learner-ai-setting-item[data-v-4867bcb3] {
+.lang-learner-voice-setting-item[data-v-6f515981],
+.lang-learner-ai-setting-item[data-v-6f515981] {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.lang-learner-voice-setting-item label[data-v-4867bcb3],
-.lang-learner-ai-setting-item label[data-v-4867bcb3] {
+.lang-learner-voice-setting-item label[data-v-6f515981],
+.lang-learner-ai-setting-item label[data-v-6f515981] {
   font-size: 0.75em;
   color: var(--text-muted);
 }
-.lang-learner-voice-setting-item select[data-v-4867bcb3],
-.lang-learner-ai-setting-item input[data-v-4867bcb3],
-.lang-learner-voice-setting-item input[type=text][data-v-4867bcb3] {
+.lang-learner-voice-setting-item select[data-v-6f515981],
+.lang-learner-ai-setting-item input[data-v-6f515981],
+.lang-learner-voice-setting-item input[type=text][data-v-6f515981] {
   width: 100%;
   padding: 4px;
   font-size: 0.85em;
@@ -63,16 +63,16 @@
   background-color: var(--background-primary);
   color: var(--text-normal);
 }
-.lang-learner-slider-row[data-v-4867bcb3] {
+.lang-learner-slider-row[data-v-6f515981] {
   flex-direction: row !important;
   align-items: center;
   justify-content: space-between;
 }
-.lang-learner-slider-row input[data-v-4867bcb3] {
+.lang-learner-slider-row input[data-v-6f515981] {
   width: 60%;
   cursor: pointer;
 }
-.lang-learner-settings-divider[data-v-4867bcb3] {
+.lang-learner-settings-divider[data-v-6f515981] {
   align-self: stretch;
   width: 1px;
   background-color: var(--background-modifier-border);
@@ -80,12 +80,12 @@
 }
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=style&index=0 */
-.lang-learner-detail-title-box[data-v-b1a0df07] {
+.lang-learner-detail-title-box[data-v-b902454b] {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.lang-learner-btn-back[data-v-b1a0df07] {
+.lang-learner-btn-back[data-v-b902454b] {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -94,12 +94,12 @@
   display: inline-flex;
   align-items: center;
 }
-.lang-learner-word-detail-header[data-v-b1a0df07] {
+.lang-learner-word-detail-header[data-v-b902454b] {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.lang-learner-word-detail-word-box[data-v-b1a0df07] {
+.lang-learner-word-detail-word-box[data-v-b902454b] {
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -109,16 +109,16 @@
   margin-left: -6px;
   transition: background-color 0.2s ease;
 }
-.lang-learner-word-detail-word-box[data-v-b1a0df07]:hover {
+.lang-learner-word-detail-word-box[data-v-b902454b]:hover {
   background-color: var(--background-primary-alt);
 }
-.lang-learner-detail-actions[data-v-b1a0df07] {
+.lang-learner-detail-actions[data-v-b902454b] {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.lang-learner-btn-voice-word[data-v-b1a0df07],
-.lang-learner-btn-add-word[data-v-b1a0df07] {
+.lang-learner-btn-voice-word[data-v-b902454b],
+.lang-learner-btn-add-word[data-v-b902454b] {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -126,12 +126,12 @@
   padding: 2px 6px;
   opacity: 0.85;
 }
-.lang-learner-word-etymology-container[data-v-b1a0df07] {
+.lang-learner-word-etymology-container[data-v-b902454b] {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px dashed var(--background-modifier-border);
 }
-.lang-learner-etymology-title[data-v-b1a0df07] {
+.lang-learner-etymology-title[data-v-b902454b] {
   font-weight: 500;
   font-size: 0.85em;
   color: var(--text-accent);
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 4px;
 }
-.lang-learner-etymology-content[data-v-b1a0df07] {
+.lang-learner-etymology-content[data-v-b902454b] {
   font-size: 0.85em;
   color: var(--text-normal);
   line-height: 1.4;
@@ -150,18 +150,18 @@
   border-left: 3px solid var(--text-accent);
   white-space: pre-wrap;
 }
-.lang-learner-ai-teacher-container[data-v-b1a0df07] {
+.lang-learner-ai-teacher-container[data-v-b902454b] {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--background-modifier-border);
 }
-.lang-learner-ai-teacher-header[data-v-b1a0df07] {
+.lang-learner-ai-teacher-header[data-v-b902454b] {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
-.lang-learner-btn-ask-ai[data-v-b1a0df07] {
+.lang-learner-btn-ask-ai[data-v-b902454b] {
   font-size: 0.8em;
   padding: 4px 8px;
   border-radius: 4px;
@@ -171,10 +171,10 @@
   cursor: pointer;
   opacity: 0.9;
 }
-.lang-learner-ai-response-box[data-v-b1a0df07] {
+.lang-learner-ai-response-box[data-v-b902454b] {
   margin-top: 8px;
 }
-.lang-learner-root-box[data-v-b1a0df07] {
+.lang-learner-root-box[data-v-b902454b] {
   margin-bottom: 8px;
   display: flex;
   gap: 8px;
@@ -183,16 +183,16 @@
   padding: 4px 8px;
   border-radius: 4px;
 }
-.lang-learner-root-label[data-v-b1a0df07] {
+.lang-learner-root-label[data-v-b902454b] {
   font-size: 0.8em;
   color: var(--text-muted);
 }
-.lang-learner-root-value[data-v-b1a0df07] {
+.lang-learner-root-value[data-v-b902454b] {
   font-size: 0.85em;
   font-weight: bold;
   color: var(--text-accent);
 }
-.lang-learner-ai-markdown[data-v-b1a0df07] {
+.lang-learner-ai-markdown[data-v-b902454b] {
   font-size: 0.85em;
   color: var(--text-normal);
   line-height: 1.5;
@@ -202,7 +202,7 @@
   max-height: 300px;
   overflow-y: auto;
 }
-.lang-learner-btn-export-ai[data-v-b1a0df07] {
+.lang-learner-btn-export-ai[data-v-b902454b] {
   margin-top: 8px;
   width: 100%;
   padding: 6px;
@@ -215,12 +215,12 @@
 }
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=style&index=0 */
-.lang-learner-wordlist-actions[data-v-264bff6f] {
+.lang-learner-wordlist-actions[data-v-8c9dc214] {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.lang-learner-btn-voice-mini[data-v-264bff6f] {
+.lang-learner-btn-voice-mini[data-v-8c9dc214] {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -232,7 +232,7 @@
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/EstimateTab.vue?type=style&index=0 */
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=style&index=0 */
-.lang-learner-btn-voice-mini[data-v-aa470f1f] {
+.lang-learner-btn-voice-mini[data-v-12bd9dd0] {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -240,7 +240,7 @@
   padding: 2px 4px;
   opacity: 0.8;
 }
-.lang-learner-btn-voice-sentence[data-v-aa470f1f] {
+.lang-learner-btn-voice-sentence[data-v-12bd9dd0] {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -252,7 +252,7 @@
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=style&index=0 */
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=style&index=0 */
-.lang-learner-media-input-box[data-v-90c8bbfa] {
+.lang-learner-media-input-box[data-v-c0c04209] {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
@@ -261,17 +261,17 @@
   flex-direction: column;
   gap: 8px;
 }
-.lang-learner-media-input-row[data-v-90c8bbfa] {
+.lang-learner-media-input-row[data-v-c0c04209] {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.lang-learner-media-input-header[data-v-90c8bbfa] {
+.lang-learner-media-input-header[data-v-c0c04209] {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-.lang-learner-media-input-row select[data-v-90c8bbfa] {
+.lang-learner-media-input-row select[data-v-c0c04209] {
   width: 100%;
   padding: 5px 8px;
   border-radius: 6px;
@@ -281,11 +281,11 @@
   font-size: 0.82em;
   cursor: pointer;
 }
-.lang-learner-media-input-row-divider[data-v-90c8bbfa] {
+.lang-learner-media-input-row-divider[data-v-c0c04209] {
   border-top: 1px dashed var(--background-modifier-border);
   padding-top: 8px;
 }
-.lang-learner-media-url-input[data-v-90c8bbfa] {
+.lang-learner-media-url-input[data-v-c0c04209] {
   flex: 1;
   padding: 5px 8px;
   border-radius: 6px;
@@ -294,7 +294,7 @@
   color: var(--text-normal);
   font-size: 0.82em;
 }
-.lang-learner-video-container-box[data-v-90c8bbfa] {
+.lang-learner-video-container-box[data-v-c0c04209] {
   text-align: center;
   background: #000;
   border-radius: 8px;
@@ -302,28 +302,28 @@
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
-.lang-learner-video-container-box video[data-v-90c8bbfa] {
+.lang-learner-video-container-box video[data-v-c0c04209] {
   width: 100%;
   max-height: 280px;
   aspect-ratio: 16/9;
   display: block;
   border-radius: 6px;
 }
-.lang-learner-video-container-box iframe[data-v-90c8bbfa] {
+.lang-learner-video-container-box iframe[data-v-c0c04209] {
   width: 100%;
   height: 240px;
   border: none;
   border-radius: 6px;
   display: block;
 }
-#youtube-player-container[data-v-90c8bbfa] {
+#youtube-player-container[data-v-c0c04209] {
   width: 100%;
   height: 240px;
   display: block;
   border-radius: 6px;
   background: #000;
 }
-.lang-learner-media-controls-box[data-v-90c8bbfa] {
+.lang-learner-media-controls-box[data-v-c0c04209] {
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
@@ -332,7 +332,7 @@
   flex-direction: column;
   gap: 8px;
 }
-.lang-learner-media-time-display[data-v-90c8bbfa] {
+.lang-learner-media-time-display[data-v-c0c04209] {
   font-size: 0.85em;
   font-weight: 600;
   color: var(--text-accent);
@@ -340,7 +340,7 @@
   align-items: center;
   gap: 4px;
 }
-.lang-learner-current-subtitle-box[data-v-90c8bbfa] {
+.lang-learner-current-subtitle-box[data-v-c0c04209] {
   padding: 12px;
   border-radius: 8px;
   border: 1.5px solid var(--interactive-accent);
@@ -348,7 +348,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   text-align: center;
 }
-.lang-learner-current-subtitle-header[data-v-90c8bbfa] {
+.lang-learner-current-subtitle-header[data-v-c0c04209] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -356,25 +356,25 @@
   border-bottom: 1px dashed var(--background-modifier-border);
   padding-bottom: 6px;
 }
-.lang-learner-current-subtitle-title[data-v-90c8bbfa] {
+.lang-learner-current-subtitle-title[data-v-c0c04209] {
   font-size: 0.75em;
   color: var(--interactive-accent);
   font-weight: 700;
   letter-spacing: 0.5px;
 }
-.lang-learner-current-subtitle-text[data-v-90c8bbfa] {
+.lang-learner-current-subtitle-text[data-v-c0c04209] {
   font-size: 1.08em;
   font-weight: 600;
   line-height: 1.5;
   color: var(--text-normal);
 }
-.lang-learner-subtitle-interactive-word[data-v-90c8bbfa] {
+.lang-learner-subtitle-interactive-word[data-v-c0c04209] {
   border-bottom: 1.5px dashed var(--text-accent);
   padding: 0 1px;
   margin: 0 1px;
   cursor: pointer;
 }
-.lang-learner-current-subtitle-trans[data-v-90c8bbfa] {
+.lang-learner-current-subtitle-trans[data-v-c0c04209] {
   font-size: 0.88em;
   color: var(--text-muted);
   margin-top: 8px;
@@ -383,13 +383,13 @@
   padding-top: 6px;
   text-align: center;
 }
-.lang-learner-subtitles-card-box[data-v-90c8bbfa] {
+.lang-learner-subtitles-card-box[data-v-c0c04209] {
   padding: 10px;
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
 }
-.lang-learner-subtitles-card-header[data-v-90c8bbfa] {
+.lang-learner-subtitles-card-header[data-v-c0c04209] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -398,7 +398,7 @@
   font-weight: 700;
   color: var(--text-muted);
 }
-.lang-learner-subtitles-container[data-v-90c8bbfa] {
+.lang-learner-subtitles-container[data-v-c0c04209] {
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid var(--background-modifier-border);
@@ -409,14 +409,14 @@
   flex-direction: column;
   gap: 6px;
 }
-.lang-learner-subtitles-container[data-v-90c8bbfa]::-webkit-scrollbar {
+.lang-learner-subtitles-container[data-v-c0c04209]::-webkit-scrollbar {
   width: 6px;
 }
-.lang-learner-subtitles-container[data-v-90c8bbfa]::-webkit-scrollbar-thumb {
+.lang-learner-subtitles-container[data-v-c0c04209]::-webkit-scrollbar-thumb {
   background-color: var(--background-modifier-border);
   border-radius: 3px;
 }
-.lang-learner-sub-line[data-v-90c8bbfa] {
+.lang-learner-sub-line[data-v-c0c04209] {
   padding: 5px 8px;
   border-radius: 6px;
   line-height: 1.45;
@@ -428,33 +428,33 @@
   background: transparent;
   border-left: 3px solid transparent;
 }
-.lang-learner-sub-line[data-v-90c8bbfa]:hover {
+.lang-learner-sub-line[data-v-c0c04209]:hover {
   background: var(--background-secondary-alt);
 }
-.lang-learner-active-sub[data-v-90c8bbfa] {
+.lang-learner-active-sub[data-v-c0c04209] {
   background: rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.12) !important;
   border-left: 3px solid var(--interactive-accent) !important;
   font-weight: 500;
 }
-.lang-learner-sub-time-label[data-v-90c8bbfa] {
+.lang-learner-sub-time-label[data-v-c0c04209] {
   font-size: 0.72em;
   color: var(--text-muted);
   font-family: monospace;
   display: block;
   margin-bottom: 2px;
 }
-.lang-learner-sub-text[data-v-90c8bbfa] {
+.lang-learner-sub-text[data-v-c0c04209] {
   color: var(--text-normal);
   display: block;
 }
-.lang-learner-sub-translation[data-v-90c8bbfa] {
+.lang-learner-sub-translation[data-v-c0c04209] {
   font-size: 0.8em;
   color: var(--text-muted);
   margin-top: 3px;
   font-weight: normal;
   display: block;
 }
-.lang-learner-media-empty-box[data-v-90c8bbfa] {
+.lang-learner-media-empty-box[data-v-c0c04209] {
   padding: 40px 0;
   text-align: center;
   background: var(--background-secondary);
@@ -464,35 +464,35 @@
 }
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=style&index=0 */
-.lang-learner-rss-config-box[data-v-40c9e23f] {
+.lang-learner-rss-config-box[data-v-bce0db60] {
   padding: 12px;
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
 }
-.lang-learner-rss-config-header[data-v-40c9e23f] {
+.lang-learner-rss-config-header[data-v-bce0db60] {
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   padding: 4px 0;
 }
-.lang-learner-rss-config-title[data-v-40c9e23f] {
+.lang-learner-rss-config-title[data-v-bce0db60] {
   font-weight: 600;
   font-size: 0.85em;
   color: var(--text-muted);
 }
-.lang-learner-rss-config-arrow[data-v-40c9e23f] {
+.lang-learner-rss-config-arrow[data-v-bce0db60] {
   font-size: 0.75em;
   color: var(--text-muted);
 }
-.lang-learner-rss-config-body[data-v-40c9e23f] {
+.lang-learner-rss-config-body[data-v-bce0db60] {
   padding-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.lang-learner-rss-input[data-v-40c9e23f] {
+.lang-learner-rss-input[data-v-bce0db60] {
   width: 100%;
   padding: 6px 8px;
   border-radius: 4px;
@@ -501,26 +501,26 @@
   color: var(--text-normal);
   font-size: 0.85em;
 }
-.lang-learner-rss-list-container[data-v-40c9e23f] {
+.lang-learner-rss-list-container[data-v-bce0db60] {
   border-top: 1px dashed var(--background-modifier-border);
   padding-top: 8px;
   margin-top: 4px;
 }
-.lang-learner-rss-list-container label[data-v-40c9e23f] {
+.lang-learner-rss-list-container label[data-v-bce0db60] {
   font-size: 0.75em;
   color: var(--text-muted);
   font-weight: 600;
   display: block;
   margin-bottom: 4px;
 }
-.lang-learner-rss-feeds-list[data-v-40c9e23f] {
+.lang-learner-rss-feeds-list[data-v-bce0db60] {
   display: flex;
   flex-direction: column;
   gap: 4px;
   max-height: 120px;
   overflow-y: auto;
 }
-.lang-learner-rss-feed-item[data-v-40c9e23f] {
+.lang-learner-rss-feed-item[data-v-bce0db60] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -529,7 +529,7 @@
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
 }
-.lang-learner-feed-name-span[data-v-40c9e23f] {
+.lang-learner-feed-name-span[data-v-bce0db60] {
   font-size: 0.8em;
   color: var(--text-normal);
   font-weight: 500;
@@ -538,18 +538,18 @@
   white-space: nowrap;
   max-width: 150px;
 }
-.lang-learner-rss-selector-box[data-v-40c9e23f] {
+.lang-learner-rss-selector-box[data-v-bce0db60] {
   margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.lang-learner-rss-selector-box label[data-v-40c9e23f] {
+.lang-learner-rss-selector-box label[data-v-bce0db60] {
   font-size: 0.85em;
   font-weight: 600;
   color: var(--text-muted);
 }
-.lang-learner-rss-selector-box select[data-v-40c9e23f] {
+.lang-learner-rss-selector-box select[data-v-bce0db60] {
   width: 100%;
   padding: 6px 8px;
   border-radius: 4px;
@@ -559,7 +559,7 @@
   font-size: 0.85em;
   cursor: pointer;
 }
-.lang-learner-rss-detail-header[data-v-40c9e23f] {
+.lang-learner-rss-detail-header[data-v-bce0db60] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -567,19 +567,19 @@
   border-bottom: 1px solid var(--background-modifier-border);
   padding-bottom: 8px;
 }
-.lang-learner-rss-title[data-v-40c9e23f] {
+.lang-learner-rss-title[data-v-bce0db60] {
   font-size: 1.2em;
   font-weight: bold;
   margin: 0 0 6px 0;
   line-height: 1.3;
   color: var(--text-normal);
 }
-.lang-learner-rss-date-label[data-v-40c9e23f] {
+.lang-learner-rss-date-label[data-v-bce0db60] {
   font-size: 0.75em;
   color: var(--text-muted);
   margin: 0 0 16px 0;
 }
-.lang-learner-rss-article-body[data-v-40c9e23f] {
+.lang-learner-rss-article-body[data-v-bce0db60] {
   line-height: 1.6;
   font-size: 0.95em;
   color: var(--text-normal);
@@ -587,7 +587,7 @@
   flex-direction: column;
   gap: 14px;
 }
-.lang-learner-rss-para[data-v-40c9e23f] {
+.lang-learner-rss-para[data-v-bce0db60] {
   margin: 0;
   text-indent: 0;
   text-align: justify;
@@ -597,14 +597,14 @@
 }
 
 /* sfc-style:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=style&index=0 */
-.lang-learner-btn-close-results[data-v-5fbf7b1e] {
+.lang-learner-btn-close-results[data-v-a2912b6f] {
   background: transparent;
   border: none;
   cursor: pointer;
   font-size: 1.1em;
   color: var(--text-muted);
 }
-.lang-learner-search-results-list[data-v-5fbf7b1e] {
+.lang-learner-search-results-list[data-v-a2912b6f] {
   max-height: 250px;
   overflow-y: auto;
   display: flex;
@@ -612,7 +612,7 @@
   gap: 6px;
   padding: 2px;
 }
-.lang-learner-search-result-item[data-v-5fbf7b1e] {
+.lang-learner-search-result-item[data-v-a2912b6f] {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -623,11 +623,11 @@
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
-.lang-learner-result-word-span[data-v-5fbf7b1e] {
+.lang-learner-result-word-span[data-v-a2912b6f] {
   font-weight: 600;
   color: var(--text-accent);
 }
-.lang-learner-result-trans-span[data-v-5fbf7b1e] {
+.lang-learner-result-trans-span[data-v-a2912b6f] {
   font-size: 0.85em;
   color: var(--text-muted);
   text-align: right;
