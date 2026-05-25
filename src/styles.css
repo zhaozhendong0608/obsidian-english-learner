@@ -611,21 +611,45 @@
     border-radius: 8px;
     padding: 4px;
     margin-bottom: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+}
+
+/* 自定义滚动条样式（可选） */
+.lang-learner-main-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.lang-learner-main-tabs::-webkit-scrollbar-track {
+    background: var(--background-primary);
+    border-radius: 3px;
+}
+
+.lang-learner-main-tabs::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 3px;
+}
+
+.lang-learner-main-tabs::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }
 
 .lang-learner-main-tab-btn {
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 80px;
     cursor: pointer;
     background: transparent;
     border: none;
     border-radius: 6px;
-    padding: 8px 4px;
+    padding: 8px 12px;
     font-size: 0.85em;
     font-weight: 700;
     color: var(--text-muted);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     text-align: center;
+    white-space: nowrap;
 }
 
 .lang-learner-main-tab-btn:hover {

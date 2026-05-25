@@ -108,6 +108,13 @@
       >
         📰 RSS 阅读
       </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'webimport' }"
+        @click="setTab('webimport')"
+      >
+        🌐 网页导入
+      </button>
     </div>
 
     <!-- Tab 视图 -->
@@ -117,6 +124,7 @@
     <ReviewTab v-show="mainTab === 'review'" @select-word="onWordSelectedByString" />
     <MediaTab v-show="mainTab === 'media'" @select-word="onWordSelectedByString" />
     <ReaderTab v-show="mainTab === 'reader'" @select-word="onWordSelectedByString" />
+    <WebImportTab v-show="mainTab === 'webimport'" />
   </div>
 </template>
 
@@ -140,6 +148,7 @@ import SentenceTab from './components/SentenceTab.vue';
 import ReviewTab from './components/ReviewTab.vue';
 import MediaTab from './components/MediaTab.vue';
 import ReaderTab from './components/ReaderTab.vue';
+import WebImportTab from './components/WebImportTab.vue';
 
 export default defineComponent({
   name: 'Panel',
@@ -151,7 +160,8 @@ export default defineComponent({
     SentenceTab,
     ReviewTab,
     MediaTab,
-    ReaderTab
+    ReaderTab,
+    WebImportTab
   },
   setup() {
     // 注入核心全局依赖
@@ -166,7 +176,7 @@ export default defineComponent({
     const audioService = new AudioService();
 
     // ========== 共享与状态变量 ==========
-    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader'>('vocabulary');
+    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader' | 'webimport'>('vocabulary');
     const searchQuery = ref('');
     const selectedWord = ref<WordInfo | null>(null);
     const searchResultsList = ref<string[]>([]);
@@ -206,6 +216,7 @@ export default defineComponent({
     provide('getAiSettings', () => aiSettings.value);
     provide('getVoiceSettings', () => voiceSettings.value);
     provide('getAvailableVoices', () => availableVoices.value);
+    provide('plugin', plugin);
 
     // ========== 自主查词与搜索逻辑 ==========
 

@@ -30,6 +30,7 @@
 | ADR-021 | 2026-05-25 | 视频精读高度比例优化、双语字幕独立分行及译文显隐联动控制架构 | 🟢 Accepted | -                  |
 | ADR-022 | 2026-05-25 | esbuild-plugin-vue3 编译局限治理与 SFC defineComponent 标准架构改版 | 🟢 Accepted | -                  |
 | ADR-023 | 2026-05-25 | SFC 双闭合标签防卫与嵌套 require('obsidian') 的 ES 模块化升级 | 🟢 Accepted | -                  |
+| ADR-024 | 2026-05-25 | 集成 @mozilla/readability 实现网页正文智能提取与编辑器插入 | 🟢 Accepted | Approval_Hash: `1` |
 
 
 ---
@@ -289,4 +290,20 @@
 - **后果**:
   - 正面：彻底规避了编译器在 SFC 解析和 esbuild 打包过程中的静默失败，使代码全部以直观的 ES 模块打包，运行期极其稳定。
   - 负面：无。
+
+### ADR-024 集成 @mozilla/readability 实现网页正文智能提取与编辑器插入
+- **上下文**: 用户在英语学习过程中经常需要阅读外文网站的文章（如 Medium、BBC News、技术博客等）。为了实现"输入 URL → 抓取网页 → 提取正文 → 插入编辑器 → 自动分词高亮 → 点击查词"的完整学习闭环，需要集成高准确率的网页正文提取算法。现有的 RSS 阅读器模块已验证了 `requestUrl` 跨域抓取与分词高亮的技术可行性，但 RSS 有标准的 `<content:encoded>` 标签，而普通网页需要智能识别正文区域（去除导航栏、广告、侧边栏等噪音）。
+- **决策**:
+  1. **引入 @mozilla/readability 依赖**: 集成 Mozilla Firefox Reader View 使用的同款算法库，该库经过多年生产环境验证，能够高准确率地从复杂 HTML 中提取主体内容；
+  2. **修改 Solid-Strict 资产**: 在 `package.json` 的 `dependencies` 中添加 `"@mozilla/readability": "^0.5.0"`，触发 Solid-Strict 资产管制流程，授权标识为 `1`；
+  3. **实现 WebScraperService.ts**: 新建服务层，封装 `fetchWebPage` (使用 `requestUrl` 跨域抓取) 和 `extractMainContent` (使用 Readability 提取正文) 方法；
+  4. **UI 集成**: 在 `Panel.vue` 新增"🌐 网页导入" Tab，提供 URL 输入框与"导入到编辑器"按钮；
+  5. **编辑器插入**: 复用 `getActiveMarkdownView` 逻辑，将提取的正文段落格式化为 Markdown 并插入到当前活动编辑器，依赖现有的 `registerMarkdownPostProcessor` 自动触发分词高亮。
+- **后果**:
+  - 正面: 打通了从外部网页到本地笔记的学习闭环；Readability 算法准确率高，能够处理绝大多数主流网站；完全复用现有的分词、高亮、查词基础设施，零额外开发成本；
+  - 负面: 
+    - 增加了约 50KB 的打包体积（Readability 库）；
+    - 仅支持静态 HTML 网页，对于 JavaScript 动态渲染的 SPA 应用（如 React/Vue 单页应用）无法提取内容；
+    - 部分网站有反爬虫机制（User-Agent 检测、Cloudflare 防护等），可能导致抓取失败。
+- **证明**: 详见本次交付的 Evidence Block。
 

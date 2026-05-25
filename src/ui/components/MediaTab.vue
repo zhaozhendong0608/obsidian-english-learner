@@ -431,6 +431,12 @@ export default defineComponent({
     // 载入媒体源
     function loadMediaSource(targetUrlOrPath: string) {
       if (!targetUrlOrPath) return;
+
+      // 清空之前的字幕数据
+      subtitlesList.value = [];
+      activeSubtitleIndex.value = -1;
+      isLoopingCurrentSentence.value = false;
+
       currentVideoUrl.value = targetUrlOrPath;
 
       const isYt = targetUrlOrPath.includes('youtube.com') || targetUrlOrPath.includes('youtu.be');
@@ -868,7 +874,8 @@ export default defineComponent({
 
     // 导入本地 SRT/VTT
     function handleLocalSubtitleUpload(event: Event) {
-      const file = (event.target as HTMLInputElement).files?.[0];
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
       if (!file) return;
 
       const reader = new FileReader();
@@ -889,6 +896,9 @@ export default defineComponent({
           new Notice(`成功导入本地字幕：共 ${list.length} 句`);
         } catch (err) {
           new Notice(`解析字幕文件失败: ${err.message || err}`);
+        } finally {
+          // 重置文件输入框，允许重复上传同一文件
+          input.value = '';
         }
       };
       reader.readAsText(file);

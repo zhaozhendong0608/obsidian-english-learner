@@ -48,6 +48,34 @@
   1. 发生此问题是因为在当前的 esbuild 构建链中，部分转译器在打包 Vue 单文件组件（SFC）时没有将 `<script setup>` 内声明的变量自动生成 `return` 返回。
   2. 彻底的解决方案是：改写为 Vue 3 最标准的 **`defineComponent` 与 `setup()` 显式返回语法**，手动 `return { ... }` 需要暴露给模板的所有属性和方法，确保打包稳定性。
 
+## 7. Vue 子组件 `provide/inject` 依赖注入模式
+- **问题**: 子组件通过 `props` 接收 `plugin` 对象时报错 `Cannot read properties of undefined (reading 'app')`。
+- **场景**: 在 `Panel.vue` 中通过 `<WebImportTab :plugin="plugin" />` 传递 props，但子组件运行时 `props.plugin` 为 `undefined`。
+- **对策**:
+  1. 在 Vue 3 组合式 API 中，跨多层组件传递全局依赖（如 `plugin`、`vocabManager`）时，应统一使用 `provide/inject` 模式，而非 props 传递。
+  2. 在父组件 `Panel.vue` 的 `setup()` 中添加：`provide('plugin', plugin)`。
+  3. 在子组件中通过 `const plugin = inject<LanguageLearnerPlugin>('plugin')!` 获取。
+  4. 这样可以保持与其他 Tab 组件（`MediaTab`、`ReaderTab` 等）的一致性，避免 props 传递链过长导致的维护问题。
+
+## 8. 文件输入框重复上传同一文件失效问题
+- **问题**: 用户切换视频后，再次上传同一个字幕文件时，`@change` 事件不触发，字幕无法加载。
+- **场景**: 使用 `<input type="file" @change="handleUpload" />` 上传字幕文件。
+- **对策**:
+  1. 浏览器的 `<input type="file">` 元素有一个特性：如果用户选择了同一个文件（文件名相同），`@change` 事件不会触发。
+  2. 解决方案：在上传处理函数的 `finally` 块中重置文件输入框的值：`input.value = ''`。
+  3. 这样每次上传完成后都会清空文件输入框，确保下次选择同一文件时也能触发 `@change` 事件。
+
+## 9. 网页正文提取与 Markdown 格式化
+- **问题**: 直接抓取网页 HTML 后插入编辑器，包含大量广告、导航栏等噪音内容。
+- **场景**: 实现"输入 URL → 提取正文 → 插入编辑器"的网页导入功能。
+- **对策**:
+  1. 使用 `@mozilla/readability` 库（Firefox Reader View 同款算法）进行智能正文提取。
+  2. 通过 `requestUrl` 绕过 CORS 限制抓取网页 HTML。
+  3. 使用 Obsidian Callout 语法（`> [!info]`、`> [!abstract]`）美化元信息展示。
+  4. 自动添加标签（`#英语学习 #外文阅读`）和导入时间戳，便于后续检索和追溯。
+  5. 注意：仅支持静态 HTML 网页，对于 JavaScript 动态渲染的 SPA 应用无法提取内容。
+
+
 ## 7. Obsidian API 重命名文件冲突
 - **问题**: 执行数据或卡片落盘保存时报错 `Error: Destination file already exists!` 导致落盘失败。
 - **场景**: 使用先写入 `.tmp` 临时文件、再通过 `app.vault.adapter.rename(tempPath, targetPath)` 实现原子写入防断电损毁。
