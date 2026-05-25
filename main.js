@@ -245,7 +245,7 @@ var require_hyphen = __commonJS({
           )
         ), resolveNewText = function() {
         };
-        function nextTick2() {
+        function nextTick3() {
           var loopStart = /* @__PURE__ */ new Date();
           while ((!isAsync || /* @__PURE__ */ new Date() - loopStart < 10) && (fragments = readText(text))) {
             if (fragments[1]) {
@@ -272,16 +272,16 @@ var require_hyphen = __commonJS({
           if (!fragments) {
             done();
           } else {
-            setTimeout(nextTick2);
+            setTimeout(nextTick3);
           }
         }
         if (isAsync) {
-          setTimeout(nextTick2);
-          return new Promise(function(resolve) {
-            resolveNewText = resolve;
+          setTimeout(nextTick3);
+          return new Promise(function(resolve2) {
+            resolveNewText = resolve2;
           });
         } else {
-          nextTick2();
+          nextTick3();
           return newText;
         }
       }
@@ -4509,7 +4509,7 @@ __export(main_exports, {
   refreshWordsInDOM: () => refreshWordsInDOM
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/data/static_data.ts
 var HIGH_FREQUENCY_WORDS = [
@@ -17091,8 +17091,8 @@ var VocabularyManager = class {
    */
   async saveImmediately() {
     if (this.isSaving) {
-      return new Promise((resolve, reject) => {
-        this.saveQueue.push({ resolve, reject });
+      return new Promise((resolve2, reject) => {
+        this.saveQueue.push({ resolve: resolve2, reject });
       });
     }
     this.isSaving = true;
@@ -17957,6 +17957,11 @@ function wrapTextNode(textNode, vocabManager) {
     }
     const status = vocabManager.get(token.lemma);
     const info = vocabManager.getInfo(token.lemma);
+    if (status === "KNOWN") {
+      fragment.appendChild(document.createTextNode(text.slice(token.start, token.end)));
+      lastIndex = token.end;
+      continue;
+    }
     const span = document.createElement("span");
     span.className = "lang-learner-word";
     span.textContent = text.slice(token.start, token.end);
@@ -18068,7 +18073,7 @@ function refreshWordsInDOM(word, newStatus) {
 }
 
 // src/ui/SidebarView.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 
 // node_modules/@vue/shared/dist/shared.esm-bundler.js
 // @__NO_SIDE_EFFECTS__
@@ -20775,6 +20780,21 @@ function invokeDirectiveHook(vnode, prevVNode, instance, name) {
     }
   }
 }
+function provide(key, value) {
+  if (true) {
+    if (!currentInstance || currentInstance.isMounted) {
+      warn$1(`provide() can only be used inside setup().`);
+    }
+  }
+  if (currentInstance) {
+    let provides = currentInstance.provides;
+    const parentProvides = currentInstance.parent && currentInstance.parent.provides;
+    if (parentProvides === provides) {
+      provides = currentInstance.provides = Object.create(parentProvides);
+    }
+    provides[key] = value;
+  }
+}
 function inject(key, defaultValue, treatDefaultAsFactory = false) {
   const instance = getCurrentInstance();
   if (instance || currentApp) {
@@ -21107,7 +21127,48 @@ var onServerPrefetch = createHook(
 );
 var onRenderTriggered = createHook("rtg");
 var onRenderTracked = createHook("rtc");
+var COMPONENTS = "components";
+function resolveComponent(name, maybeSelfReference) {
+  return resolveAsset(COMPONENTS, name, true, maybeSelfReference) || name;
+}
 var NULL_DYNAMIC_COMPONENT = /* @__PURE__ */ Symbol.for("v-ndc");
+function resolveAsset(type, name, warnMissing = true, maybeSelfReference = false) {
+  const instance = currentRenderingInstance || currentInstance;
+  if (instance) {
+    const Component = instance.type;
+    if (type === COMPONENTS) {
+      const selfName = getComponentName(
+        Component,
+        false
+      );
+      if (selfName && (selfName === name || selfName === camelize(name) || selfName === capitalize(camelize(name)))) {
+        return Component;
+      }
+    }
+    const res = (
+      // local registration
+      // check instance[type] first which is resolved for options API
+      resolve(instance[type] || Component[type], name) || // global registration
+      resolve(instance.appContext[type], name)
+    );
+    if (!res && maybeSelfReference) {
+      return Component;
+    }
+    if (warnMissing && !res) {
+      const extra = type === COMPONENTS ? `
+If this is a native custom element, make sure to exclude it from component resolution via compilerOptions.isCustomElement.` : ``;
+      warn$1(`Failed to resolve ${type.slice(0, -1)}: ${name}${extra}`);
+    }
+    return res;
+  } else if (true) {
+    warn$1(
+      `resolve${capitalize(type.slice(0, -1))} can only be used in render() or setup().`
+    );
+  }
+}
+function resolve(registry, name) {
+  return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
+}
 function renderList(source, renderItem, cache, index) {
   let ret;
   const cached = cache && cache[index];
@@ -21409,7 +21470,7 @@ function createAppContext() {
   };
 }
 var uid$1 = 0;
-function createAppAPI(render2, hydrate) {
+function createAppAPI(render10, hydrate) {
   return function createApp2(rootComponent, rootProps = null) {
     if (!isFunction(rootComponent)) {
       rootComponent = extend({}, rootComponent);
@@ -21515,13 +21576,13 @@ function createAppAPI(render2, hydrate) {
             context.reload = () => {
               const cloned = cloneVNode(vnode);
               cloned.el = null;
-              render2(cloned, rootContainer, namespace);
+              render10(cloned, rootContainer, namespace);
             };
           }
           if (isHydrate && hydrate) {
             hydrate(vnode, rootContainer);
           } else {
-            render2(vnode, rootContainer, namespace);
+            render10(vnode, rootContainer, namespace);
           }
           isMounted = true;
           app._container = rootContainer;
@@ -21553,7 +21614,7 @@ If you want to remount the same app, move your app creation logic into a factory
             app._instance,
             16
           );
-          render2(null, app._container);
+          render10(null, app._container);
           if (true) {
             app._instance = null;
             devtoolsUnmountApp(app);
@@ -21745,7 +21806,7 @@ function renderComponentRoot(instance) {
     slots,
     attrs,
     emit: emit2,
-    render: render2,
+    render: render10,
     renderCache,
     props,
     data,
@@ -21773,7 +21834,7 @@ function renderComponentRoot(instance) {
         }
       }) : proxyToUse;
       result = normalizeVNode(
-        render2.call(
+        render10.call(
           thisProxy,
           proxyToUse,
           renderCache,
@@ -24023,7 +24084,7 @@ function baseCreateRenderer(options, createHydrationFns) {
     return teleportEnd ? hostNextSibling(teleportEnd) : el;
   };
   let isFlushing = false;
-  const render2 = (vnode, container, namespace) => {
+  const render10 = (vnode, container, namespace) => {
     let instance;
     if (vnode == null) {
       if (container._vnode) {
@@ -24069,9 +24130,9 @@ function baseCreateRenderer(options, createHydrationFns) {
     );
   }
   return {
-    render: render2,
+    render: render10,
     hydrate,
-    createApp: createAppAPI(render2, hydrate)
+    createApp: createAppAPI(render10, hydrate)
   };
 }
 function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -25977,13 +26038,711 @@ if (true) {
   initDev();
 }
 
-// sfc-script:/Users/up_dong/Documents/open_workspace/obsidian-english-learner/src/ui/Panel.vue?type=script
-var import_obsidian3 = require("obsidian");
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
+var import_obsidian11 = require("obsidian");
+
+// src/services/AudioService.ts
+var import_obsidian2 = require("obsidian");
+var AudioService = class {
+  constructor() {
+    this.currentAudio = null;
+    this.speakRequestVersion = 0;
+  }
+  /**
+   * 停止所有音频播放
+   */
+  stopAllAudio() {
+    if (this.currentAudio) {
+      try {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      } catch (e) {
+      }
+      this.currentAudio = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }
+  /**
+   * 网络获取并播放音频流，播放成功返回 true，失败抛出异常
+   */
+  async fetchAndPlayAudio(url, version2) {
+    if (version2 !== this.speakRequestVersion) {
+      throw new Error("\u64AD\u653E\u5DF2\u88AB\u66F4\u65B0\u7684\u64AD\u653E\u8BF7\u6C42\u53D6\u6D88");
+    }
+    try {
+      const response = await (0, import_obsidian2.requestUrl)({
+        url,
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        },
+        throw: true
+      });
+      if (version2 !== this.speakRequestVersion) {
+        throw new Error("\u64AD\u653E\u5DF2\u88AB\u66F4\u65B0\u7684\u64AD\u653E\u8BF7\u6C42\u53D6\u6D88");
+      }
+      if (response.status === 200 && response.arrayBuffer) {
+        const blob = new Blob([response.arrayBuffer], { type: "audio/mpeg" });
+        const blobUrl = URL.createObjectURL(blob);
+        const audio = new Audio(blobUrl);
+        this.currentAudio = audio;
+        return new Promise((resolve2, reject) => {
+          audio.onended = () => {
+            URL.revokeObjectURL(blobUrl);
+            resolve2(true);
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
+            reject(new Error("\u97F3\u9891\u89E3\u7801\u6216\u64AD\u653E\u5931\u8D25"));
+          };
+          audio.play().catch((err) => {
+            URL.revokeObjectURL(blobUrl);
+            reject(err);
+          });
+        });
+      }
+      throw new Error(`\u7F51\u7EDC\u54CD\u5E94\u72B6\u6001\u9519\u8BEF: ${response.status}`);
+    } catch (e) {
+      if (version2 !== this.speakRequestVersion) {
+        throw new Error("\u64AD\u653E\u5DF2\u88AB\u66F4\u65B0\u7684\u64AD\u653E\u8BF7\u6C42\u53D6\u6D88");
+      }
+      const audio = new Audio(url);
+      this.currentAudio = audio;
+      return new Promise((resolve2, reject) => {
+        audio.onended = () => resolve2(true);
+        audio.onerror = () => reject(new Error("HTMLAudioElement \u64AD\u653E\u5931\u8D25"));
+        audio.play().catch(reject);
+      });
+    }
+  }
+  /**
+   * 发音入口，自适应多源路由
+   */
+  async speak(text, settings, availableVoices, onBoundary, onEnd) {
+    if (!text || !text.trim())
+      return;
+    const currentVersion = ++this.speakRequestVersion;
+    this.stopAllAudio();
+    try {
+      if (settings.engine === "online") {
+        const accent = settings.onlineAccent || 2;
+        if (text.trim().length > 180) {
+          this.playLocalVoice(text, settings, availableVoices, currentVersion, onBoundary, onEnd);
+          return;
+        }
+        try {
+          const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
+          await this.fetchAndPlayAudio(youdaoUrl, currentVersion);
+          if (onEnd)
+            onEnd();
+          return;
+        } catch (err1) {
+          if (currentVersion !== this.speakRequestVersion)
+            return;
+          console.warn("\u6709\u9053\u5728\u7EBF\u53D1\u97F3\u6E90\u8BF7\u6C42\u5F02\u5E38\uFF0C\u81EA\u52A8\u5C1D\u8BD5\u5907\u7528\u8C37\u6B4C\u6E90:", err1);
+        }
+        try {
+          const tl = accent === 2 ? "en-US" : "en-GB";
+          const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=tw-ob`;
+          await this.fetchAndPlayAudio(googleUrl, currentVersion);
+          if (onEnd)
+            onEnd();
+          return;
+        } catch (err2) {
+          if (currentVersion !== this.speakRequestVersion)
+            return;
+          console.error("\u6240\u6709\u5728\u7EBF\u53D1\u97F3\u6E90\u5747\u52A0\u8F7D\u5931\u8D25\uFF0C\u964D\u7EA7\u56DE\u9000\u7CFB\u7EDF\u5408\u6210:", err2);
+          this.playLocalVoice(text, settings, availableVoices, currentVersion, onBoundary, onEnd);
+        }
+      } else {
+        if (currentVersion !== this.speakRequestVersion)
+          return;
+        this.playLocalVoice(text, settings, availableVoices, currentVersion, onBoundary, onEnd);
+      }
+    } catch (e) {
+      if (currentVersion !== this.speakRequestVersion)
+        return;
+      console.error("\u53D1\u97F3\u8DEF\u7531\u94FE\u6761\u5F02\u5E38\uFF0C\u5F3A\u5236\u56DE\u9000\u672C\u5730\u64AD\u653E:", e);
+      this.playLocalVoice(text, settings, availableVoices, currentVersion, onBoundary, onEnd);
+    }
+  }
+  /**
+   * 播放本地系统离线发音，并支持意群微调及高亮回调
+   */
+  playLocalVoice(text, settings, availableVoices, version2, onBoundary, onEnd) {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      console.warn("\u5F53\u524D\u73AF\u5883\u4E0D\u652F\u6301 SpeechSynthesis");
+      if (onEnd)
+        onEnd();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const segments = [];
+    const puncRegex = /([,.;:!?，。；：！？]+)/g;
+    const parts = text.split(puncRegex);
+    const structureWords = /\b(because|although|though|however|therefore|nevertheless|if|when|while|before|after|since|until|unless|but|so|that|which|who|whom|whose)\b/i;
+    const prepositionWords = /\b(in|on|at|by|for|with|about|of|from|to|as)\b/i;
+    const slowWords = /\b(because|although|though|however|therefore|nevertheless|especially|particularly|refuse|believe|bankrupt|insufficient|opportunity)\b/i;
+    let currentOffset = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!part)
+        continue;
+      const partLen = part.length;
+      const partStart = currentOffset;
+      currentOffset += partLen;
+      if (part.match(/[,.;:!?，。；：！？]+/)) {
+        let pauseMs = 350;
+        if (part.match(/[.!?。！？]/)) {
+          pauseMs = 700;
+        }
+        if (segments.length > 0) {
+          segments[segments.length - 1].pauseMs = pauseMs;
+        }
+      } else {
+        const words = part.split(/(\s+)/);
+        let currentGroup = "";
+        let groupStartOffset = partStart;
+        let lastWordOffset = partStart;
+        for (let j = 0; j < words.length; j++) {
+          const word = words[j];
+          const cleanWord = word.trim().toLowerCase();
+          const wordLen = word.length;
+          const isMajor = structureWords.test(cleanWord);
+          const isMinor = prepositionWords.test(cleanWord);
+          const currentLen = currentGroup.trim().length;
+          if (isMajor && currentLen > 18 || isMinor && currentLen > 28) {
+            const groupText = currentGroup.trim();
+            let rateMultiplier = 1;
+            if (slowWords.test(groupText)) {
+              rateMultiplier = 0.88;
+            } else if (groupText.length < 15) {
+              rateMultiplier = 1.05;
+            }
+            segments.push({
+              text: groupText,
+              pauseMs: 150,
+              rateMultiplier,
+              startOffset: groupStartOffset
+            });
+            currentGroup = word;
+            groupStartOffset = lastWordOffset;
+          } else {
+            currentGroup += word;
+          }
+          lastWordOffset += wordLen;
+        }
+        if (currentGroup.trim()) {
+          const groupText = currentGroup.trim();
+          let rateMultiplier = 1;
+          if (slowWords.test(groupText)) {
+            rateMultiplier = 0.88;
+          } else if (groupText.length < 15) {
+            rateMultiplier = 1.05;
+          }
+          segments.push({
+            text: groupText,
+            pauseMs: 0,
+            rateMultiplier,
+            startOffset: groupStartOffset
+          });
+        }
+      }
+    }
+    if (segments.length === 0) {
+      if (onEnd)
+        onEnd();
+      return;
+    }
+    let currentIndex = 0;
+    const playNext = () => {
+      if (currentIndex >= segments.length) {
+        if (onEnd)
+          onEnd();
+        return;
+      }
+      if (version2 !== this.speakRequestVersion)
+        return;
+      const segment = segments[currentIndex];
+      const utterance = new SpeechSynthesisUtterance(segment.text);
+      if (settings.voiceName) {
+        const matched = availableVoices.find((v) => v.name === settings.voiceName);
+        if (matched)
+          utterance.voice = matched;
+      }
+      utterance.rate = settings.rate * segment.rateMultiplier;
+      utterance.pitch = settings.pitch;
+      utterance.onboundary = (event) => {
+        if (version2 !== this.speakRequestVersion)
+          return;
+        if (event.name !== "word")
+          return;
+        const absoluteCharIndex = segment.startOffset + event.charIndex;
+        if (onBoundary) {
+          onBoundary(absoluteCharIndex);
+        }
+      };
+      utterance.onend = () => {
+        if (version2 !== this.speakRequestVersion)
+          return;
+        currentIndex++;
+        if (currentIndex < segments.length) {
+          setTimeout(playNext, segment.pauseMs);
+        } else {
+          if (onEnd)
+            onEnd();
+        }
+      };
+      utterance.onerror = (e) => {
+        console.error("\u672C\u5730\u5408\u6210\u64AD\u653E\u7247\u6BB5\u5931\u8D25:", e);
+        if (version2 !== this.speakRequestVersion)
+          return;
+        currentIndex++;
+        playNext();
+      };
+      window.speechSynthesis.speak(utterance);
+    };
+    playNext();
+  }
+};
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SettingsHeader.vue?type=script
+var SettingsHeader_default = defineComponent({
+  name: "SettingsHeader",
+  props: {
+    availableVoices: {
+      type: Array,
+      required: true,
+      default: () => []
+    }
+  },
+  emits: ["voice-settings-changed", "ai-settings-changed"],
+  setup(props, { emit: emit2 }) {
+    const showVoiceConfig = ref(false);
+    const showAiConfig = ref(false);
+    const voiceSettings = ref({
+      engine: "online",
+      onlineAccent: 2,
+      voiceName: "",
+      rate: 0.9,
+      pitch: 1
+    });
+    const aiSettings = ref({
+      apiKey: "",
+      baseUrl: "https://api.deepseek.com/v1",
+      model: "deepseek-chat"
+    });
+    function loadSettings() {
+      try {
+        const voiceStored = localStorage.getItem("lang-learner-voice-settings");
+        if (voiceStored) {
+          const parsed = JSON.parse(voiceStored);
+          if (parsed) {
+            Object.assign(voiceSettings.value, parsed);
+          }
+        }
+      } catch (e) {
+        console.error("\u8F7D\u5165\u53D1\u97F3\u914D\u7F6E\u5931\u8D25:", e);
+      }
+      try {
+        const aiStored = localStorage.getItem("lang-learner-ai-settings");
+        if (aiStored) {
+          const parsed = JSON.parse(aiStored);
+          if (parsed) {
+            Object.assign(aiSettings.value, parsed);
+          }
+        }
+      } catch (e) {
+        console.error("\u8F7D\u5165 AI \u914D\u7F6E\u5931\u8D25:", e);
+      }
+    }
+    function onVoiceSettingsChange() {
+      localStorage.setItem("lang-learner-voice-settings", JSON.stringify(voiceSettings.value));
+      emit2("voice-settings-changed", { ...voiceSettings.value });
+    }
+    function onAiSettingsChange() {
+      localStorage.setItem("lang-learner-ai-settings", JSON.stringify(aiSettings.value));
+      emit2("ai-settings-changed", { ...aiSettings.value });
+    }
+    watch2(() => props.availableVoices, (voices) => {
+      if (!voiceSettings.value.voiceName && voices && voices.length > 0) {
+        const matched = voices.find((v) => v.name.toLowerCase().includes("siri") || v.name.toLowerCase().includes("samantha"));
+        voiceSettings.value.voiceName = matched ? matched.name : voices[0].name;
+        onVoiceSettingsChange();
+      }
+    }, { immediate: true });
+    onMounted(() => {
+      loadSettings();
+      emit2("voice-settings-changed", { ...voiceSettings.value });
+      emit2("ai-settings-changed", { ...aiSettings.value });
+    });
+    return {
+      showVoiceConfig,
+      showAiConfig,
+      voiceSettings,
+      aiSettings,
+      onVoiceSettingsChange,
+      onAiSettingsChange
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SettingsHeader.vue?type=template
+var _hoisted_1 = { class: "lang-learner-settings-row" };
+var _hoisted_2 = { class: "lang-learner-panel-section lang-learner-voice-settings-section" };
+var _hoisted_3 = { class: "lang-learner-settings-arrow-text" };
+var _hoisted_4 = { class: "lang-learner-voice-settings-body" };
+var _hoisted_5 = { class: "lang-learner-voice-setting-item" };
+var _hoisted_6 = {
+  key: 0,
+  class: "lang-learner-voice-setting-item"
+};
+var _hoisted_7 = { class: "lang-learner-voice-setting-item" };
+var _hoisted_8 = ["value"];
+var _hoisted_9 = {
+  key: 0,
+  value: ""
+};
+var _hoisted_10 = { class: "lang-learner-voice-setting-item lang-learner-slider-row" };
+var _hoisted_11 = { class: "lang-learner-voice-setting-item lang-learner-slider-row" };
+var _hoisted_12 = { class: "lang-learner-panel-section lang-learner-ai-settings-section" };
+var _hoisted_13 = { class: "lang-learner-settings-arrow-text" };
+var _hoisted_14 = { class: "lang-learner-ai-settings-body" };
+var _hoisted_15 = { class: "lang-learner-ai-setting-item" };
+var _hoisted_16 = { class: "lang-learner-ai-setting-item" };
+var _hoisted_17 = { class: "lang-learner-ai-setting-item" };
+function render(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_1, [
+    createBaseVNode("div", _hoisted_2, [
+      createBaseVNode("div", {
+        class: "lang-learner-voice-settings-header",
+        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig)
+      }, [
+        _cache[18] || (_cache[18] = createBaseVNode(
+          "span",
+          { class: "lang-learner-settings-title-text" },
+          "\u2699\uFE0F \u53D1\u97F3\u914D\u7F6E",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode(
+          "span",
+          _hoisted_3,
+          toDisplayString(_ctx.showVoiceConfig ? "\u25BC" : "\u25B6"),
+          1
+          /* TEXT */
+        )
+      ]),
+      withDirectives(createBaseVNode(
+        "div",
+        _hoisted_4,
+        [
+          createBaseVNode("div", _hoisted_5, [
+            _cache[20] || (_cache[20] = createBaseVNode(
+              "label",
+              null,
+              "\u53D1\u97F3\u5F15\u64CE:",
+              -1
+              /* CACHED */
+            )),
+            withDirectives(createBaseVNode(
+              "select",
+              {
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.voiceSettings.engine = $event),
+                onChange: _cache[2] || (_cache[2] = (...args) => _ctx.onVoiceSettingsChange && _ctx.onVoiceSettingsChange(...args))
+              },
+              [..._cache[19] || (_cache[19] = [
+                createBaseVNode(
+                  "option",
+                  { value: "online" },
+                  "\u{1F310} \u5728\u7EBF\u53D1\u97F3",
+                  -1
+                  /* CACHED */
+                ),
+                createBaseVNode(
+                  "option",
+                  { value: "local" },
+                  "\u{1F4BB} \u7CFB\u7EDF\u53D1\u97F3",
+                  -1
+                  /* CACHED */
+                )
+              ])],
+              544
+              /* NEED_HYDRATION, NEED_PATCH */
+            ), [
+              [vModelSelect, _ctx.voiceSettings.engine]
+            ])
+          ]),
+          _ctx.voiceSettings.engine === "online" ? (openBlock(), createElementBlock("div", _hoisted_6, [
+            _cache[22] || (_cache[22] = createBaseVNode(
+              "label",
+              null,
+              "\u53E3\u97F3\u9009\u62E9:",
+              -1
+              /* CACHED */
+            )),
+            withDirectives(createBaseVNode(
+              "select",
+              {
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.voiceSettings.onlineAccent = $event),
+                onChange: _cache[4] || (_cache[4] = (...args) => _ctx.onVoiceSettingsChange && _ctx.onVoiceSettingsChange(...args))
+              },
+              [..._cache[21] || (_cache[21] = [
+                createBaseVNode(
+                  "option",
+                  { value: 2 },
+                  "\u{1F1FA}\u{1F1F8} \u7F8E\u97F3",
+                  -1
+                  /* CACHED */
+                ),
+                createBaseVNode(
+                  "option",
+                  { value: 1 },
+                  "\u{1F1EC}\u{1F1E7} \u82F1\u97F3",
+                  -1
+                  /* CACHED */
+                )
+              ])],
+              544
+              /* NEED_HYDRATION, NEED_PATCH */
+            ), [
+              [vModelSelect, _ctx.voiceSettings.onlineAccent]
+            ])
+          ])) : (openBlock(), createElementBlock(
+            Fragment,
+            { key: 1 },
+            [
+              createBaseVNode("div", _hoisted_7, [
+                _cache[23] || (_cache[23] = createBaseVNode(
+                  "label",
+                  null,
+                  "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
+                  -1
+                  /* CACHED */
+                )),
+                withDirectives(createBaseVNode(
+                  "select",
+                  {
+                    "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => _ctx.voiceSettings.voiceName = $event),
+                    onChange: _cache[6] || (_cache[6] = (...args) => _ctx.onVoiceSettingsChange && _ctx.onVoiceSettingsChange(...args))
+                  },
+                  [
+                    (openBlock(true), createElementBlock(
+                      Fragment,
+                      null,
+                      renderList(_ctx.availableVoices || [], (voice) => {
+                        return openBlock(), createElementBlock("option", {
+                          key: voice.name,
+                          value: voice.name
+                        }, toDisplayString(voice.name), 9, _hoisted_8);
+                      }),
+                      128
+                      /* KEYED_FRAGMENT */
+                    )),
+                    !_ctx.availableVoices || _ctx.availableVoices.length === 0 ? (openBlock(), createElementBlock("option", _hoisted_9, "\u9ED8\u8BA4")) : createCommentVNode("v-if", true)
+                  ],
+                  544
+                  /* NEED_HYDRATION, NEED_PATCH */
+                ), [
+                  [vModelSelect, _ctx.voiceSettings.voiceName]
+                ])
+              ]),
+              createBaseVNode("div", _hoisted_10, [
+                createBaseVNode(
+                  "label",
+                  null,
+                  "\u8BED\u901F: " + toDisplayString(_ctx.voiceSettings.rate.toFixed(1)) + "x",
+                  1
+                  /* TEXT */
+                ),
+                withDirectives(createBaseVNode(
+                  "input",
+                  {
+                    type: "range",
+                    "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => _ctx.voiceSettings.rate = $event),
+                    min: "0.5",
+                    max: "1.8",
+                    step: "0.1",
+                    onChange: _cache[8] || (_cache[8] = (...args) => _ctx.onVoiceSettingsChange && _ctx.onVoiceSettingsChange(...args))
+                  },
+                  null,
+                  544
+                  /* NEED_HYDRATION, NEED_PATCH */
+                ), [
+                  [
+                    vModelText,
+                    _ctx.voiceSettings.rate,
+                    void 0,
+                    { number: true }
+                  ]
+                ])
+              ]),
+              createBaseVNode("div", _hoisted_11, [
+                createBaseVNode(
+                  "label",
+                  null,
+                  "\u97F3\u8C03: " + toDisplayString(_ctx.voiceSettings.pitch.toFixed(1)),
+                  1
+                  /* TEXT */
+                ),
+                withDirectives(createBaseVNode(
+                  "input",
+                  {
+                    type: "range",
+                    "onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => _ctx.voiceSettings.pitch = $event),
+                    min: "0.5",
+                    max: "1.5",
+                    step: "0.1",
+                    onChange: _cache[10] || (_cache[10] = (...args) => _ctx.onVoiceSettingsChange && _ctx.onVoiceSettingsChange(...args))
+                  },
+                  null,
+                  544
+                  /* NEED_HYDRATION, NEED_PATCH */
+                ), [
+                  [
+                    vModelText,
+                    _ctx.voiceSettings.pitch,
+                    void 0,
+                    { number: true }
+                  ]
+                ])
+              ])
+            ],
+            64
+            /* STABLE_FRAGMENT */
+          ))
+        ],
+        512
+        /* NEED_PATCH */
+      ), [
+        [vShow, _ctx.showVoiceConfig]
+      ])
+    ]),
+    _cache[28] || (_cache[28] = createBaseVNode(
+      "div",
+      { class: "lang-learner-settings-divider" },
+      null,
+      -1
+      /* CACHED */
+    )),
+    createBaseVNode("div", _hoisted_12, [
+      createBaseVNode("div", {
+        class: "lang-learner-ai-settings-header",
+        onClick: _cache[11] || (_cache[11] = ($event) => _ctx.showAiConfig = !_ctx.showAiConfig)
+      }, [
+        _cache[24] || (_cache[24] = createBaseVNode(
+          "span",
+          { class: "lang-learner-settings-title-text" },
+          "\u{1F916} AI \u6559\u5E08\u914D\u7F6E",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode(
+          "span",
+          _hoisted_13,
+          toDisplayString(_ctx.showAiConfig ? "\u25BC" : "\u25B6"),
+          1
+          /* TEXT */
+        )
+      ]),
+      withDirectives(createBaseVNode(
+        "div",
+        _hoisted_14,
+        [
+          createBaseVNode("div", _hoisted_15, [
+            _cache[25] || (_cache[25] = createBaseVNode(
+              "label",
+              null,
+              "API Key:",
+              -1
+              /* CACHED */
+            )),
+            withDirectives(createBaseVNode(
+              "input",
+              {
+                type: "password",
+                "onUpdate:modelValue": _cache[12] || (_cache[12] = ($event) => _ctx.aiSettings.apiKey = $event),
+                onChange: _cache[13] || (_cache[13] = (...args) => _ctx.onAiSettingsChange && _ctx.onAiSettingsChange(...args)),
+                placeholder: "sk-..."
+              },
+              null,
+              544
+              /* NEED_HYDRATION, NEED_PATCH */
+            ), [
+              [vModelText, _ctx.aiSettings.apiKey]
+            ])
+          ]),
+          createBaseVNode("div", _hoisted_16, [
+            _cache[26] || (_cache[26] = createBaseVNode(
+              "label",
+              null,
+              "Base URL:",
+              -1
+              /* CACHED */
+            )),
+            withDirectives(createBaseVNode(
+              "input",
+              {
+                type: "text",
+                "onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => _ctx.aiSettings.baseUrl = $event),
+                onChange: _cache[15] || (_cache[15] = (...args) => _ctx.onAiSettingsChange && _ctx.onAiSettingsChange(...args)),
+                placeholder: "https://api.deepseek.com/v1"
+              },
+              null,
+              544
+              /* NEED_HYDRATION, NEED_PATCH */
+            ), [
+              [vModelText, _ctx.aiSettings.baseUrl]
+            ])
+          ]),
+          createBaseVNode("div", _hoisted_17, [
+            _cache[27] || (_cache[27] = createBaseVNode(
+              "label",
+              null,
+              "Model:",
+              -1
+              /* CACHED */
+            )),
+            withDirectives(createBaseVNode(
+              "input",
+              {
+                type: "text",
+                "onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => _ctx.aiSettings.model = $event),
+                onChange: _cache[17] || (_cache[17] = (...args) => _ctx.onAiSettingsChange && _ctx.onAiSettingsChange(...args)),
+                placeholder: "deepseek-chat"
+              },
+              null,
+              544
+              /* NEED_HYDRATION, NEED_PATCH */
+            ), [
+              [vModelText, _ctx.aiSettings.model]
+            ])
+          ])
+        ],
+        512
+        /* NEED_PATCH */
+      ), [
+        [vShow, _ctx.showAiConfig]
+      ])
+    ])
+  ]);
+}
+
+// src/ui/components/SettingsHeader.vue
+SettingsHeader_default.render = render;
+SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
+SettingsHeader_default.__scopeId = "data-v-4867bcb3";
+var SettingsHeader_default2 = SettingsHeader_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
+var import_obsidian4 = require("obsidian");
 var import_hyphen = __toESM(require_hyphen());
 var import_en_us = __toESM(require_en_us());
 
 // src/services/aiService.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 async function fetchAITeacher(word, contextSentence, settings) {
   if (!settings.apiKey) {
     throw new Error("\u672A\u914D\u7F6E API Key\u3002\u8BF7\u5728\u4FA7\u8FB9\u680F\u9876\u90E8\u5C55\u5F00 AI \u6559\u5E08\u914D\u7F6E\u3002");
@@ -26025,7 +26784,7 @@ async function fetchAITeacher(word, contextSentence, settings) {
     temperature: 0.7
   };
   try {
-    const response = await (0, import_obsidian2.requestUrl)({
+    const response = await (0, import_obsidian3.requestUrl)({
       url: apiUrl,
       method: "POST",
       headers: {
@@ -26109,67 +26868,77 @@ async function ensureRootNoteLinked(app, root, meaning, word) {
   }
 }
 
-// sfc-script:/Users/up_dong/Documents/open_workspace/obsidian-english-learner/src/ui/Panel.vue?type=script
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
 var hyphenator = (0, import_hyphen.default)(import_en_us.default);
-var Panel_default = defineComponent({
-  name: "LangLearnerPanel",
-  setup() {
+var WordDetailCard_default = defineComponent({
+  name: "WordDetailCard",
+  props: {
+    wordInfo: {
+      type: Object,
+      required: true
+    },
+    hasSearchResults: {
+      type: Boolean,
+      required: true
+    }
+  },
+  emits: ["back-to-results"],
+  setup(props, { emit: emit2 }) {
     const vocabManager = inject("vocabManager");
     const plugin = inject("plugin");
-    const app = plugin.app;
-    const highFreqSet = new Set(HIGH_FREQUENCY_WORDS);
-    const mainTab = ref("vocabulary");
-    const stats = ref({ total: 0, unknown: 0, learning: 0, known: 0 });
-    function refreshStats() {
-      console.log("refreshStats: vocabManager =", vocabManager);
-      const count = vocabManager?.getCount?.();
-      console.log("refreshStats: getCount() returned =", count);
-      if (count) {
-        stats.value = count;
-      }
-    }
-    const activeTab = ref("UNKNOWN");
-    const wordListCache = ref([]);
-    function refreshWordList() {
-      const entries = vocabManager.getAllEntries();
-      const list = [];
-      entries.forEach((info) => {
-        if (info.status === "UNKNOWN" || info.status === "LEARNING") {
-          list.push(info);
-        }
-      });
-      list.sort((a, b) => b.updated - a.updated);
-      wordListCache.value = list;
-    }
-    const unknownList = computed2(
-      () => wordListCache.value.filter((w) => w.status === "UNKNOWN")
-    );
-    const learningList = computed2(
-      () => wordListCache.value.filter((w) => w.status === "LEARNING")
-    );
-    const currentTabList = computed2(
-      () => activeTab.value === "UNKNOWN" ? unknownList.value : learningList.value
-    );
-    const selectedWord = ref(null);
-    const searchResultsList = ref([]);
+    const speak = inject("speak");
+    const getAiSettings = inject("getAiSettings");
+    const localWordInfo = ref({ ...props.wordInfo });
     const showSyllableSplit = ref(false);
     const exampleSentences = ref([]);
     const isLoadingExamples = ref(false);
     let exampleRequestVersion = 0;
+    const isAiLoading = ref(false);
+    const aiResponse = ref(null);
+    const aiMarkdownEl = ref(null);
+    watch2(() => props.wordInfo, (newVal) => {
+      if (newVal) {
+        localWordInfo.value = { ...newVal };
+        showSyllableSplit.value = false;
+        aiResponse.value = null;
+        loadExamples(newVal.word);
+        if (!newVal.trans) {
+          fetchOnlineAndUpdate(newVal.word);
+        }
+      }
+    }, { immediate: true });
+    eventBus.on("lang-learner:word-changed", (word, status) => {
+      if (localWordInfo.value && localWordInfo.value.word === word) {
+        localWordInfo.value.status = status;
+      }
+    });
     const displayWord = computed2(() => {
-      if (!selectedWord.value)
-        return "";
+      const word = localWordInfo.value.word;
       if (showSyllableSplit.value) {
-        const word = selectedWord.value.word;
         if (word.includes(" ")) {
           return word.split(" ").map((w) => hyphenator(w, { hyphenChar: "\xB7" })).join(" ");
         }
         return hyphenator(word, { hyphenChar: "\xB7" });
       }
-      return selectedWord.value.word;
+      return word;
     });
     function toggleSyllableSplit() {
       showSyllableSplit.value = !showSyllableSplit.value;
+    }
+    function lookupInSystemDict(word) {
+      const clean = word.trim();
+      if (!clean)
+        return;
+      window.open(`dict://${encodeURIComponent(clean)}`);
+    }
+    function toggleAddWord(word) {
+      const currentStatus = localWordInfo.value.status;
+      const newStatus = currentStatus === "LEARNING" ? "UNKNOWN" : "LEARNING";
+      const trans = localWordInfo.value.trans || OFFLINE_DICT[word]?.trans || "";
+      const phonetic = localWordInfo.value.phonetic || OFFLINE_DICT[word]?.phonetic || "";
+      const etymology = localWordInfo.value.etymology || "";
+      vocabManager.set(word, newStatus, trans, phonetic, etymology);
+      eventBus.emit("lang-learner:word-changed", word, newStatus);
     }
     async function searchCurrentDocSentences(word) {
       try {
@@ -26223,17 +26992,8 @@ var Panel_default = defineComponent({
     async function fetchOnlineExamples(word) {
       const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
       try {
-        const obsidian = require("obsidian");
-        let data = null;
-        if (obsidian && obsidian.requestUrl) {
-          const res = await obsidian.requestUrl({ url });
-          data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "[]");
-        } else {
-          const res = await fetch(url);
-          if (res.ok) {
-            data = await res.json();
-          }
-        }
+        const res = await requestUrl({ url });
+        const data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "[]");
         const sentences = [];
         let phonetic;
         if (Array.isArray(data)) {
@@ -26280,7 +27040,7 @@ var Panel_default = defineComponent({
           sentences = [...sentences, ...cardSentences];
         }
         sentences = Array.from(new Set(sentences.map((s) => s.trim()))).filter(Boolean);
-        const needPhonetic = selectedWord.value && selectedWord.value.word === word && !selectedWord.value.phonetic;
+        const needPhonetic = localWordInfo.value && localWordInfo.value.word === word && !localWordInfo.value.phonetic;
         let onlineSentences = [];
         let fetchedPhonetic;
         if (sentences.length < 2 || needPhonetic) {
@@ -26292,13 +27052,13 @@ var Panel_default = defineComponent({
         const finalSentences = Array.from(new Set(sentences.map((s) => s.trim()))).filter((s) => s.toLowerCase().includes(cleanWord) || s.length > 5).slice(0, 3);
         if (currentVersion === exampleRequestVersion) {
           exampleSentences.value = finalSentences;
-          if (fetchedPhonetic && selectedWord.value && selectedWord.value.word === word) {
+          if (fetchedPhonetic && localWordInfo.value && localWordInfo.value.word === word) {
             const cleanPhonetic = fetchedPhonetic.replace(/^\/|\/$/g, "");
             if (cleanPhonetic) {
-              selectedWord.value.phonetic = cleanPhonetic;
+              localWordInfo.value.phonetic = cleanPhonetic;
               const currentStatus = vocabManager.get(word);
               const info = vocabManager.getInfo(word);
-              const trans = info?.trans || selectedWord.value.trans || "";
+              const trans = info?.trans || localWordInfo.value.trans || "";
               vocabManager.set(word, currentStatus, trans, cleanPhonetic);
               eventBus.emit("lang-learner:word-changed", word, currentStatus);
             }
@@ -26312,98 +27072,406 @@ var Panel_default = defineComponent({
         }
       }
     }
-    function selectWord(info) {
-      selectedWord.value = { ...info };
-      showSyllableSplit.value = false;
-      aiResponse.value = null;
-      loadExamples(info.word);
-    }
-    function changeWordStatus(word, newStatus) {
-      const info = vocabManager.getInfo(word);
-      const trans = info?.trans || OFFLINE_DICT[word]?.trans || "";
-      const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || "";
-      const etymology = info?.etymology;
-      vocabManager.set(word, newStatus, trans, phonetic, etymology);
-      eventBus.emit("lang-learner:word-changed", word, newStatus);
-      if (selectedWord.value && selectedWord.value.word === word) {
-        selectedWord.value.status = newStatus;
+    async function fetchOnlineAndUpdate(word) {
+      try {
+        const result = await vocabManager.fetchOnlineTranslationAndDetails(word);
+        if (result && result.trans) {
+          if (localWordInfo.value && localWordInfo.value.word === word) {
+            localWordInfo.value.trans = result.trans;
+            if (result.phonetic) {
+              localWordInfo.value.phonetic = result.phonetic;
+            }
+            if (result.etymology) {
+              localWordInfo.value.etymology = result.etymology;
+            }
+          }
+          const currentStatus = vocabManager.get(word);
+          vocabManager.set(word, currentStatus, result.trans, result.phonetic, result.etymology);
+        }
+      } catch (err) {
+        console.error("\u5728\u7EBF\u5F02\u6B65\u66F4\u65B0\u91CA\u4E49\u5931\u8D25:", err);
       }
-      refreshStats();
-      refreshWordList();
     }
+    function copyCardContent() {
+      if (!localWordInfo.value)
+        return;
+      const lines = [];
+      lines.push(`# ${localWordInfo.value.word}`);
+      if (localWordInfo.value.phonetic) {
+        lines.push(`**\u97F3\u6807**: /${localWordInfo.value.phonetic}/`);
+      }
+      lines.push(`**\u91CA\u4E49**: ${localWordInfo.value.trans || "\u6682\u65E0\u91CA\u4E49"}`);
+      if (localWordInfo.value.etymology) {
+        lines.push(`**\u8BCD\u6E90**: ${localWordInfo.value.etymology}`);
+      }
+      if (exampleSentences.value.length > 0) {
+        lines.push("");
+        lines.push("## \u4F8B\u53E5");
+        exampleSentences.value.forEach((s) => lines.push(`> ${s}`));
+      }
+      const content = lines.join("\n\n");
+      navigator.clipboard.writeText(content).then(() => {
+        new import_obsidian4.Notice("\u{1F4CB} \u5DF2\u6210\u529F\u590D\u5236\u5361\u7247\u5185\u5BB9\u5230\u526A\u8D34\u677F\uFF01");
+      }).catch(() => {
+        new import_obsidian4.Notice("\u590D\u5236\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u6D4F\u89C8\u5668\u6743\u9650");
+      });
+    }
+    watch2([aiResponse, aiMarkdownEl], () => {
+      if (aiMarkdownEl.value) {
+        aiMarkdownEl.value.innerHTML = "";
+        if (aiResponse.value && aiResponse.value.markdown) {
+          import_obsidian4.MarkdownRenderer.renderMarkdown(
+            aiResponse.value.markdown,
+            aiMarkdownEl.value,
+            "",
+            plugin
+          );
+        }
+      }
+    }, { flush: "post" });
+    async function askAITeacher() {
+      if (!localWordInfo.value)
+        return;
+      const word = localWordInfo.value.word;
+      const info = vocabManager.getInfo(word);
+      const contextSentence = info?.sentence;
+      isAiLoading.value = true;
+      aiResponse.value = null;
+      try {
+        const settings = getAiSettings();
+        const result = await fetchAITeacher(word, contextSentence, settings);
+        aiResponse.value = result;
+      } catch (e) {
+        new import_obsidian4.Notice(`AI \u6559\u5E08\u8BF7\u6C42\u5931\u8D25: ${e.message}`);
+      } finally {
+        isAiLoading.value = false;
+      }
+    }
+    async function exportAIResponse() {
+      if (!localWordInfo.value || !aiResponse.value)
+        return;
+      const word = localWordInfo.value.word;
+      const { root, rootMeaning, markdown } = aiResponse.value;
+      const app = plugin.app;
+      try {
+        vocabManager.updateRootInfo(word, root || "", rootMeaning || "", aiResponse.value.phrases || []);
+        await updateAIContextNote(app, word, root || "", rootMeaning || "", markdown);
+        if (root) {
+          await ensureRootNoteLinked(app, root, rootMeaning || "", word);
+        }
+        const activeView = app.workspace.getActiveViewOfType(import_obsidian4.MarkdownView);
+        if (activeView && activeView.editor) {
+          const editor = activeView.editor;
+          const cursor = editor.getCursor();
+          editor.replaceRange(`
+
+### \u{1F916} AI \u6559\u5E08\u89E3\u6790: ${word}
+${markdown}
+`, cursor);
+        } else {
+          new import_obsidian4.Notice("\u63D0\u793A\uFF1A\u672A\u80FD\u8BC6\u522B\u5230\u53EF\u7F16\u8F91\u7684\u6D3B\u52A8\u6587\u6863\u3002\u4EC5\u81EA\u52A8\u4FDD\u5B58\u5230\u751F\u8BCD\u672C\u5361\u7247\u3002");
+        }
+        new import_obsidian4.Notice(`[${word}] AI \u89E3\u6790\u4E0E\u8BCD\u6839\u53CC\u94FE\u5DF2\u6210\u529F\u843D\u76D8\uFF01`);
+      } catch (e) {
+        console.error("\u5BFC\u51FAAI\u89E3\u6790\u5931\u8D25:", e);
+        new import_obsidian4.Notice("\u5BFC\u51FA AI \u89E3\u6790\u65F6\u53D1\u751F\u9519\u8BEF\uFF0C\u8BF7\u67E5\u770B\u63A7\u5236\u53F0\u3002");
+      }
+    }
+    return {
+      localWordInfo,
+      showSyllableSplit,
+      exampleSentences,
+      isLoadingExamples,
+      isAiLoading,
+      aiResponse,
+      aiMarkdownEl,
+      displayWord,
+      toggleSyllableSplit,
+      lookupInSystemDict,
+      toggleAddWord,
+      speak,
+      copyCardContent,
+      askAITeacher,
+      exportAIResponse
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=template
+var _hoisted_18 = { class: "lang-learner-panel-section lang-learner-word-detail" };
+var _hoisted_22 = { class: "lang-learner-section-title" };
+var _hoisted_32 = { class: "lang-learner-detail-title-box" };
+var _hoisted_42 = { class: "lang-learner-word-info-card" };
+var _hoisted_52 = { class: "lang-learner-word-detail-header" };
+var _hoisted_62 = { class: "lang-learner-word-lemma" };
+var _hoisted_72 = {
+  key: 0,
+  class: "lang-learner-word-phonetic-inline"
+};
+var _hoisted_82 = { class: "lang-learner-detail-actions" };
+var _hoisted_92 = ["title"];
+var _hoisted_102 = { class: "lang-learner-word-trans" };
+var _hoisted_112 = {
+  key: 0,
+  class: "lang-learner-word-etymology-container"
+};
+var _hoisted_122 = { class: "lang-learner-etymology-content" };
+var _hoisted_132 = { class: "lang-learner-word-examples-container" };
+var _hoisted_142 = {
+  key: 0,
+  class: "lang-learner-examples-loading"
+};
+var _hoisted_152 = {
+  key: 1,
+  class: "lang-learner-example-list"
+};
+var _hoisted_162 = {
+  key: 2,
+  class: "lang-learner-examples-empty"
+};
+var _hoisted_172 = { class: "lang-learner-ai-teacher-container" };
+var _hoisted_182 = { class: "lang-learner-ai-teacher-header" };
+var _hoisted_19 = ["disabled"];
+var _hoisted_20 = {
+  key: 0,
+  class: "lang-learner-ai-response-box"
+};
+var _hoisted_21 = {
+  key: 0,
+  class: "lang-learner-root-box"
+};
+var _hoisted_222 = { class: "lang-learner-root-value" };
+var _hoisted_23 = {
+  ref: "aiMarkdownEl",
+  class: "lang-learner-ai-markdown markdown-preview-view markdown-rendered"
+};
+function render2(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_18, [
+    createBaseVNode("h4", _hoisted_22, [
+      createBaseVNode("span", _hoisted_32, [
+        _ctx.hasSearchResults ? (openBlock(), createElementBlock("button", {
+          key: 0,
+          onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("back-to-results")),
+          class: "lang-learner-btn-back",
+          title: "\u8FD4\u56DE\u641C\u7D22\u5217\u8868"
+        }, " \u2B05\uFE0F ")) : createCommentVNode("v-if", true),
+        _cache[8] || (_cache[8] = createBaseVNode(
+          "span",
+          null,
+          "\u{1F4DD} \u5355\u8BCD\u8BE6\u60C5",
+          -1
+          /* CACHED */
+        ))
+      ]),
+      createBaseVNode("button", {
+        class: "lang-learner-btn-icon",
+        title: "\u590D\u5236\u5361\u7247\u5185\u5BB9",
+        onClick: _cache[1] || (_cache[1] = (...args) => _ctx.copyCardContent && _ctx.copyCardContent(...args))
+      }, "\u{1F4CB}")
+    ]),
+    createBaseVNode("div", _hoisted_42, [
+      createBaseVNode("div", _hoisted_52, [
+        createBaseVNode("div", {
+          class: "lang-learner-word-detail-word-box",
+          title: "\u70B9\u51FB\u5207\u6362\u97F3\u8282\u5212\u5206",
+          onClick: _cache[2] || (_cache[2] = (...args) => _ctx.toggleSyllableSplit && _ctx.toggleSyllableSplit(...args))
+        }, [
+          createBaseVNode(
+            "span",
+            _hoisted_62,
+            toDisplayString(_ctx.displayWord),
+            1
+            /* TEXT */
+          ),
+          _ctx.localWordInfo.phonetic ? (openBlock(), createElementBlock(
+            "span",
+            _hoisted_72,
+            "/" + toDisplayString(_ctx.localWordInfo.phonetic) + "/",
+            1
+            /* TEXT */
+          )) : createCommentVNode("v-if", true)
+        ]),
+        createBaseVNode("div", _hoisted_82, [
+          createBaseVNode("button", {
+            class: "lang-learner-btn-voice-word",
+            title: "\u6717\u8BFB\u5355\u8BCD",
+            onClick: _cache[3] || (_cache[3] = ($event) => _ctx.speak(_ctx.localWordInfo.word))
+          }, " \u{1F50A} "),
+          createBaseVNode("button", {
+            class: "lang-learner-btn-voice-word",
+            title: "\u5728\u7CFB\u7EDF\u8BCD\u5178\u4E2D\u67E5\u770B",
+            onClick: _cache[4] || (_cache[4] = ($event) => _ctx.lookupInSystemDict(_ctx.localWordInfo.word))
+          }, " \u{1F4D6} "),
+          createBaseVNode("button", {
+            class: "lang-learner-btn-add-word",
+            title: _ctx.localWordInfo.status === "LEARNING" ? "\u5DF2\u5728\u751F\u8BCD\u672C\uFF0C\u70B9\u51FB\u79FB\u51FA" : "\u6DFB\u52A0\u5230\u751F\u8BCD\u672C",
+            onClick: _cache[5] || (_cache[5] = ($event) => _ctx.toggleAddWord(_ctx.localWordInfo.word))
+          }, toDisplayString(_ctx.localWordInfo.status === "LEARNING" ? "\u{1F4CC}" : "\u2795"), 9, _hoisted_92)
+        ])
+      ]),
+      createBaseVNode(
+        "div",
+        _hoisted_102,
+        toDisplayString(_ctx.localWordInfo.trans || "\u6682\u65E0\u91CA\u4E49"),
+        1
+        /* TEXT */
+      ),
+      _ctx.localWordInfo.etymology ? (openBlock(), createElementBlock("div", _hoisted_112, [
+        _cache[9] || (_cache[9] = createBaseVNode(
+          "div",
+          { class: "lang-learner-etymology-title" },
+          [
+            createBaseVNode("span", null, "\u{1F4A1} \u8BCD\u6E90\u4E0E\u8BB0\u5FC6\u8F85\u52A9")
+          ],
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode(
+          "div",
+          _hoisted_122,
+          toDisplayString(_ctx.localWordInfo.etymology),
+          1
+          /* TEXT */
+        )
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("div", _hoisted_132, [
+        _cache[10] || (_cache[10] = createBaseVNode(
+          "div",
+          { class: "lang-learner-examples-title" },
+          " \u{1F4A1} \u4F8B\u53E5\u8054\u60F3 ",
+          -1
+          /* CACHED */
+        )),
+        _ctx.isLoadingExamples ? (openBlock(), createElementBlock("div", _hoisted_142, " \u6B63\u5728\u83B7\u53D6\u4F8B\u53E5... ")) : _ctx.exampleSentences.length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_152, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.exampleSentences, (sentence, idx) => {
+              return openBlock(), createElementBlock(
+                "li",
+                {
+                  key: idx,
+                  class: "lang-learner-example-item"
+                },
+                toDisplayString(sentence),
+                1
+                /* TEXT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])) : (openBlock(), createElementBlock("div", _hoisted_162, " \u6682\u65E0\u76F8\u5173\u4F8B\u53E5 "))
+      ]),
+      createBaseVNode("div", _hoisted_172, [
+        createBaseVNode("div", _hoisted_182, [
+          _cache[11] || (_cache[11] = createBaseVNode(
+            "div",
+            { class: "lang-learner-examples-title" },
+            "\u{1F916} AI \u6559\u5E08\u6DF1\u5EA6\u89E3\u6790",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode("button", {
+            onClick: _cache[6] || (_cache[6] = (...args) => _ctx.askAITeacher && _ctx.askAITeacher(...args)),
+            disabled: _ctx.isAiLoading,
+            class: "lang-learner-btn-ask-ai"
+          }, toDisplayString(_ctx.isAiLoading ? "\u601D\u8003\u4E2D..." : "\u8BE2\u95EE AI \u6559\u5E08"), 9, _hoisted_19)
+        ]),
+        _ctx.aiResponse ? (openBlock(), createElementBlock("div", _hoisted_20, [
+          _ctx.aiResponse.root ? (openBlock(), createElementBlock("div", _hoisted_21, [
+            _cache[12] || (_cache[12] = createBaseVNode(
+              "span",
+              { class: "lang-learner-root-label" },
+              "\u8BCD\u6839\u67A2\u7EBD:",
+              -1
+              /* CACHED */
+            )),
+            createBaseVNode(
+              "span",
+              _hoisted_222,
+              toDisplayString(_ctx.aiResponse.root) + " (" + toDisplayString(_ctx.aiResponse.rootMeaning) + ")",
+              1
+              /* TEXT */
+            )
+          ])) : createCommentVNode("v-if", true),
+          createBaseVNode(
+            "div",
+            _hoisted_23,
+            null,
+            512
+            /* NEED_PATCH */
+          ),
+          createBaseVNode("button", {
+            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.exportAIResponse && _ctx.exportAIResponse(...args)),
+            class: "lang-learner-btn-export-ai"
+          }, " \u270D\uFE0F \u4E00\u952E\u5F52\u7EB3\u5E76\u6784\u5EFA\u8BCD\u6839\u7F51\u7EDC ")
+        ])) : createCommentVNode("v-if", true)
+      ])
+    ])
+  ]);
+}
+
+// src/ui/components/WordDetailCard.vue
+WordDetailCard_default.render = render2;
+WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
+WordDetailCard_default.__scopeId = "data-v-b1a0df07";
+var WordDetailCard_default2 = WordDetailCard_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
+var import_obsidian5 = require("obsidian");
+var VocabularyTab_default = defineComponent({
+  name: "VocabularyTab",
+  emits: ["select-word"],
+  setup(props, { emit: emit2 }) {
+    const vocabManager = inject("vocabManager");
+    const plugin = inject("plugin");
+    const speak = inject("speak");
+    const highFreqSet = new Set(HIGH_FREQUENCY_WORDS);
+    const stats = ref({ total: 0, unknown: 0, learning: 0, known: 0 });
+    const activeTab = ref("UNKNOWN");
+    const wordListCache = ref([]);
+    function refreshData() {
+      const count = vocabManager.getCount();
+      if (count) {
+        stats.value = count;
+      }
+      const entries = vocabManager.getAllEntries();
+      const list = [];
+      entries.forEach((info) => {
+        if (info.status === "UNKNOWN" || info.status === "LEARNING") {
+          list.push(info);
+        }
+      });
+      list.sort((a, b) => b.updated - a.updated);
+      wordListCache.value = list;
+    }
+    const unknownList = computed2(
+      () => wordListCache.value.filter((w) => w.status === "UNKNOWN")
+    );
+    const learningList = computed2(
+      () => wordListCache.value.filter((w) => w.status === "LEARNING")
+    );
+    const currentTabList = computed2(
+      () => activeTab.value === "UNKNOWN" ? unknownList.value : learningList.value
+    );
     function quickAdvance(info) {
       const nextStatus = info.status === "UNKNOWN" ? "LEARNING" : "KNOWN";
-      changeWordStatus(info.word, nextStatus);
-    }
-    const estimationState = ref("idle");
-    const currentQuestionIndex = ref(0);
-    const totalQuestions = ref(20);
-    const currentTestWord = ref("");
-    const estimatedLevel = ref(0);
-    const batchMarkedCount = ref(0);
-    let bsLow = 0;
-    let bsHigh = HIGH_FREQUENCY_WORDS.length - 1;
-    let bsRound = 0;
-    const maxRounds = 20;
-    const progressPercent = computed2(
-      () => Math.round((currentQuestionIndex.value + 1) / totalQuestions.value * 100)
-    );
-    function startEstimation() {
-      bsLow = 0;
-      bsHigh = HIGH_FREQUENCY_WORDS.length - 1;
-      bsRound = 0;
-      currentQuestionIndex.value = 0;
-      estimationState.value = "running";
-      pickNextWord();
-    }
-    function pickNextWord() {
-      const mid = Math.floor((bsLow + bsHigh) / 2);
-      currentTestWord.value = HIGH_FREQUENCY_WORDS[mid];
-    }
-    function answerEstimation(known) {
-      const mid = Math.floor((bsLow + bsHigh) / 2);
-      if (known) {
-        bsLow = mid + 1;
-      } else {
-        bsHigh = mid - 1;
-      }
-      bsRound++;
-      currentQuestionIndex.value = bsRound;
-      if (bsRound >= maxRounds || bsLow > bsHigh) {
-        finishEstimation();
-      } else {
-        pickNextWord();
-      }
-    }
-    function finishEstimation() {
-      const waterLevel = bsLow;
-      estimatedLevel.value = waterLevel;
-      const wordsToMark = HIGH_FREQUENCY_WORDS.slice(0, waterLevel);
-      const safeWords = wordsToMark.filter((w) => {
-        const status = vocabManager.get(w);
-        return status !== "LEARNING";
-      });
-      vocabManager.batchSetKnown(safeWords);
-      batchMarkedCount.value = safeWords.length;
-      eventBus.emit("lang-learner:batch-known", safeWords.length);
-      eventBus.emit("lang-learner:estimation-done", waterLevel);
-      estimationState.value = "done";
-      refreshStats();
-      refreshWordList();
+      const word = info.word;
+      const trans = info.trans || OFFLINE_DICT[word]?.trans || "";
+      const phonetic = info.phonetic || OFFLINE_DICT[word]?.phonetic || "";
+      const etymology = info.etymology;
+      vocabManager.set(word, nextStatus, trans, phonetic, etymology);
+      eventBus.emit("lang-learner:word-changed", word, nextStatus);
     }
     function learnArticle() {
       try {
         const activeFile = plugin.app.workspace.getActiveFile();
         if (!activeFile) {
-          new import_obsidian3.Notice("\u8BF7\u5148\u6253\u5F00\u4E00\u7BC7\u6587\u7AE0\u518D\u4F7F\u7528\u6B64\u529F\u80FD");
+          new import_obsidian5.Notice("\u8BF7\u5148\u6253\u5F00\u4E00\u7BC7\u6587\u7AE0\u518D\u4F7F\u7528\u6B64\u529F\u80FD");
           return;
         }
-        const cachedRead = plugin.app.vault.cachedRead(activeFile);
-        if (!cachedRead) {
-          console.log("\u65E0\u6CD5\u8BFB\u53D6\u5F53\u524D\u6587\u7AE0\u5185\u5BB9");
-          return;
-        }
-        cachedRead.then((articleText) => {
+        plugin.app.vault.cachedRead(activeFile).then((articleText) => {
           if (!articleText)
             return;
           const wordRegex = /[a-zA-Z]+(?:[''][a-zA-Z]+)*(?:-[a-zA-Z]+)*/g;
@@ -26422,19 +27490,475 @@ var Panel_default = defineComponent({
             wordsToMark.push(word);
           });
           if (wordsToMark.length === 0) {
-            console.log("\u5F53\u524D\u6587\u7AE0\u4E2D\u6CA1\u6709\u9700\u8981\u6279\u91CF\u6807\u8BB0\u7684\u9AD8\u9891\u8BCD");
+            new import_obsidian5.Notice("\u5F53\u524D\u6587\u7AE0\u4E2D\u6CA1\u6709\u9700\u8981\u6279\u91CF\u6807\u8BB0\u7684\u9AD8\u9891\u8BCD");
             return;
           }
           vocabManager.batchSetKnown(wordsToMark);
           eventBus.emit("lang-learner:batch-known", wordsToMark.length);
-          console.log(`\u4E00\u952E\u5B66\u5B8C\uFF1A\u5DF2\u5C06 ${wordsToMark.length} \u4E2A\u9AD8\u9891\u8BCD\u6807\u8BB0\u4E3A\u5DF2\u638C\u63E1`);
-          refreshStats();
-          refreshWordList();
+          new import_obsidian5.Notice(`\u4E00\u952E\u5B66\u5B8C\uFF1A\u5DF2\u5C06 ${wordsToMark.length} \u4E2A\u9AD8\u9891\u8BCD\u6807\u8BB0\u4E3A\u5DF2\u638C\u63E1`);
+          refreshData();
         });
       } catch (err) {
         console.error("\u4E00\u952E\u5B66\u5B8C\u64CD\u4F5C\u5F02\u5E38:", err);
       }
     }
+    function handleSyncEvents() {
+      refreshData();
+    }
+    onMounted(() => {
+      refreshData();
+      eventBus.on("lang-learner:word-changed", handleSyncEvents);
+      eventBus.on("lang-learner:batch-known", handleSyncEvents);
+      eventBus.on("lang-learner:estimation-done", handleSyncEvents);
+    });
+    onUnmounted(() => {
+      eventBus.off("lang-learner:word-changed", handleSyncEvents);
+      eventBus.off("lang-learner:batch-known", handleSyncEvents);
+      eventBus.off("lang-learner:estimation-done", handleSyncEvents);
+    });
+    return {
+      emit: emit2,
+      stats,
+      activeTab,
+      unknownList,
+      learningList,
+      currentTabList,
+      speak,
+      quickAdvance,
+      learnArticle
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=template
+var _hoisted_110 = { class: "lang-learner-tab-content" };
+var _hoisted_24 = { class: "lang-learner-panel-dashboard" };
+var _hoisted_33 = { class: "lang-learner-stats-grid" };
+var _hoisted_43 = { class: "lang-learner-stat-item lang-learner-stat-total" };
+var _hoisted_53 = { class: "lang-learner-stat-value" };
+var _hoisted_63 = { class: "lang-learner-stat-item lang-learner-stat-known" };
+var _hoisted_73 = { class: "lang-learner-stat-value" };
+var _hoisted_83 = { class: "lang-learner-stat-item lang-learner-stat-learning" };
+var _hoisted_93 = { class: "lang-learner-stat-value" };
+var _hoisted_103 = { class: "lang-learner-stat-item lang-learner-stat-unknown" };
+var _hoisted_113 = { class: "lang-learner-stat-value" };
+var _hoisted_123 = { class: "lang-learner-panel-section lang-learner-wordlist-area" };
+var _hoisted_133 = { class: "lang-learner-tab-bar" };
+var _hoisted_143 = { class: "lang-learner-wordlist-container" };
+var _hoisted_153 = ["onClick"];
+var _hoisted_163 = { class: "lang-learner-wl-word" };
+var _hoisted_173 = { class: "lang-learner-wl-trans" };
+var _hoisted_183 = { class: "lang-learner-wordlist-actions" };
+var _hoisted_192 = ["onClick"];
+var _hoisted_202 = ["title", "onClick"];
+var _hoisted_212 = {
+  key: 0,
+  class: "lang-learner-empty-hint"
+};
+var _hoisted_223 = { class: "lang-learner-panel-section" };
+function render3(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_110, [
+    createBaseVNode("div", _hoisted_24, [
+      _cache[7] || (_cache[7] = createBaseVNode(
+        "h3",
+        { class: "lang-learner-panel-title" },
+        "\u{1F4D6} \u8BED\u8A00\u5B66\u4E60\u52A9\u624B",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_33, [
+        createBaseVNode("div", _hoisted_43, [
+          createBaseVNode(
+            "span",
+            _hoisted_53,
+            toDisplayString(_ctx.stats.total),
+            1
+            /* TEXT */
+          ),
+          _cache[3] || (_cache[3] = createBaseVNode(
+            "span",
+            { class: "lang-learner-stat-label" },
+            "\u603B\u8BCD\u91CF",
+            -1
+            /* CACHED */
+          ))
+        ]),
+        createBaseVNode("div", _hoisted_63, [
+          createBaseVNode(
+            "span",
+            _hoisted_73,
+            toDisplayString(_ctx.stats.known),
+            1
+            /* TEXT */
+          ),
+          _cache[4] || (_cache[4] = createBaseVNode(
+            "span",
+            { class: "lang-learner-stat-label" },
+            "\u5DF2\u638C\u63E1",
+            -1
+            /* CACHED */
+          ))
+        ]),
+        createBaseVNode("div", _hoisted_83, [
+          createBaseVNode(
+            "span",
+            _hoisted_93,
+            toDisplayString(_ctx.stats.learning),
+            1
+            /* TEXT */
+          ),
+          _cache[5] || (_cache[5] = createBaseVNode(
+            "span",
+            { class: "lang-learner-stat-label" },
+            "\u5B66\u4E60\u4E2D",
+            -1
+            /* CACHED */
+          ))
+        ]),
+        createBaseVNode("div", _hoisted_103, [
+          createBaseVNode(
+            "span",
+            _hoisted_113,
+            toDisplayString(_ctx.stats.unknown),
+            1
+            /* TEXT */
+          ),
+          _cache[6] || (_cache[6] = createBaseVNode(
+            "span",
+            { class: "lang-learner-stat-label" },
+            "\u751F\u8BCD",
+            -1
+            /* CACHED */
+          ))
+        ])
+      ])
+    ]),
+    createBaseVNode("div", _hoisted_123, [
+      _cache[8] || (_cache[8] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F4CB} \u751F\u8BCD\u672C",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_133, [
+        createBaseVNode(
+          "button",
+          {
+            class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "UNKNOWN" }]),
+            onClick: _cache[0] || (_cache[0] = ($event) => _ctx.activeTab = "UNKNOWN")
+          },
+          "\u751F\u8BCD (" + toDisplayString(_ctx.unknownList.length) + ")",
+          3
+          /* TEXT, CLASS */
+        ),
+        createBaseVNode(
+          "button",
+          {
+            class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "LEARNING" }]),
+            onClick: _cache[1] || (_cache[1] = ($event) => _ctx.activeTab = "LEARNING")
+          },
+          "\u5B66\u4E60\u4E2D (" + toDisplayString(_ctx.learningList.length) + ")",
+          3
+          /* TEXT, CLASS */
+        )
+      ]),
+      createBaseVNode("div", _hoisted_143, [
+        (openBlock(true), createElementBlock(
+          Fragment,
+          null,
+          renderList(_ctx.currentTabList, (item) => {
+            return openBlock(), createElementBlock("div", {
+              key: item.word,
+              class: "lang-learner-wordlist-item",
+              onClick: ($event) => _ctx.emit("select-word", item)
+            }, [
+              createBaseVNode(
+                "span",
+                _hoisted_163,
+                toDisplayString(item.word),
+                1
+                /* TEXT */
+              ),
+              createBaseVNode(
+                "span",
+                _hoisted_173,
+                toDisplayString(item.trans || "\u2014"),
+                1
+                /* TEXT */
+              ),
+              createBaseVNode("div", _hoisted_183, [
+                createBaseVNode("button", {
+                  class: "lang-learner-btn-voice-mini",
+                  title: "\u53D1\u97F3",
+                  onClick: withModifiers(($event) => _ctx.speak(item.word), ["stop"])
+                }, "\u{1F50A}", 8, _hoisted_192),
+                createBaseVNode("button", {
+                  class: "lang-learner-btn-icon",
+                  title: item.status === "UNKNOWN" ? "\u6807\u4E3A\u5B66\u4E60\u4E2D" : "\u6807\u4E3A\u5DF2\u638C\u63E1",
+                  onClick: withModifiers(($event) => _ctx.quickAdvance(item), ["stop"])
+                }, toDisplayString(item.status === "UNKNOWN" ? "\u{1F4CC}" : "\u2705"), 9, _hoisted_202)
+              ])
+            ], 8, _hoisted_153);
+          }),
+          128
+          /* KEYED_FRAGMENT */
+        )),
+        _ctx.currentTabList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_212, "\u6682\u65E0\u6570\u636E")) : createCommentVNode("v-if", true)
+      ])
+    ]),
+    createBaseVNode("div", _hoisted_223, [
+      createBaseVNode("button", {
+        class: "lang-learner-btn lang-learner-btn-accent lang-learner-btn-full",
+        onClick: _cache[2] || (_cache[2] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
+      }, " \u26A1 \u4E00\u952E\u5B66\u5B8C\u5F53\u524D\u6587\u7AE0 "),
+      _cache[9] || (_cache[9] = createBaseVNode(
+        "p",
+        { class: "lang-learner-hint-text" },
+        "\u5C06\u5F53\u524D\u6587\u7AE0\u4E2D\u9AD8\u9891\u8BCD\u8868\u5185\u7684\u672A\u6807\u8BB0\u8BCD\u6279\u91CF\u6807\u4E3A\u5DF2\u638C\u63E1",
+        -1
+        /* CACHED */
+      ))
+    ])
+  ]);
+}
+
+// src/ui/components/VocabularyTab.vue
+VocabularyTab_default.render = render3;
+VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
+VocabularyTab_default.__scopeId = "data-v-264bff6f";
+var VocabularyTab_default2 = VocabularyTab_default;
+
+// src/utils/algorithms.ts
+function getNextBinarySearchIndex(state) {
+  return Math.floor((state.low + state.high) / 2);
+}
+function updateBinarySearch(state, known) {
+  const mid = getNextBinarySearchIndex(state);
+  const nextState = { ...state, round: state.round + 1 };
+  if (known) {
+    nextState.low = mid + 1;
+  } else {
+    nextState.high = mid - 1;
+  }
+  return nextState;
+}
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/EstimateTab.vue?type=script
+var EstimateTab_default = defineComponent({
+  name: "EstimateTab",
+  setup() {
+    const vocabManager = inject("vocabManager");
+    const estimationState = ref("idle");
+    const currentQuestionIndex = ref(0);
+    const totalQuestions = ref(20);
+    const currentTestWord = ref("");
+    const estimatedLevel = ref(0);
+    const batchMarkedCount = ref(0);
+    let bsState = {
+      low: 0,
+      high: HIGH_FREQUENCY_WORDS.length - 1,
+      round: 0
+    };
+    const progressPercent = computed2(
+      () => Math.round((currentQuestionIndex.value + 1) / totalQuestions.value * 100)
+    );
+    function pickNextWord() {
+      const mid = getNextBinarySearchIndex(bsState);
+      currentTestWord.value = HIGH_FREQUENCY_WORDS[mid];
+    }
+    function startEstimation() {
+      bsState = {
+        low: 0,
+        high: HIGH_FREQUENCY_WORDS.length - 1,
+        round: 0
+      };
+      currentQuestionIndex.value = 0;
+      estimationState.value = "running";
+      pickNextWord();
+    }
+    function answerEstimation(known) {
+      bsState = updateBinarySearch(bsState, known);
+      currentQuestionIndex.value = bsState.round;
+      if (bsState.round >= totalQuestions.value || bsState.low > bsState.high) {
+        finishEstimation();
+      } else {
+        pickNextWord();
+      }
+    }
+    function finishEstimation() {
+      const waterLevel = bsState.low;
+      estimatedLevel.value = waterLevel;
+      const wordsToMark = HIGH_FREQUENCY_WORDS.slice(0, waterLevel);
+      const safeWords = wordsToMark.filter((w) => {
+        const status = vocabManager.get(w);
+        return status !== "LEARNING";
+      });
+      vocabManager.batchSetKnown(safeWords);
+      batchMarkedCount.value = safeWords.length;
+      eventBus.emit("lang-learner:batch-known", safeWords.length);
+      eventBus.emit("lang-learner:estimation-done", waterLevel);
+      estimationState.value = "done";
+    }
+    return {
+      estimationState,
+      currentQuestionIndex,
+      totalQuestions,
+      currentTestWord,
+      estimatedLevel,
+      batchMarkedCount,
+      progressPercent,
+      startEstimation,
+      answerEstimation
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/EstimateTab.vue?type=template
+var _hoisted_111 = { class: "lang-learner-tab-content" };
+var _hoisted_25 = {
+  key: 0,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_34 = {
+  key: 1,
+  class: "lang-learner-panel-section lang-learner-estimation-area"
+};
+var _hoisted_44 = { class: "lang-learner-estimation-header" };
+var _hoisted_54 = { class: "lang-learner-estimation-progress" };
+var _hoisted_64 = { class: "lang-learner-progress-bar" };
+var _hoisted_74 = { class: "lang-learner-estimation-word" };
+var _hoisted_84 = { class: "lang-learner-big-word" };
+var _hoisted_94 = { class: "lang-learner-estimation-actions" };
+var _hoisted_104 = {
+  key: 2,
+  class: "lang-learner-panel-section lang-learner-estimation-result"
+};
+var _hoisted_114 = { class: "lang-learner-result-value" };
+var _hoisted_124 = { class: "lang-learner-result-detail" };
+function render4(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_111, [
+    _ctx.estimationState === "idle" ? (openBlock(), createElementBlock("div", _hoisted_25, [
+      createBaseVNode("button", {
+        class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
+        onClick: _cache[0] || (_cache[0] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
+      }, " \u{1F3AF} \u5F00\u59CB\u8BCD\u6C47\u91CF\u4F30\u7B97 "),
+      _cache[4] || (_cache[4] = createBaseVNode(
+        "p",
+        { class: "lang-learner-hint-text" },
+        "\u901A\u8FC7\u7EA6 20 \u9053\u9898\u5FEB\u901F\u6D4B\u5B9A\u4F60\u7684\u82F1\u8BED\u8BCD\u6C47\u6C34\u4F4D\u7EBF",
+        -1
+        /* CACHED */
+      ))
+    ])) : createCommentVNode("v-if", true),
+    _ctx.estimationState === "running" ? (openBlock(), createElementBlock("div", _hoisted_34, [
+      createBaseVNode("div", _hoisted_44, [
+        createBaseVNode(
+          "span",
+          _hoisted_54,
+          "\u7B2C " + toDisplayString(_ctx.currentQuestionIndex + 1) + " / " + toDisplayString(_ctx.totalQuestions) + " \u9898",
+          1
+          /* TEXT */
+        ),
+        createBaseVNode("div", _hoisted_64, [
+          createBaseVNode(
+            "div",
+            {
+              class: "lang-learner-progress-fill",
+              style: normalizeStyle({ width: _ctx.progressPercent + "%" })
+            },
+            null,
+            4
+            /* STYLE */
+          )
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_74, [
+        createBaseVNode(
+          "span",
+          _hoisted_84,
+          toDisplayString(_ctx.currentTestWord),
+          1
+          /* TEXT */
+        )
+      ]),
+      _cache[5] || (_cache[5] = createBaseVNode(
+        "p",
+        { class: "lang-learner-estimation-prompt" },
+        "\u4F60\u8BA4\u8BC6\u8FD9\u4E2A\u5355\u8BCD\u5417\uFF1F",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_94, [
+        createBaseVNode("button", {
+          class: "lang-learner-btn lang-learner-btn-yes",
+          onClick: _cache[1] || (_cache[1] = ($event) => _ctx.answerEstimation(true))
+        }, "\u2705 \u8BA4\u8BC6"),
+        createBaseVNode("button", {
+          class: "lang-learner-btn lang-learner-btn-no",
+          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.answerEstimation(false))
+        }, "\u274C \u4E0D\u8BA4\u8BC6")
+      ])
+    ])) : createCommentVNode("v-if", true),
+    _ctx.estimationState === "done" ? (openBlock(), createElementBlock("div", _hoisted_104, [
+      _cache[8] || (_cache[8] = createBaseVNode(
+        "p",
+        { class: "lang-learner-result-title" },
+        "\u{1F389} \u4F30\u7B97\u5B8C\u6210\uFF01",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("p", _hoisted_114, [
+        _cache[6] || (_cache[6] = createTextVNode(
+          "\u4F60\u7684\u8BCD\u6C47\u91CF\u7EA6\u4E3A ",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode(
+          "strong",
+          null,
+          toDisplayString(_ctx.estimatedLevel),
+          1
+          /* TEXT */
+        ),
+        _cache[7] || (_cache[7] = createTextVNode(
+          " \u8BCD",
+          -1
+          /* CACHED */
+        ))
+      ]),
+      createBaseVNode(
+        "p",
+        _hoisted_124,
+        "\u5DF2\u5C06\u6C34\u4F4D\u7EBF\u4EE5\u4E0B\u7684 " + toDisplayString(_ctx.batchMarkedCount) + " \u4E2A\u9AD8\u9891\u8BCD\u6807\u8BB0\u4E3A\u5DF2\u638C\u63E1",
+        1
+        /* TEXT */
+      ),
+      createBaseVNode("button", {
+        class: "lang-learner-btn lang-learner-btn-secondary",
+        onClick: _cache[3] || (_cache[3] = ($event) => _ctx.estimationState = "idle")
+      }, "\u5173\u95ED")
+    ])) : createCommentVNode("v-if", true)
+  ]);
+}
+
+// src/ui/components/EstimateTab.vue
+EstimateTab_default.render = render4;
+EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
+EstimateTab_default.__scopeId = "data-v-0a7821c8";
+var EstimateTab_default2 = EstimateTab_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
+var import_obsidian6 = require("obsidian");
+var SentenceTab_default = defineComponent({
+  name: "SentenceTab",
+  emits: ["select-word"],
+  setup(props, { emit: emit2 }) {
+    const vocabManager = inject("vocabManager");
+    const plugin = inject("plugin");
+    const speak = inject("speak");
+    const getVoiceSettings = inject("getVoiceSettings");
+    const getAvailableVoices = inject("getAvailableVoices");
     const sentenceInput = ref("");
     const isAnalyzing = ref(false);
     const hasAnalyzed = ref(false);
@@ -26446,7 +27970,7 @@ var Panel_default = defineComponent({
     async function analyzeInputSentence() {
       const text = sentenceInput.value.trim();
       if (!text) {
-        new import_obsidian3.Notice("\u8BF7\u8F93\u5165\u5F85\u5206\u6790\u7684\u53E5\u5B50");
+        new import_obsidian6.Notice("\u8BF7\u8F93\u5165\u5F85\u5206\u6790\u7684\u53E5\u5B50");
         return;
       }
       isAnalyzing.value = true;
@@ -26454,7 +27978,14 @@ var Panel_default = defineComponent({
       isTranslating.value = true;
       sentenceTranslation.value = "";
       try {
-        let isCoveredByPhrase = function(token) {
+        const tokens = tokenize(text);
+        const phraseRanges = [];
+        for (const token of tokens) {
+          if (token.isPhrase) {
+            phraseRanges.push({ start: token.start, end: token.end });
+          }
+        }
+        const isCoveredByPhrase = (token) => {
           if (token.isPhrase)
             return false;
           for (const range of phraseRanges) {
@@ -26464,13 +27995,6 @@ var Panel_default = defineComponent({
           }
           return false;
         };
-        const tokens = tokenize(text);
-        const phraseRanges = [];
-        for (const token of tokens) {
-          if (token.isPhrase) {
-            phraseRanges.push({ start: token.start, end: token.end });
-          }
-        }
         let lastIndex = 0;
         const segments = [];
         const uniqueWords = /* @__PURE__ */ new Map();
@@ -26536,7 +28060,7 @@ var Panel_default = defineComponent({
         sentenceTranslation.value = translation;
       } catch (err) {
         console.error("\u5206\u6790\u53E5\u5B50\u8FC7\u7A0B\u4E2D\u53D1\u751F\u5F02\u5E38:", err);
-        new import_obsidian3.Notice("\u5206\u6790\u53E5\u5B50\u8FC7\u7A0B\u4E2D\u53D1\u751F\u9519\u8BEF");
+        new import_obsidian6.Notice("\u5206\u6790\u53E5\u5B50\u8FC7\u7A0B\u4E2D\u53D1\u751F\u9519\u8BEF");
       } finally {
         isAnalyzing.value = false;
         isTranslating.value = false;
@@ -26544,9 +28068,8 @@ var Panel_default = defineComponent({
     }
     function importSelection() {
       try {
-        const { MarkdownView: MarkdownView3 } = require("obsidian");
         let selection = "";
-        const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView3);
+        const activeView = plugin.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
         if (activeView && activeView.editor) {
           selection = activeView.editor.getSelection();
         }
@@ -26564,33 +28087,33 @@ var Panel_default = defineComponent({
           sentenceInput.value = selection.trim();
           analyzeInputSentence();
         } else {
-          new import_obsidian3.Notice("\u5F53\u524D\u6D3B\u52A8\u6587\u6863\u4E2D\u672A\u68C0\u6D4B\u5230\u9009\u4E2D\u6587\u672C");
+          new import_obsidian6.Notice("\u5F53\u524D\u6D3B\u52A8\u6587\u6863\u4E2D\u672A\u68C0\u6D4B\u5230\u9009\u4E2D\u6587\u672C");
         }
       } catch (err) {
-        console.error("\u4ECE\u7F16\u8F91\u5668\u83B7\u53D6\u9009\u4E2D\u6587\u672C\u5931\u8D25:", err);
-        new import_obsidian3.Notice("\u65E0\u6CD5\u76F4\u63A5\u83B7\u53D6\u9009\u4E2D\u6587\u672C\uFF0C\u8BF7\u4F7F\u7528\u547D\u4EE4\u9762\u677F\u6216\u624B\u52A8\u7C98\u8D34");
+        console.error("\u83B7\u53D6\u9009\u4E2D\u6587\u672C\u5931\u8D25:", err);
+        new import_obsidian6.Notice("\u65E0\u6CD5\u76F4\u63A5\u83B7\u53D6\u9009\u4E2D\u6587\u672C\uFF0C\u8BF7\u4F7F\u7528\u547D\u4EE4\u9762\u677F\u6216\u624B\u52A8\u7C98\u8D34");
       }
     }
-    function onSentenceWordClick(word) {
-      handleWordSelected(word);
+    function onWordClick(word) {
+      emit2("select-word", word);
     }
-    async function onSentenceWordDblClick(token) {
+    async function onWordDblClick(token) {
       const currentStatus = vocabManager.get(token.lemma);
       const displayPhonetic = token.phonetic ? ` /${token.phonetic}/` : "";
       let trans = token.trans;
       let phonetic = token.phonetic;
       let etymology = token.etymology;
       if (trans) {
-        new import_obsidian3.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+        new import_obsidian6.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
 \u91CA\u4E49: ${trans}`, 3500);
       } else {
-        const loadingNotice = new import_obsidian3.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+        const loadingNotice = new import_obsidian6.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
 \u6B63\u5728\u4ECE\u5728\u7EBF\u8BCD\u5178\u67E5\u8BE2\u91CA\u4E49...`, 5e3);
         try {
           const result = await vocabManager.fetchOnlineTranslationAndDetails(token.lemma);
           loadingNotice.hide();
           if (result && result.trans) {
-            new import_obsidian3.Notice(`\u{1F4D6} ${token.lemma}${result.phonetic ? ` /${result.phonetic}/` : ""}
+            new import_obsidian6.Notice(`\u{1F4D6} ${token.lemma}${result.phonetic ? ` /${result.phonetic}/` : ""}
 \u91CA\u4E49: ${result.trans}`, 4500);
             trans = result.trans;
             token.trans = result.trans;
@@ -26603,12 +28126,12 @@ var Panel_default = defineComponent({
               token.etymology = result.etymology;
             }
           } else {
-            new import_obsidian3.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+            new import_obsidian6.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
 \u91CA\u4E49: \u6682\u65E0\u91CA\u4E49`, 3500);
           }
         } catch (err) {
           loadingNotice.hide();
-          new import_obsidian3.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+          new import_obsidian6.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
 \u91CA\u4E49: \u6682\u65E0\u91CA\u4E49 (\u67E5\u8BE2\u5931\u8D25)`, 3500);
         }
       }
@@ -26619,7 +28142,7 @@ var Panel_default = defineComponent({
       } else {
         vocabManager.set(token.lemma, "KNOWN", trans, phonetic, etymology);
       }
-      handleWordSelected(token.lemma);
+      emit2("select-word", token.lemma);
     }
     function updateWordStatusInList(word, newStatus) {
       const info = vocabManager.getInfo(word);
@@ -26628,20 +28151,28 @@ var Panel_default = defineComponent({
       const etymology = info?.etymology;
       vocabManager.set(word, newStatus, trans, phonetic, etymology);
       eventBus.emit("lang-learner:word-changed", word, newStatus);
-      analyzedSentenceTokens.value.forEach((token) => {
-        if (token.lemma === word) {
-          token.status = newStatus;
+    }
+    function playSentence(text) {
+      const settings = getVoiceSettings();
+      const voices = getAvailableVoices();
+      speak(
+        text,
+        settings,
+        voices,
+        (charIndex) => {
+          const tokenIndex = analyzedSentenceTokens.value.findIndex((token) => {
+            return charIndex >= token.start && charIndex < token.end;
+          });
+          if (tokenIndex !== -1) {
+            activeTokenIndex.value = tokenIndex;
+          }
+        },
+        () => {
+          activeTokenIndex.value = null;
         }
-      });
-      analyzedWordsList.value.forEach((item) => {
-        if (item.word === word) {
-          item.status = newStatus;
-        }
-      });
+      );
     }
     function handleWordChanged(word, status) {
-      refreshStats();
-      refreshWordList();
       analyzedSentenceTokens.value.forEach((token) => {
         if (token.lemma === word) {
           token.status = status;
@@ -26652,660 +28183,315 @@ var Panel_default = defineComponent({
           item.status = status;
         }
       });
-      if (selectedWord.value && selectedWord.value.word === word) {
-        selectedWord.value.status = status;
-      }
-    }
-    function handleWordSelected(word, keepSearchResults = false) {
-      if (!keepSearchResults) {
-        searchResultsList.value = [];
-      }
-      showSyllableSplit.value = false;
-      aiResponse.value = null;
-      loadExamples(word);
-      const info = vocabManager.getInfo(word);
-      if (info) {
-        selectedWord.value = { ...info };
-        if (!info.trans) {
-          fetchOnlineAndUpdate(word);
-        }
-      } else {
-        let trans = "";
-        let phonetic;
-        const dictEntry = OFFLINE_DICT[word];
-        if (dictEntry) {
-          trans = dictEntry.trans;
-          phonetic = dictEntry.phonetic || void 0;
-        }
-        selectedWord.value = {
-          word,
-          status: "UNKNOWN",
-          trans,
-          phonetic,
-          added: Date.now(),
-          updated: Date.now()
-        };
-        if (!trans) {
-          fetchOnlineAndUpdate(word);
-        }
-      }
-    }
-    async function fetchOnlineAndUpdate(word) {
-      try {
-        const result = await vocabManager.fetchOnlineTranslationAndDetails(word);
-        if (result && result.trans) {
-          if (selectedWord.value && selectedWord.value.word === word) {
-            selectedWord.value.trans = result.trans;
-            if (result.phonetic) {
-              selectedWord.value.phonetic = result.phonetic;
-            }
-            if (result.etymology) {
-              selectedWord.value.etymology = result.etymology;
-            }
-          }
-          const currentStatus = vocabManager.get(word);
-          vocabManager.set(word, currentStatus, result.trans, result.phonetic, result.etymology);
-        }
-      } catch (err) {
-        console.error("\u5728\u7EBF\u5F02\u6B65\u66F4\u65B0\u91CA\u4E49\u4E0E\u8BE6\u60C5\u5931\u8D25:", err);
-      }
-    }
-    function toggleAddWord(word) {
-      const info = vocabManager.getInfo(word);
-      const currentStatus = info?.status || "UNKNOWN";
-      const newStatus = currentStatus === "LEARNING" ? "UNKNOWN" : "LEARNING";
-      const trans = info?.trans || OFFLINE_DICT[word]?.trans || selectedWord.value?.trans || "";
-      const phonetic = info?.phonetic || OFFLINE_DICT[word]?.phonetic || selectedWord.value?.phonetic || "";
-      const etymology = info?.etymology || selectedWord.value?.etymology || "";
-      vocabManager.set(word, newStatus, trans, phonetic, etymology);
-      eventBus.emit("lang-learner:word-changed", word, newStatus);
-      if (selectedWord.value && selectedWord.value.word === word) {
-        selectedWord.value.status = newStatus;
-      }
-      refreshStats();
-      refreshWordList();
     }
     onMounted(() => {
-      refreshStats();
-      refreshWordList();
       eventBus.on("lang-learner:word-changed", handleWordChanged);
-      eventBus.on("lang-learner:word-selected", handleWordSelected);
-      eventBus.on("lang-learner:play-media", handlePlayMediaEvent);
       eventBus.on("lang-learner:analyze-sentence", (sentence) => {
-        mainTab.value = "sentence";
         sentenceInput.value = sentence;
         analyzeInputSentence();
       });
-      loadVoiceSettings();
-      loadAiSettings();
-      updateVoices();
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = updateVoices;
-      }
     });
     onUnmounted(() => {
-      stopYtTimer();
       eventBus.off("lang-learner:word-changed", handleWordChanged);
-      eventBus.off("lang-learner:word-selected", handleWordSelected);
       eventBus.off("lang-learner:analyze-sentence");
-      eventBus.off("lang-learner:play-media", handlePlayMediaEvent);
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = null;
-      }
     });
-    const availableVoices = ref([]);
-    const showVoiceConfig = ref(false);
-    const voiceSettings = ref({
-      engine: "online",
-      // 'online' 或 'local'
-      onlineAccent: 2,
-      // 1: 英音, 2: 美音
-      voiceName: "",
-      rate: 0.9,
-      pitch: 1
-    });
-    let currentAudio = null;
-    let speakRequestVersion = 0;
-    function stopAllAudio() {
-      activeTokenIndex.value = null;
-      if (currentAudio) {
-        try {
-          currentAudio.pause();
-          currentAudio.currentTime = 0;
-        } catch (e) {
-        }
-        currentAudio = null;
-      }
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-    }
-    function loadVoiceSettings() {
-      try {
-        const stored = localStorage.getItem("lang-learner-voice-settings");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed) {
-            if (parsed.engine !== void 0)
-              voiceSettings.value.engine = parsed.engine;
-            if (parsed.onlineAccent !== void 0)
-              voiceSettings.value.onlineAccent = parsed.onlineAccent;
-            if (parsed.voiceName !== void 0)
-              voiceSettings.value.voiceName = parsed.voiceName;
-            if (parsed.rate !== void 0)
-              voiceSettings.value.rate = parsed.rate;
-            if (parsed.pitch !== void 0)
-              voiceSettings.value.pitch = parsed.pitch;
-          }
-        }
-      } catch (e) {
-        console.error("\u8F7D\u5165\u53D1\u97F3\u914D\u7F6E\u5931\u8D25:", e);
-      }
-    }
-    function saveVoiceSettings() {
-      localStorage.setItem("lang-learner-voice-settings", JSON.stringify(voiceSettings.value));
-    }
-    const showAiConfig = ref(false);
-    const aiSettings = ref({
-      apiKey: "",
-      baseUrl: "https://api.deepseek.com/v1",
-      model: "deepseek-chat"
-    });
-    const isAiLoading = ref(false);
-    const aiResponse = ref(null);
-    const aiMarkdownEl = ref(null);
-    watch2([aiResponse, aiMarkdownEl], () => {
-      if (aiMarkdownEl.value) {
-        aiMarkdownEl.value.innerHTML = "";
-        if (aiResponse.value && aiResponse.value.markdown) {
-          import_obsidian3.MarkdownRenderer.renderMarkdown(
-            aiResponse.value.markdown,
-            aiMarkdownEl.value,
-            "",
-            plugin
-          );
-        }
-      }
-    }, { flush: "post" });
-    function loadAiSettings() {
-      try {
-        const stored = localStorage.getItem("lang-learner-ai-settings");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed) {
-            if (parsed.apiKey !== void 0)
-              aiSettings.value.apiKey = parsed.apiKey;
-            if (parsed.baseUrl !== void 0)
-              aiSettings.value.baseUrl = parsed.baseUrl;
-            if (parsed.model !== void 0)
-              aiSettings.value.model = parsed.model;
-          }
-        }
-      } catch (e) {
-        console.error("\u8F7D\u5165 AI \u914D\u7F6E\u5931\u8D25:", e);
-      }
-    }
-    function saveAiSettings() {
-      localStorage.setItem("lang-learner-ai-settings", JSON.stringify(aiSettings.value));
-    }
-    async function askAITeacher() {
-      if (!selectedWord.value)
-        return;
-      const word = selectedWord.value.word;
-      const info = vocabManager.getInfo(word);
-      let contextSentence = info?.sentence;
-      isAiLoading.value = true;
-      aiResponse.value = null;
-      try {
-        const result = await fetchAITeacher(word, contextSentence, aiSettings.value);
-        aiResponse.value = result;
-      } catch (e) {
-        new import_obsidian3.Notice(`AI \u6559\u5E08\u8BF7\u6C42\u5931\u8D25: ${e.message}`);
-      } finally {
-        isAiLoading.value = false;
-      }
-    }
-    async function exportAIResponse() {
-      if (!selectedWord.value || !aiResponse.value)
-        return;
-      const word = selectedWord.value.word;
-      const { root, rootMeaning, markdown } = aiResponse.value;
-      try {
-        vocabManager.updateRootInfo(word, root || "", rootMeaning || "", aiResponse.value.phrases || []);
-        await updateAIContextNote(app, word, root || "", rootMeaning || "", markdown);
-        if (root) {
-          await ensureRootNoteLinked(app, root, rootMeaning || "", word);
-        }
-        const activeView = app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
-        if (activeView && activeView.editor) {
-          const editor = activeView.editor;
-          const cursor = editor.getCursor();
-          editor.replaceRange(`
+    return {
+      sentenceInput,
+      isAnalyzing,
+      hasAnalyzed,
+      isTranslating,
+      sentenceTranslation,
+      analyzedSentenceTokens,
+      analyzedWordsList,
+      activeTokenIndex,
+      analyzeInputSentence,
+      importSelection,
+      onWordClick,
+      onWordDblClick,
+      updateWordStatusInList,
+      playSentence,
+      speak
+    };
+  }
+});
 
-### \u{1F916} AI \u6559\u5E08\u89E3\u6790: ${word}
-${markdown}
-`, cursor);
-        } else {
-          new import_obsidian3.Notice("\u63D0\u793A\uFF1A\u672A\u80FD\u8BC6\u522B\u5230\u53EF\u7F16\u8F91\u7684\u6D3B\u52A8\u6587\u6863\u3002\u4EC5\u81EA\u52A8\u4FDD\u5B58\u5230\u751F\u8BCD\u672C\u5361\u7247\u3002");
-        }
-        new import_obsidian3.Notice(`[${word}] AI \u89E3\u6790\u4E0E\u8BCD\u6839\u53CC\u94FE\u5DF2\u6210\u529F\u843D\u76D8\uFF01`);
-      } catch (e) {
-        console.error("\u5BFC\u51FAAI\u89E3\u6790\u5931\u8D25:", e);
-        new import_obsidian3.Notice("\u5BFC\u51FA AI \u89E3\u6790\u65F6\u53D1\u751F\u9519\u8BEF\uFF0C\u8BF7\u67E5\u770B\u63A7\u5236\u53F0\u3002");
-      }
-    }
-    function updateVoices() {
-      if (typeof window === "undefined" || !window.speechSynthesis)
-        return;
-      const allVoices = window.speechSynthesis.getVoices();
-      availableVoices.value = allVoices.filter((v) => v.lang.toLowerCase().startsWith("en"));
-      if (!voiceSettings.value.voiceName && availableVoices.value.length > 0) {
-        const siriOrSamantha = availableVoices.value.find((v) => v.name.toLowerCase().includes("siri") || v.name.toLowerCase().includes("samantha"));
-        if (siriOrSamantha) {
-          voiceSettings.value.voiceName = siriOrSamantha.name;
-        } else {
-          voiceSettings.value.voiceName = availableVoices.value[0].name;
-        }
-        saveVoiceSettings();
-      }
-    }
-    async function fetchAndPlayAudio(url, version2) {
-      let hasObsidianRequest = false;
-      let obsidianRequestUrl = null;
-      try {
-        const obs = require("obsidian");
-        if (obs && obs.requestUrl) {
-          obsidianRequestUrl = obs.requestUrl;
-          hasObsidianRequest = true;
-        }
-      } catch (e) {
-      }
-      if (hasObsidianRequest && obsidianRequestUrl) {
-        const response = await obsidianRequestUrl({
-          url,
-          method: "GET",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=template
+var _hoisted_115 = { class: "lang-learner-tab-content" };
+var _hoisted_26 = { class: "lang-learner-panel-section" };
+var _hoisted_35 = { class: "lang-learner-sentence-actions" };
+var _hoisted_45 = ["disabled"];
+var _hoisted_55 = {
+  key: 0,
+  class: "lang-learner-panel-section lang-learner-analysis-result"
+};
+var _hoisted_65 = { class: "lang-learner-result-box" };
+var _hoisted_75 = {
+  class: "lang-learner-box-title",
+  style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
+};
+var _hoisted_85 = {
+  key: 0,
+  class: "lang-learner-loading-text"
+};
+var _hoisted_95 = {
+  key: 1,
+  class: "lang-learner-translation-text"
+};
+var _hoisted_105 = { class: "lang-learner-result-box" };
+var _hoisted_116 = { class: "lang-learner-interactive-sentence" };
+var _hoisted_125 = { key: 0 };
+var _hoisted_134 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_144 = { class: "lang-learner-result-box" };
+var _hoisted_154 = { class: "lang-learner-box-title" };
+var _hoisted_164 = {
+  class: "lang-learner-wordlist-container",
+  style: { "max-height": "250px" }
+};
+var _hoisted_174 = ["onClick"];
+var _hoisted_184 = {
+  key: 0,
+  style: { "opacity": "0.6", "font-size": "0.7em" }
+};
+var _hoisted_193 = { class: "lang-learner-wl-trans" };
+var _hoisted_203 = { class: "lang-learner-sentence-word-status-btns" };
+var _hoisted_213 = ["onClick"];
+var _hoisted_224 = ["onClick"];
+var _hoisted_232 = ["onClick"];
+var _hoisted_242 = ["onClick"];
+var _hoisted_252 = {
+  key: 0,
+  class: "lang-learner-empty-hint"
+};
+function render5(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_115, [
+    createBaseVNode("div", _hoisted_26, [
+      _cache[4] || (_cache[4] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F50D} \u8F93\u5165\u5F85\u5206\u6790\u53E5\u5B50",
+        -1
+        /* CACHED */
+      )),
+      withDirectives(createBaseVNode(
+        "textarea",
+        {
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.sentenceInput = $event),
+          class: "lang-learner-textarea",
+          placeholder: "\u5728\u6B64\u8F93\u5165\u6216\u7C98\u8D34\u4E00\u6BB5\u82F1\u6587\u53E5\u5B50...",
+          rows: "4"
+        },
+        null,
+        512
+        /* NEED_PATCH */
+      ), [
+        [vModelText, _ctx.sentenceInput]
+      ]),
+      createBaseVNode("div", _hoisted_35, [
+        createBaseVNode("button", {
+          class: "lang-learner-btn lang-learner-btn-primary",
+          onClick: _cache[1] || (_cache[1] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
+          disabled: _ctx.isAnalyzing,
+          style: { "flex": "1" }
+        }, toDisplayString(_ctx.isAnalyzing ? "\u6B63\u5728\u5206\u6790..." : "\u5206\u6790\u53E5\u5B50"), 9, _hoisted_45),
+        createBaseVNode("button", {
+          class: "lang-learner-btn lang-learner-btn-secondary",
+          onClick: _cache[2] || (_cache[2] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
+          style: { "flex": "1" }
+        }, " \u5BFC\u5165\u9009\u4E2D\u6587\u672C ")
+      ])
+    ]),
+    _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_55, [
+      _cache[8] || (_cache[8] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F4D6} \u5206\u6790\u7ED3\u679C",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_65, [
+        createBaseVNode("div", _hoisted_75, [
+          _cache[5] || (_cache[5] = createBaseVNode(
+            "span",
+            null,
+            "\u{1F310} \u673A\u5668\u7FFB\u8BD1",
+            -1
+            /* CACHED */
+          )),
+          _ctx.sentenceInput && _ctx.sentenceInput.trim() ? (openBlock(), createElementBlock("button", {
+            key: 0,
+            class: "lang-learner-btn-voice-sentence",
+            title: "\u6717\u8BFB\u6574\u53E5",
+            onClick: _cache[3] || (_cache[3] = ($event) => _ctx.speak(_ctx.sentenceInput))
+          }, " \u{1F50A} ")) : createCommentVNode("v-if", true)
+        ]),
+        _ctx.isTranslating ? (openBlock(), createElementBlock("p", _hoisted_85, "\u6B63\u5728\u7FFB\u8BD1\u4E2D...")) : (openBlock(), createElementBlock(
+          "p",
+          _hoisted_95,
+          toDisplayString(_ctx.sentenceTranslation || "\u6682\u65E0\u7FFB\u8BD1\u7ED3\u679C"),
+          1
+          /* TEXT */
+        ))
+      ]),
+      createBaseVNode("div", _hoisted_105, [
+        _cache[6] || (_cache[6] = createBaseVNode(
+          "div",
+          { class: "lang-learner-box-title" },
+          "\u{1F3A8} \u53E5\u5B50\u9AD8\u4EAE\u4E0E\u4EA4\u4E92",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode("div", _hoisted_116, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.analyzedSentenceTokens, (token, index) => {
+              return openBlock(), createElementBlock(
+                Fragment,
+                { key: index },
+                [
+                  token.type === "text" ? (openBlock(), createElementBlock(
+                    "span",
+                    _hoisted_125,
+                    toDisplayString(token.text),
+                    1
+                    /* TEXT */
+                  )) : (openBlock(), createElementBlock("span", {
+                    key: 1,
+                    class: normalizeClass(["lang-learner-word", {
+                      "lang-learner-unknown": token.status === "UNKNOWN",
+                      "lang-learner-learning": token.status === "LEARNING",
+                      "lang-learner-known": token.status === "KNOWN",
+                      "lang-learner-phrase": token.isPhrase,
+                      "lang-learner-word-speaking": _ctx.activeTokenIndex === index
+                    }]),
+                    "data-lemma": token.lemma,
+                    "data-trans": token.trans,
+                    "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
+                    onClick: ($event) => _ctx.onWordClick(token.lemma),
+                    onDblclick: ($event) => _ctx.onWordDblClick(token)
+                  }, toDisplayString(token.text), 43, _hoisted_134))
+                ],
+                64
+                /* STABLE_FRAGMENT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ]),
+        _cache[7] || (_cache[7] = createBaseVNode(
+          "p",
+          {
+            class: "lang-learner-hint-text",
+            style: { "text-align": "left", "margin-top": "8px" }
           },
-          throw: true
-        });
-        if (version2 !== speakRequestVersion) {
-          throw new Error("\u64AD\u653E\u5DF2\u88AB\u66F4\u65B0\u7684\u64AD\u653E\u8BF7\u6C42\u53D6\u6D88");
-        }
-        if (response.status === 200 && response.arrayBuffer) {
-          const blob = new Blob([response.arrayBuffer], { type: "audio/mpeg" });
-          const blobUrl = URL.createObjectURL(blob);
-          const audio = new Audio(blobUrl);
-          currentAudio = audio;
-          return new Promise((resolve, reject) => {
-            audio.onended = () => {
-              URL.revokeObjectURL(blobUrl);
-              resolve(true);
-            };
-            audio.onerror = (errEvent) => {
-              URL.revokeObjectURL(blobUrl);
-              reject(new Error("\u97F3\u9891\u89E3\u7801\u6216\u64AD\u653E\u5931\u8D25"));
-            };
-            audio.play().catch((err) => {
-              URL.revokeObjectURL(blobUrl);
-              reject(err);
-            });
-          });
-        }
-        throw new Error(`\u7F51\u7EDC\u54CD\u5E94\u72B6\u6001\u9519\u8BEF: ${response.status}`);
-      } else {
-        if (version2 !== speakRequestVersion) {
-          throw new Error("\u64AD\u653E\u5DF2\u88AB\u66F4\u65B0\u7684\u64AD\u653E\u8BF7\u6C42\u53D6\u6D88");
-        }
-        const audio = new Audio(url);
-        currentAudio = audio;
-        return new Promise((resolve, reject) => {
-          audio.onended = () => resolve(true);
-          audio.onerror = () => reject(new Error("HTMLAudioElement \u64AD\u653E\u5931\u8D25"));
-          audio.play().catch(reject);
-        });
-      }
-    }
-    async function speak(text) {
-      if (!text || !text.trim())
-        return;
-      const currentVersion = ++speakRequestVersion;
-      stopAllAudio();
-      try {
-        if (voiceSettings.value.engine === "online") {
-          const accent = voiceSettings.value.onlineAccent || 2;
-          if (text.trim().length > 180) {
-            playLocalVoice(text);
-            return;
-          }
-          try {
-            const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=${accent}`;
-            await fetchAndPlayAudio(youdaoUrl, currentVersion);
-            return;
-          } catch (err1) {
-            if (currentVersion !== speakRequestVersion)
-              return;
-            console.warn("\u6709\u9053\u5728\u7EBF\u53D1\u97F3\u6E90\u8BF7\u6C42\u5F02\u5E38\uFF0C\u81EA\u52A8\u5C1D\u8BD5\u5907\u7528\u8C37\u6B4C\u6E90:", err1);
-          }
-          try {
-            const tl = accent === 2 ? "en-US" : "en-GB";
-            const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${tl}&client=tw-ob`;
-            await fetchAndPlayAudio(googleUrl, currentVersion);
-            return;
-          } catch (err2) {
-            if (currentVersion !== speakRequestVersion)
-              return;
-            console.error("\u6709\u9053\u4E0E\u8C37\u6B4C\u5907\u7528\u53D1\u97F3\u6E90\u5747\u52A0\u8F7D\u5931\u8D25\uFF0C\u964D\u7EA7\u56DE\u9000\u7CFB\u7EDF\u5408\u6210:", err2);
-            playLocalVoice(text);
-          }
-        } else {
-          if (currentVersion !== speakRequestVersion)
-            return;
-          playLocalVoice(text);
-        }
-      } catch (e) {
-        if (currentVersion !== speakRequestVersion)
-          return;
-        console.error("\u53D1\u97F3\u8DEF\u7531\u94FE\u6761\u5F02\u5E38\uFF0C\u5F3A\u5236\u56DE\u9000\u672C\u5730\u64AD\u653E:", e);
-        playLocalVoice(text);
-      }
-    }
-    function playLocalVoice(text) {
-      if (typeof window !== "undefined" && window.speechSynthesis) {
-        let playNext = function() {
-          if (currentIndex >= segments.length) {
-            activeTokenIndex.value = null;
-            return;
-          }
-          if (currentSession !== speakRequestVersion)
-            return;
-          const segment = segments[currentIndex];
-          const utterance = new SpeechSynthesisUtterance(segment.text);
-          if (voiceSettings.value.voiceName) {
-            const matched = availableVoices.value.find((v) => v.name === voiceSettings.value.voiceName);
-            if (matched)
-              utterance.voice = matched;
-          }
-          utterance.rate = voiceSettings.value.rate * segment.rateMultiplier;
-          utterance.pitch = voiceSettings.value.pitch;
-          utterance.onboundary = (event) => {
-            if (currentSession !== speakRequestVersion)
-              return;
-            if (event.name !== "word")
-              return;
-            const absoluteCharIndex = segment.startOffset + event.charIndex;
-            const tokenIndex = analyzedSentenceTokens.value.findIndex((token) => {
-              return absoluteCharIndex >= token.start && absoluteCharIndex < token.end;
-            });
-            if (tokenIndex !== -1) {
-              activeTokenIndex.value = tokenIndex;
-            }
-          };
-          utterance.onend = () => {
-            if (currentSession !== speakRequestVersion)
-              return;
-            currentIndex++;
-            if (currentIndex < segments.length) {
-              setTimeout(playNext, segment.pauseMs);
-            } else {
-              activeTokenIndex.value = null;
-            }
-          };
-          utterance.onerror = (e) => {
-            console.error("\u7CFB\u7EDF\u8BED\u97F3\u5408\u6210\u7247\u6BB5\u64AD\u653E\u51FA\u9519:", e);
-            if (currentSession !== speakRequestVersion)
-              return;
-            currentIndex++;
-            playNext();
-          };
-          window.speechSynthesis.speak(utterance);
-        };
-        window.speechSynthesis.cancel();
-        activeTokenIndex.value = null;
-        const segments = [];
-        const puncRegex = /([,.;:!?，。；：！？]+)/g;
-        const parts = text.split(puncRegex);
-        const structureWords = /\b(because|although|though|however|therefore|nevertheless|if|when|while|before|after|since|until|unless|but|so|that|which|who|whom|whose)\b/i;
-        const prepositionWords = /\b(in|on|at|by|for|with|about|of|from|to|as)\b/i;
-        const slowWords = /\b(because|although|though|however|therefore|nevertheless|especially|particularly|refuse|believe|bankrupt|insufficient|opportunity)\b/i;
-        let currentOffset = 0;
-        for (let i = 0; i < parts.length; i++) {
-          const part = parts[i];
-          if (!part)
-            continue;
-          const partLen = part.length;
-          const partStart = currentOffset;
-          currentOffset += partLen;
-          if (part.match(/[,.;:!?，。；：！？]+/)) {
-            let pauseMs = 350;
-            if (part.match(/[.!?。！？]/)) {
-              pauseMs = 700;
-            }
-            if (segments.length > 0) {
-              segments[segments.length - 1].pauseMs = pauseMs;
-            }
-          } else {
-            const words = part.split(/(\s+)/);
-            let currentGroup = "";
-            let groupStartOffset = partStart;
-            let lastWordOffset = partStart;
-            for (let j = 0; j < words.length; j++) {
-              const word = words[j];
-              const cleanWord = word.trim().toLowerCase();
-              const wordLen = word.length;
-              const isMajor = structureWords.test(cleanWord);
-              const isMinor = prepositionWords.test(cleanWord);
-              const currentLen = currentGroup.trim().length;
-              if (isMajor && currentLen > 18 || isMinor && currentLen > 28) {
-                const groupText = currentGroup.trim();
-                let rateMultiplier = 1;
-                if (slowWords.test(groupText)) {
-                  rateMultiplier = 0.88;
-                } else if (groupText.length < 15) {
-                  rateMultiplier = 1.05;
-                }
-                segments.push({
-                  text: groupText,
-                  pauseMs: 150,
-                  // 意群间有 150ms 的自然呼吸/换气时间
-                  rateMultiplier,
-                  startOffset: groupStartOffset
-                });
-                currentGroup = word;
-                groupStartOffset = lastWordOffset;
-              } else {
-                currentGroup += word;
-              }
-              lastWordOffset += wordLen;
-            }
-            if (currentGroup.trim()) {
-              const groupText = currentGroup.trim();
-              let rateMultiplier = 1;
-              if (slowWords.test(groupText)) {
-                rateMultiplier = 0.88;
-              } else if (groupText.length < 15) {
-                rateMultiplier = 1.05;
-              }
-              segments.push({
-                text: groupText,
-                pauseMs: 0,
-                rateMultiplier,
-                startOffset: groupStartOffset
-              });
-            }
-          }
-        }
-        if (segments.length === 0)
-          return;
-        let currentIndex = 0;
-        const currentSession = speakRequestVersion;
-        playNext();
-      } else {
-        new import_obsidian3.Notice("\u5F53\u524D\u7CFB\u7EDF\u4E0D\u652F\u6301\u79BB\u7EBF\u53D1\u97F3");
-      }
-    }
-    const searchQuery = ref("");
-    const onlineTransCache = /* @__PURE__ */ new Map();
-    async function fetchOnlineChineseSuggestions(query) {
-      console.log(`[Language Learner] \u5F00\u59CB\u5F02\u6B65\u5728\u7EBF\u83B7\u53D6\u6709\u9053\u4E2D\u6587\u8BCD\u6C47\u8054\u60F3\uFF0C\u67E5\u8BE2\u8BCD: "${query}"`);
-      const url = `https://dict.youdao.com/suggest?q=${encodeURIComponent(query)}&num=20&doctype=json`;
-      try {
-        try {
-          const obsidian = require("obsidian");
-          if (obsidian && obsidian.requestUrl) {
-            console.log(`[Language Learner] \u6B63\u5728\u4F7F\u7528 obsidian.requestUrl \u6293\u53D6: ${url}`);
-            const res2 = await obsidian.requestUrl({ url });
-            const data2 = typeof res2.json === "object" ? res2.json : JSON.parse(res2.text || "{}");
-            console.log(`[Language Learner] obsidian.requestUrl \u83B7\u53D6\u6210\u529F\uFF0C\u6570\u636E\u6761\u6570:`, data2?.data?.entries?.length || 0);
-            if (data2?.data?.entries) {
-              return data2.data.entries.filter((e) => e.entry && e.explain).map((e) => ({ word: e.entry, trans: e.explain }));
-            }
-          }
-        } catch (obsError) {
-          console.warn("[Language Learner] \u4F7F\u7528 Obsidian requestUrl \u83B7\u53D6\u5728\u7EBF\u63A8\u8350\u5931\u8D25\uFF0C\u56DE\u9000\u5230 fetch:", obsError);
-        }
-        console.log(`[Language Learner] \u6B63\u5728\u4F7F\u7528 window.fetch \u6293\u53D6: ${url}`);
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error(`[Language Learner] fetch \u7F51\u7EDC\u8BF7\u6C42\u8FD4\u56DE\u9519\u8BEF\uFF0C\u72B6\u6001\u7801: ${res.status}`);
-          return [];
-        }
-        const data = await res.json();
-        console.log(`[Language Learner] fetch \u83B7\u53D6\u6210\u529F\uFF0C\u6570\u636E\u6761\u6570:`, data?.data?.entries?.length || 0);
-        if (data?.data?.entries) {
-          return data.data.entries.filter((e) => e.entry && e.explain).map((e) => ({ word: e.entry, trans: e.explain }));
-        }
-      } catch (e) {
-        console.error("[Language Learner] \u83B7\u53D6\u5728\u7EBF\u4E2D\u6587\u67E5\u8BCD\u63A8\u8350\u53D1\u751F\u5F02\u5E38:", e);
-      }
-      return [];
-    }
-    function getWordTranslation(word) {
-      const info = vocabManager.getInfo(word);
-      if (info && info.trans) {
-        return info.trans;
-      }
-      const cached = onlineTransCache.get(word);
-      if (cached) {
-        return cached;
-      }
-      const dictEntry = OFFLINE_DICT[word];
-      if (dictEntry) {
-        return dictEntry.trans;
-      }
-      return "\u6682\u65E0\u91CA\u4E49";
-    }
-    function selectResultWord(word) {
-      handleWordSelected(word, true);
-    }
-    function backToSearchResults() {
-      selectedWord.value = null;
-    }
-    function lookupInSystemDict(query) {
-      const cleanQuery = query.trim();
-      console.log(`[Language Learner] \u5524\u8D77 macOS \u7CFB\u7EDF\u8BCD\u5178\uFF0C\u67E5\u8BE2\u8BCD: "${cleanQuery}"`);
-      if (!cleanQuery)
-        return;
-      const dictUrl = `dict://${encodeURIComponent(cleanQuery)}`;
-      console.log(`[Language Learner] \u6B63\u5728\u901A\u8FC7 window.open \u6253\u5F00 URI: ${dictUrl}`);
-      window.open(dictUrl);
-    }
-    async function performSearch() {
-      const query = searchQuery.value.trim();
-      console.log(`[Language Learner] \u6267\u884C performSearch\uFF0C\u8F93\u5165\u5185\u5BB9: "${query}"`);
-      if (!query)
-        return;
-      const hasChinese = /[\u4e00-\u9fa5]/.test(query);
-      console.log(`[Language Learner] \u8F93\u5165\u5206\u6790\uFF1AhasChinese = ${hasChinese}`);
-      if (hasChinese) {
-        const queryLower = query.toLowerCase();
-        let matches = [];
-        const customEntries = vocabManager.getAllEntries();
-        console.log(`[Language Learner] 1. \u5F00\u59CB\u626B\u63CF\u81EA\u5B9A\u4E49\u5F71\u5B50\u8BCD\u5E93...`);
-        for (const entry of customEntries.values()) {
-          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
-            matches.push(entry.word);
-          }
-        }
-        console.log(`[Language Learner] \u5F71\u5B50\u8BCD\u5E93\u626B\u63CF\u5B8C\u6BD5\uFF0C\u5F53\u524D\u5339\u914D\u6570: ${matches.length}`);
-        console.log(`[Language Learner] 2. \u5F00\u59CB\u626B\u63CF\u672C\u5730\u6781\u7B80\u79BB\u7EBF\u5B57\u5178...`);
-        for (const [word, entry] of Object.entries(OFFLINE_DICT)) {
-          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
-            if (!matches.includes(word)) {
-              matches.push(word);
-            }
-          }
-        }
-        console.log(`[Language Learner] \u672C\u5730\u5B57\u5178\u626B\u63CF\u5B8C\u6BD5\uFF0C\u5F53\u524D\u7D2F\u8BA1\u5339\u914D\u6570: ${matches.length}`);
-        console.log(`[Language Learner] 3. \u5F00\u59CB\u5F02\u6B65\u5728\u7EBF\u83B7\u53D6\u5EFA\u8BAE\u8BCD...`);
-        const onlineResults = await fetchOnlineChineseSuggestions(query);
-        console.log(`[Language Learner] \u5728\u7EBF\u5EFA\u8BAE\u8BCD\u8FD4\u56DE\u6761\u6570: ${onlineResults.length}`);
-        for (const item of onlineResults) {
-          const wordLower = item.word.toLowerCase();
-          const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
-          if (isEnglishWord && !matches.includes(wordLower)) {
-            matches.push(wordLower);
-            onlineTransCache.set(wordLower, item.trans);
-          }
-        }
-        console.log(`[Language Learner] \u5F02\u6B65\u63D0\u53D6\u5904\u7406\u5B8C\u6BD5\uFF0C\u6700\u7EC8\u5339\u914D\u5355\u8BCD\u5217\u8868:`, matches);
-        if (matches.length === 0) {
-          new import_obsidian3.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
-          return;
-        }
-        if (matches.length === 1) {
-          console.log(`[Language Learner] \u5355\u4E2A\u5339\u914D\u9879: ${matches[0]}\uFF0C\u76F4\u63A5\u6253\u5F00\u8BE6\u60C5\u3002`);
-          searchResultsList.value = [];
-          handleWordSelected(matches[0]);
-        } else {
-          let totalMatches = matches.length;
-          if (totalMatches > 100) {
-            matches = matches.slice(0, 100);
-            new import_obsidian3.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
-          } else {
-            new import_obsidian3.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
-          }
-          console.log(`[Language Learner] \u591A\u4E2A\u5339\u914D\u9879\uFF0C\u6E32\u67D3\u7ED3\u679C\u5217\u8868\uFF0C\u524D100\u4E2A:`, matches);
-          selectedWord.value = null;
-          searchResultsList.value = matches;
-        }
-      } else {
-        console.log(`[Language Learner] \u82F1\u6587\u67E5\u8BCD\u6D41\u7A0B\uFF0C\u8FDB\u884C\u8BCD\u5F62\u8FD8\u539F\u5E76\u6253\u5F00\u8BE6\u60C5\u3002`);
-        searchResultsList.value = [];
-        const result = lemmatize(query.toLowerCase());
-        console.log(`[Language Learner] \u8FD8\u539F\u7ED3\u679C: lemma = ${result.lemma}`);
-        handleWordSelected(result.lemma);
-      }
-      searchQuery.value = "";
-    }
-    function copyCardContent() {
-      if (!selectedWord.value)
-        return;
-      const lines = [];
-      lines.push(`# ${selectedWord.value.word}`);
-      if (selectedWord.value.phonetic) {
-        lines.push(`**\u97F3\u6807**: /${selectedWord.value.phonetic}/`);
-      }
-      lines.push(`**\u91CA\u4E49**: ${selectedWord.value.trans || "\u6682\u65E0\u91CA\u4E49"}`);
-      if (selectedWord.value.etymology) {
-        lines.push(`**\u8BCD\u6E90**: ${selectedWord.value.etymology}`);
-      }
-      if (exampleSentences.value.length > 0) {
-        lines.push("");
-        lines.push("## \u4F8B\u53E5");
-        exampleSentences.value.forEach((s) => lines.push(`> ${s}`));
-      }
-      const content = lines.join("\n\n");
-      navigator.clipboard.writeText(content).then(() => {
-        new import_obsidian3.Notice("\u{1F4CB} \u5DF2\u6210\u529F\u590D\u5236\u5361\u7247\u5185\u5BB9\u5230\u526A\u8D34\u677F\uFF01");
-      }).catch(() => {
-        new import_obsidian3.Notice("\u590D\u5236\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u6D4F\u89C8\u5668\u6743\u9650");
-      });
-    }
+          "\u63D0\u793A: \u5355\u51FB\u5355\u8BCD\u9009\u4E2D\uFF0C\u53CC\u51FB\u5355\u8BCD\u5F39\u51FA\u91CA\u4E49\u5E76\u52A0\u5165\u5B66\u4E60\u3002",
+          -1
+          /* CACHED */
+        ))
+      ]),
+      createBaseVNode("div", _hoisted_144, [
+        createBaseVNode(
+          "div",
+          _hoisted_154,
+          "\u{1F4CA} \u8BCD\u6C47\u5206\u6790\u6E05\u5355 (\u5171 " + toDisplayString(_ctx.analyzedWordsList.length) + " \u4E2A)",
+          1
+          /* TEXT */
+        ),
+        createBaseVNode("div", _hoisted_164, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.analyzedWordsList, (item) => {
+              return openBlock(), createElementBlock("div", {
+                key: item.word,
+                class: "lang-learner-wordlist-item",
+                onClick: ($event) => _ctx.onWordClick(item.word)
+              }, [
+                createBaseVNode(
+                  "span",
+                  {
+                    class: normalizeClass(["lang-learner-wl-word", { "lang-learner-wl-phrase": item.isPhrase }])
+                  },
+                  [
+                    createTextVNode(
+                      toDisplayString(item.word) + " ",
+                      1
+                      /* TEXT */
+                    ),
+                    item.isPhrase ? (openBlock(), createElementBlock("small", _hoisted_184, "(\u77ED\u8BED)")) : createCommentVNode("v-if", true)
+                  ],
+                  2
+                  /* CLASS */
+                ),
+                createBaseVNode(
+                  "span",
+                  _hoisted_193,
+                  toDisplayString(item.trans || "\u2014"),
+                  1
+                  /* TEXT */
+                ),
+                createBaseVNode("div", _hoisted_203, [
+                  createBaseVNode("button", {
+                    class: "lang-learner-btn-voice-mini",
+                    title: "\u53D1\u97F3",
+                    onClick: withModifiers(($event) => _ctx.speak(item.word), ["stop"])
+                  }, "\u{1F50A}", 8, _hoisted_213),
+                  createBaseVNode("button", {
+                    class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "UNKNOWN" }]),
+                    onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "UNKNOWN"), ["stop"])
+                  }, "\u751F", 10, _hoisted_224),
+                  createBaseVNode("button", {
+                    class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "LEARNING" }]),
+                    onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "LEARNING"), ["stop"])
+                  }, "\u5B66", 10, _hoisted_232),
+                  createBaseVNode("button", {
+                    class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "KNOWN" }]),
+                    onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "KNOWN"), ["stop"])
+                  }, "\u719F", 10, _hoisted_242)
+                ])
+              ], 8, _hoisted_174);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          )),
+          _ctx.analyzedWordsList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_252, "\u672A\u63D0\u53D6\u51FA\u82F1\u6587\u8BCD\u6C47")) : createCommentVNode("v-if", true)
+        ])
+      ])
+    ])) : createCommentVNode("v-if", true)
+  ]);
+}
+
+// src/ui/components/SentenceTab.vue
+SentenceTab_default.render = render5;
+SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
+SentenceTab_default.__scopeId = "data-v-aa470f1f";
+var SentenceTab_default2 = SentenceTab_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
+var import_obsidian7 = require("obsidian");
+var ReviewTab_default = defineComponent({
+  name: "ReviewTab",
+  emits: ["select-word"],
+  setup(props, { emit: emit2 }) {
+    const vocabManager = inject("vocabManager");
+    const plugin = inject("plugin");
+    const speak = inject("speak");
+    const wordListCache = ref([]);
     const showReviewAnswer = ref(false);
     const reviewExampleSentences = ref([]);
     const isLoadingReviewExamples = ref(false);
     let reviewExampleVersion = 0;
+    function refreshDueWords() {
+      const entries = vocabManager.getAllEntries();
+      const list = [];
+      entries.forEach((info) => {
+        if (info.status === "LEARNING") {
+          list.push(info);
+        }
+      });
+      wordListCache.value = list;
+    }
     const dueWords = computed2(() => {
       const now = Date.now();
       return wordListCache.value.filter((w) => w.status === "LEARNING" && (!w.nextReview || w.nextReview <= now)).sort((a, b) => (a.nextReview || 0) - (b.nextReview || 0));
@@ -27313,6 +28499,79 @@ ${markdown}
     const currentReviewWord = computed2(() => {
       return dueWords.value[0] || null;
     });
+    async function searchCurrentDocSentences(word) {
+      try {
+        const activeFile = plugin.app.workspace.getActiveFile();
+        if (!activeFile)
+          return [];
+        const content = await plugin.app.vault.cachedRead(activeFile);
+        if (!content)
+          return [];
+        const sentences = [];
+        const paragraphs = content.split(/\n+/);
+        const regex = new RegExp(`\\b${word}\\b`, "i");
+        for (const para of paragraphs) {
+          if (!regex.test(para))
+            continue;
+          const segments = para.split(/[.?!。？！]/);
+          for (const seg of segments) {
+            const cleanSeg = seg.trim();
+            if (regex.test(cleanSeg)) {
+              sentences.push(cleanSeg);
+            }
+          }
+        }
+        return sentences;
+      } catch (e) {
+        return [];
+      }
+    }
+    async function loadLocalCardSentences(word) {
+      try {
+        const filePath = `LangLearner/Cards/${word}.md`;
+        const exists = await plugin.app.vault.adapter.exists(filePath);
+        if (!exists)
+          return [];
+        const content = await plugin.app.vault.adapter.read(filePath);
+        const lines = content.split("\n");
+        const sentences = [];
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith(">") && trimmed.length > 1) {
+            sentences.push(trimmed.slice(1).trim());
+          }
+        }
+        return sentences;
+      } catch (e) {
+        return [];
+      }
+    }
+    async function fetchOnlineExamples(word) {
+      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+      try {
+        const res = await (0, import_obsidian7.requestUrl)({ url });
+        const data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "[]");
+        const sentences = [];
+        if (Array.isArray(data)) {
+          for (const entry of data) {
+            if (entry.meanings) {
+              for (const meaning of entry.meanings) {
+                if (meaning.definitions) {
+                  for (const def2 of meaning.definitions) {
+                    if (def2.example) {
+                      sentences.push(def2.example);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        return { examples: sentences };
+      } catch (e) {
+        return { examples: [] };
+      }
+    }
     async function loadReviewExamples(word) {
       const currentVersion = ++reviewExampleVersion;
       reviewExampleSentences.value = [];
@@ -27352,24 +28611,285 @@ ${markdown}
       if (!wordObj)
         return;
       vocabManager.reviewWord(wordObj.word, grade);
-      refreshStats();
-      refreshWordList();
-      new import_obsidian3.Notice(`\u5DF2\u8BB0\u5F55\u590D\u4E60\uFF1A${wordObj.word} (${getGradeLabel(grade)})`);
+      refreshDueWords();
+      const labels = ["\u5FD8\u8BB0", "\u6A21\u7CCA", "\u8BB0\u5F97", "\u719F\u7EC3"];
+      new import_obsidian7.Notice(`\u5DF2\u8BB0\u5F55\u590D\u4E60\uFF1A${wordObj.word} (${labels[grade]})`);
     }
-    function getGradeLabel(grade) {
-      switch (grade) {
-        case 0:
-          return "\u5FD8\u8BB0";
-        case 1:
-          return "\u6A21\u7CCA";
-        case 2:
-          return "\u8BB0\u5F97";
-        case 3:
-          return "\u719F\u7EC3";
-        default:
-          return "";
-      }
-    }
+    onMounted(() => {
+      refreshDueWords();
+      eventBus.on("lang-learner:word-changed", refreshDueWords);
+    });
+    onUnmounted(() => {
+      eventBus.off("lang-learner:word-changed", refreshDueWords);
+    });
+    return {
+      dueWords,
+      currentReviewWord,
+      showReviewAnswer,
+      reviewExampleSentences,
+      isLoadingReviewExamples,
+      speak,
+      submitReviewGrade
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=template
+var _hoisted_117 = { class: "lang-learner-tab-content" };
+var _hoisted_27 = { class: "lang-learner-panel-dashboard" };
+var _hoisted_36 = { class: "lang-learner-stats-grid" };
+var _hoisted_46 = {
+  class: "lang-learner-stat-item lang-learner-stat-learning",
+  style: { "grid-column": "span 2" }
+};
+var _hoisted_56 = { class: "lang-learner-stat-value" };
+var _hoisted_66 = {
+  key: 0,
+  class: "lang-learner-review-card-container"
+};
+var _hoisted_76 = { class: "lang-learner-estimation-word" };
+var _hoisted_86 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "padding": "0 10px 10px 10px" } };
+var _hoisted_96 = {
+  key: 0,
+  class: "lang-learner-word-phonetic",
+  style: { "margin-top": "4px" }
+};
+var _hoisted_106 = {
+  key: 0,
+  class: "lang-learner-panel-section lang-learner-review-answer-section",
+  style: { "margin-top": "12px" }
+};
+var _hoisted_118 = {
+  class: "lang-learner-word-trans",
+  style: { "border-top": "none", "padding-top": "0", "font-size": "0.95em" }
+};
+var _hoisted_126 = {
+  key: 0,
+  class: "lang-learner-word-etymology-container",
+  style: { "margin-top": "10px", "padding-top": "10px", "border-top": "1px dashed var(--background-modifier-border)" }
+};
+var _hoisted_135 = {
+  class: "lang-learner-etymology-content",
+  style: { "font-size": "0.85em", "color": "var(--text-normal)", "line-height": "1.4", "background-color": "var(--background-secondary-alt)", "padding": "6px 8px", "border-radius": "4px", "border-left": "3px solid var(--text-accent)" }
+};
+var _hoisted_145 = {
+  class: "lang-learner-word-examples-container",
+  style: { "margin-top": "12px" }
+};
+var _hoisted_155 = {
+  key: 0,
+  class: "lang-learner-examples-loading",
+  style: { "font-size": "0.8em", "color": "var(--text-muted)" }
+};
+var _hoisted_165 = {
+  key: 1,
+  class: "lang-learner-example-list",
+  style: { "margin": "0", "padding-left": "14px", "font-size": "0.85em", "line-height": "1.4" }
+};
+var _hoisted_175 = {
+  key: 2,
+  class: "lang-learner-examples-empty",
+  style: { "font-size": "0.8em", "color": "var(--text-muted)", "font-style": "italic" }
+};
+var _hoisted_185 = { style: { "margin-top": "16px" } };
+var _hoisted_194 = {
+  key: 1,
+  style: { "display": "flex", "gap": "8px" }
+};
+var _hoisted_204 = {
+  key: 1,
+  class: "lang-learner-empty-hint",
+  style: { "padding": "40px 0", "text-align": "center" }
+};
+function render6(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_117, [
+    createBaseVNode("div", _hoisted_27, [
+      _cache[8] || (_cache[8] = createBaseVNode(
+        "h3",
+        { class: "lang-learner-panel-title" },
+        "\u{1F4C5} \u95F4\u9694\u590D\u4E60",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_36, [
+        createBaseVNode("div", _hoisted_46, [
+          createBaseVNode(
+            "span",
+            _hoisted_56,
+            toDisplayString(_ctx.dueWords.length),
+            1
+            /* TEXT */
+          ),
+          _cache[7] || (_cache[7] = createBaseVNode(
+            "span",
+            { class: "lang-learner-stat-label" },
+            "\u4ECA\u65E5\u5F85\u590D\u4E60",
+            -1
+            /* CACHED */
+          ))
+        ])
+      ])
+    ]),
+    _ctx.currentReviewWord ? (openBlock(), createElementBlock("div", _hoisted_66, [
+      createBaseVNode("div", _hoisted_76, [
+        createBaseVNode("div", _hoisted_86, [
+          createBaseVNode(
+            "span",
+            {
+              class: "lang-learner-big-word",
+              onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("select-word", _ctx.currentReviewWord.word)),
+              style: { "cursor": "pointer" },
+              title: "\u70B9\u51FB\u5728\u8BE6\u60C5\u9762\u677F\u67E5\u770B"
+            },
+            toDisplayString(_ctx.currentReviewWord.word),
+            1
+            /* TEXT */
+          ),
+          createBaseVNode("button", {
+            class: "lang-learner-btn-voice-word",
+            title: "\u6717\u8BFB\u5355\u8BCD",
+            onClick: _cache[1] || (_cache[1] = ($event) => _ctx.speak(_ctx.currentReviewWord.word)),
+            style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.2em", "opacity": "0.85" }
+          }, " \u{1F50A} ")
+        ]),
+        _ctx.currentReviewWord.phonetic ? (openBlock(), createElementBlock(
+          "div",
+          _hoisted_96,
+          " /" + toDisplayString(_ctx.currentReviewWord.phonetic) + "/ ",
+          1
+          /* TEXT */
+        )) : createCommentVNode("v-if", true)
+      ]),
+      _ctx.showReviewAnswer ? (openBlock(), createElementBlock("div", _hoisted_106, [
+        createBaseVNode(
+          "div",
+          _hoisted_118,
+          toDisplayString(_ctx.currentReviewWord.trans || "\u6682\u65E0\u91CA\u4E49"),
+          1
+          /* TEXT */
+        ),
+        _ctx.currentReviewWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_126, [
+          _cache[9] || (_cache[9] = createBaseVNode(
+            "div",
+            {
+              class: "lang-learner-etymology-title",
+              style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-accent)", "margin-bottom": "4px" }
+            },
+            " \u{1F4A1} \u8BCD\u6E90\u8BB0\u5FC6 ",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode(
+            "div",
+            _hoisted_135,
+            toDisplayString(_ctx.currentReviewWord.etymology),
+            1
+            /* TEXT */
+          )
+        ])) : createCommentVNode("v-if", true),
+        createBaseVNode("div", _hoisted_145, [
+          _cache[10] || (_cache[10] = createBaseVNode(
+            "div",
+            {
+              class: "lang-learner-examples-title",
+              style: { "font-size": "0.85em", "font-weight": "700", "color": "var(--text-muted)", "margin-bottom": "6px" }
+            },
+            " \u{1F4A1} \u4F8B\u53E5\u4E0A\u4E0B\u6587 ",
+            -1
+            /* CACHED */
+          )),
+          _ctx.isLoadingReviewExamples ? (openBlock(), createElementBlock("div", _hoisted_155, " \u6B63\u5728\u83B7\u53D6\u4F8B\u53E5... ")) : _ctx.reviewExampleSentences.length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_165, [
+            (openBlock(true), createElementBlock(
+              Fragment,
+              null,
+              renderList(_ctx.reviewExampleSentences, (sentence, idx) => {
+                return openBlock(), createElementBlock(
+                  "li",
+                  {
+                    key: idx,
+                    class: "lang-learner-example-item",
+                    style: { "margin-bottom": "4px" }
+                  },
+                  toDisplayString(sentence),
+                  1
+                  /* TEXT */
+                );
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : (openBlock(), createElementBlock("div", _hoisted_175, " \u6682\u65E0\u4F8B\u53E5 "))
+        ])
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("div", _hoisted_185, [
+        !_ctx.showReviewAnswer ? (openBlock(), createElementBlock("button", {
+          key: 0,
+          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.showReviewAnswer = true),
+          class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
+          style: { "font-size": "0.95em", "padding": "10px" }
+        }, " \u663E\u793A\u91CA\u4E49 ")) : (openBlock(), createElementBlock("div", _hoisted_194, [
+          createBaseVNode("button", {
+            onClick: _cache[3] || (_cache[3] = ($event) => _ctx.submitReviewGrade(0)),
+            class: "lang-learner-btn lang-learner-btn-no",
+            style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+          }, " \u{1F534} \u5FD8\u8BB0 "),
+          createBaseVNode("button", {
+            onClick: _cache[4] || (_cache[4] = ($event) => _ctx.submitReviewGrade(1)),
+            class: "lang-learner-btn",
+            style: { "background": "#f39c12", "color": "#fff", "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+          }, " \u{1F7E1} \u6A21\u7CCA "),
+          createBaseVNode("button", {
+            onClick: _cache[5] || (_cache[5] = ($event) => _ctx.submitReviewGrade(2)),
+            class: "lang-learner-btn lang-learner-btn-yes",
+            style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+          }, " \u{1F7E2} \u8BB0\u5F97 "),
+          createBaseVNode("button", {
+            onClick: _cache[6] || (_cache[6] = ($event) => _ctx.submitReviewGrade(3)),
+            class: "lang-learner-btn lang-learner-btn-accent",
+            style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
+          }, " \u26A1 \u719F\u7EC3 ")
+        ]))
+      ])
+    ])) : (openBlock(), createElementBlock("div", _hoisted_204, [..._cache[11] || (_cache[11] = [
+      createBaseVNode(
+        "div",
+        { style: { "font-size": "3em", "margin-bottom": "12px" } },
+        "\u{1F389}",
+        -1
+        /* CACHED */
+      ),
+      createBaseVNode(
+        "p",
+        { style: { "font-weight": "600", "color": "var(--text-success, #27ae60)", "margin": "0 0 4px 0" } },
+        "\u5DF2\u5B8C\u6210\u4ECA\u65E5\u590D\u4E60\uFF01",
+        -1
+        /* CACHED */
+      ),
+      createBaseVNode(
+        "p",
+        { style: { "font-size": "0.85em", "color": "var(--text-muted)", "margin": "0" } },
+        "\u592A\u68D2\u4E86\uFF0C\u76EE\u524D\u6CA1\u6709\u5F85\u590D\u4E60\u7684\u5230\u671F\u5355\u8BCD\u3002",
+        -1
+        /* CACHED */
+      )
+    ])]))
+  ]);
+}
+
+// src/ui/components/ReviewTab.vue
+ReviewTab_default.render = render6;
+ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
+ReviewTab_default.__scopeId = "data-v-312fbb8e";
+var ReviewTab_default2 = ReviewTab_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
+var import_obsidian8 = require("obsidian");
+var MediaTab_default = defineComponent({
+  name: "MediaTab",
+  emits: ["select-word"],
+  setup(props, { emit: emit2 }) {
+    const vocabManager = inject("vocabManager");
+    const plugin = inject("plugin");
     const currentVideoUrl = ref("");
     const activeVideoSrc = ref("");
     const mediaFiles = ref([]);
@@ -27381,6 +28901,12 @@ ${markdown}
     const pendingSeekTime = ref(null);
     let ytPlayer = null;
     let ytTimer = null;
+    const subtitlesList = ref([]);
+    const activeSubtitleIndex = ref(-1);
+    const isLoadingSubtitles = ref(false);
+    const isLoopingCurrentSentence = ref(false);
+    const isSubtitleMasked = ref(false);
+    const showTranslation = ref(true);
     function formatTime(seconds) {
       if (isNaN(seconds) || seconds < 0)
         return "00:00";
@@ -27423,9 +28949,8 @@ ${markdown}
     function parseBilibiliUrl(url) {
       try {
         const match = url.match(/(BV[a-zA-Z0-9]{10})/i);
-        if (match) {
+        if (match)
           return match[1];
-        }
       } catch (e) {
       }
       return null;
@@ -27486,8 +29011,6 @@ ${markdown}
     }
     function scanMediaFiles() {
       try {
-        if (!plugin || !plugin.app || !plugin.app.vault)
-          return;
         const files = plugin.app.vault.getFiles();
         const extensions = ["mp4", "webm", "ogv", "mp3", "wav", "m4a", "ogg"];
         mediaFiles.value = files.filter((f) => extensions.includes(f.extension.toLowerCase())).map((f) => ({ path: f.path, name: f.name }));
@@ -27508,7 +29031,7 @@ ${markdown}
           initYouTubePlayer(videoId, start);
           startYtTimer();
         } else {
-          new import_obsidian3.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 YouTube \u89C6\u9891 ID");
+          new import_obsidian8.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 YouTube \u89C6\u9891 ID");
         }
       } else if (isBili) {
         mediaType.value = "bilibili";
@@ -27517,7 +29040,7 @@ ${markdown}
         if (bvid) {
           activeVideoSrc.value = `https://player.bilibili.com/player.html?bvid=${bvid}&page=1`;
         } else {
-          new import_obsidian3.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 Bilibili \u89C6\u9891 BV \u53F7");
+          new import_obsidian8.Notice("\u65E0\u6CD5\u89E3\u6790\u8BE5 Bilibili \u89C6\u9891 BV \u53F7");
         }
       } else {
         mediaType.value = "html5";
@@ -27527,7 +29050,7 @@ ${markdown}
           if (file) {
             activeVideoSrc.value = plugin.app.vault.getResourcePath(file);
           } else {
-            new import_obsidian3.Notice("\u627E\u4E0D\u5230\u6307\u5B9A\u7684\u5E93\u5185\u5A92\u4F53\u6587\u4EF6");
+            new import_obsidian8.Notice("\u627E\u4E0D\u5230\u6307\u5B9A\u7684\u5E93\u5185\u5A92\u4F53\u6587\u4EF6");
           }
         } else {
           activeVideoSrc.value = targetUrlOrPath;
@@ -27537,6 +29060,19 @@ ${markdown}
     function handleSelectLocalMedia() {
       if (selectedMediaFile.value) {
         loadMediaSource(selectedMediaFile.value);
+      }
+    }
+    function setPlaybackRate(rate) {
+      mediaPlaybackRate.value = rate;
+      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
+        ytPlayer.setPlaybackRate(rate);
+      } else if (mediaType.value === "html5" && mediaVideoRef.value) {
+        mediaVideoRef.value.playbackRate = rate;
+      }
+    }
+    function onVideoTimeUpdate() {
+      if (mediaType.value === "html5" && mediaVideoRef.value) {
+        currentVideoTime.value = mediaVideoRef.value.currentTime;
       }
     }
     function getActiveMarkdownView() {
@@ -27570,7 +29106,7 @@ ${markdown}
       } else if (mediaType.value === "html5" && mediaVideoRef.value) {
         time = mediaVideoRef.value.currentTime;
       } else {
-        new import_obsidian3.Notice("\u5F53\u524D\u64AD\u653E\u6E90\u65E0\u6CD5\u83B7\u53D6\u65F6\u95F4\u8FDB\u5EA6");
+        new import_obsidian8.Notice("\u5F53\u524D\u64AD\u653E\u6E90\u65E0\u6CD5\u83B7\u53D6\u65F6\u95F4\u8FDB\u5EA6");
         return;
       }
       const formatted = formatTime(time);
@@ -27581,59 +29117,22 @@ ${markdown}
           const uri = `obsidian://lang-learner-media?url=${encodeURIComponent(currentVideoUrl.value)}&t=${Math.floor(time)}`;
           const timestampText = `[\u{1F3AC} ${formatted}](${uri})`;
           editor.replaceSelection(timestampText);
-          new import_obsidian3.Notice(`\u{1F4CC} \u5DF2\u6210\u529F\u63D2\u5165\u65F6\u95F4\u6233 ${formatted}`);
+          new import_obsidian8.Notice(`\u{1F4CC} \u5DF2\u6210\u529F\u63D2\u5165\u65F6\u95F4\u6233 ${formatted}`);
         } else {
-          new import_obsidian3.Notice("\u65E0\u6CD5\u83B7\u53D6\u7F16\u8F91\u5668\u5B9E\u4F8B\uFF0C\u8BF7\u5C06\u5149\u6807\u7F6E\u4E8E Markdown \u6587\u6863\u4E2D");
+          new import_obsidian8.Notice("\u65E0\u6CD5\u83B7\u53D6\u7F16\u8F91\u5668\u5B9E\u4F8B\uFF0C\u8BF7\u5C06\u5149\u6807\u7F6E\u4E8E Markdown \u6587\u6863\u4E2D");
         }
       } else {
-        new import_obsidian3.Notice("\u8BF7\u5148\u5728\u4E3B\u5DE5\u4F5C\u533A\u6253\u5F00\u5E76\u805A\u7126\u4E00\u4E2A Markdown \u7B14\u8BB0");
+        new import_obsidian8.Notice("\u8BF7\u5148\u5728\u4E3B\u5DE5\u4F5C\u533A\u6253\u5F00\u5E76\u805A\u7126\u4E00\u4E2A Markdown \u7B14\u8BB0");
       }
     }
-    function setPlaybackRate(rate) {
-      mediaPlaybackRate.value = rate;
-      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
-        ytPlayer.setPlaybackRate(rate);
-      } else if (mediaType.value === "html5" && mediaVideoRef.value) {
-        mediaVideoRef.value.playbackRate = rate;
-      }
-    }
-    function onVideoTimeUpdate() {
-      if (mediaType.value === "html5" && mediaVideoRef.value) {
-        currentVideoTime.value = mediaVideoRef.value.currentTime;
-      }
-    }
-    function handlePlayMediaEvent(urlOrPath, timestamp) {
-      mainTab.value = "media";
-      const isYt = urlOrPath.includes("youtube.com") || urlOrPath.includes("youtu.be");
-      if (isYt) {
-        pendingSeekTime.value = timestamp;
-        loadMediaSource(urlOrPath);
-      } else {
-        loadMediaSource(urlOrPath);
-        setTimeout(() => {
-          if (mediaVideoRef.value) {
-            mediaVideoRef.value.currentTime = timestamp;
-            mediaVideoRef.value.play().catch((e) => console.log("\u81EA\u52A8\u64AD\u653E\u5B89\u5168\u53D7\u9650:", e));
-          }
-        }, 500);
-      }
-    }
-    const subtitlesList = ref([]);
-    const activeSubtitleIndex = ref(-1);
-    const isLoadingSubtitles = ref(false);
-    const isLoopingCurrentSentence = ref(false);
-    const isSubtitleMasked = ref(false);
-    const showTranslation = ref(true);
     function formatSubtitleItem(rawText) {
       if (!rawText)
         return { text: "", translation: "" };
       const lines = rawText.split("\n").map((l) => l.trim()).filter(Boolean);
-      if (lines.length === 0) {
+      if (lines.length === 0)
         return { text: "", translation: "" };
-      }
-      if (lines.length === 1) {
+      if (lines.length === 1)
         return { text: lines[0], translation: "" };
-      }
       const chineseIdx = lines.findIndex((line) => /[\u4e00-\u9fa5]/.test(line));
       if (chineseIdx !== -1) {
         const trans = lines[chineseIdx];
@@ -27642,13 +29141,88 @@ ${markdown}
       }
       return { text: lines[0], translation: lines.slice(1).join(" ") };
     }
+    function processTextToSegments(text) {
+      if (!text)
+        return [];
+      const tokens = tokenize(text);
+      const phraseRanges = [];
+      for (const token of tokens) {
+        if (token.isPhrase) {
+          phraseRanges.push({ start: token.start, end: token.end });
+        }
+      }
+      const isCoveredByPhrase = (token) => {
+        if (token.isPhrase)
+          return false;
+        for (const range of phraseRanges) {
+          if (token.start >= range.start && token.end <= range.end)
+            return true;
+        }
+        return false;
+      };
+      const segments = [];
+      let lastIndex = 0;
+      for (const token of tokens) {
+        if (isCoveredByPhrase(token))
+          continue;
+        if (token.start > lastIndex) {
+          segments.push({
+            type: "text",
+            text: text.slice(lastIndex, token.start),
+            lemma: "",
+            start: lastIndex,
+            end: token.start
+          });
+        }
+        const status = vocabManager.get(token.lemma);
+        const info = vocabManager.getInfo(token.lemma);
+        let trans = info?.trans || "";
+        let phonetic = info?.phonetic || "";
+        if (!trans) {
+          const dictEntry = OFFLINE_DICT[token.lemma];
+          if (dictEntry) {
+            trans = dictEntry.trans;
+            phonetic = phonetic || dictEntry.phonetic || "";
+          }
+        }
+        segments.push({
+          type: "word",
+          text: text.slice(token.start, token.end),
+          lemma: token.lemma,
+          isPhrase: token.isPhrase,
+          status,
+          trans,
+          phonetic,
+          start: token.start,
+          end: token.end
+        });
+        lastIndex = token.end;
+      }
+      if (lastIndex < text.length) {
+        segments.push({
+          type: "text",
+          text: text.slice(lastIndex),
+          lemma: "",
+          start: lastIndex,
+          end: text.length
+        });
+      }
+      return segments;
+    }
+    function seekToSubtitleTime(seconds) {
+      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.seekTo === "function") {
+        ytPlayer.seekTo(seconds, true);
+      } else if (mediaVideoRef.value) {
+        mediaVideoRef.value.currentTime = seconds;
+        mediaVideoRef.value.play().catch((e) => console.log("\u64AD\u653E\u5931\u8D25:", e));
+      }
+    }
     function toggleLoopCurrentSentence() {
       isLoopingCurrentSentence.value = !isLoopingCurrentSentence.value;
-      if (isLoopingCurrentSentence.value) {
-        new import_obsidian3.Notice("\u5DF2\u5F00\u542F\u5355\u53E5\u5FAA\u73AF");
-      } else {
-        new import_obsidian3.Notice("\u5DF2\u5173\u95ED\u5355\u53E5\u5FAA\u73AF");
-      }
+      newNotice(isLoopingCurrentSentence.value ? "\u5DF2\u5F00\u542F\u5355\u53E5\u5FAA\u73AF" : "\u5DF2\u5173\u95ED\u5355\u53E5\u5FAA\u73AF");
+    }
+    function newNotice(msg) {
+      new import_obsidian8.Notice(msg);
     }
     function goToPrevSubtitle() {
       if (subtitlesList.value.length === 0)
@@ -27666,38 +29240,25 @@ ${markdown}
         targetIdx = subtitlesList.value.length - 1;
       seekToSubtitleTime(subtitlesList.value[targetIdx].start);
     }
-    function seekToSubtitleTime(seconds) {
-      if (mediaType.value === "youtube" && ytPlayer && typeof ytPlayer.seekTo === "function") {
-        ytPlayer.seekTo(seconds, true);
-      } else if (mediaVideoRef.value) {
-        mediaVideoRef.value.currentTime = seconds;
-        mediaVideoRef.value.play().catch((e) => console.log("\u64AD\u653E\u5931\u8D25:", e));
-      }
-    }
     async function loadYouTubeCaptions() {
       if (mediaType.value !== "youtube")
         return;
       const { videoId } = parseYouTubeUrl(currentVideoUrl.value);
       if (!videoId) {
-        new import_obsidian3.Notice("\u672A\u80FD\u8BC6\u522B YouTube \u89C6\u9891 ID\uFF0C\u8BF7\u786E\u8BA4 URL \u6B63\u786E");
+        new import_obsidian8.Notice("\u672A\u80FD\u8BC6\u522B YouTube \u89C6\u9891 ID\uFF0C\u8BF7\u786E\u8BA4 URL \u6B63\u786E");
         return;
       }
       isLoadingSubtitles.value = true;
       subtitlesList.value = [];
       activeSubtitleIndex.value = -1;
       try {
-        const obsidian = require("obsidian");
-        if (!obsidian || !obsidian.requestUrl) {
-          throw new Error("\u5F53\u524D\u975E Obsidian \u73AF\u5883\u6216 requestUrl \u4E0D\u53EF\u7528");
-        }
-        const headers = {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-          "Referer": `https://www.youtube.com/watch?v=${videoId}`
-        };
         const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const res = await obsidian.requestUrl({
+        const res = await (0, import_obsidian8.requestUrl)({
           url: videoUrl,
-          headers
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Referer": `https://www.youtube.com/watch?v=${videoId}`
+          }
         });
         const html = res.text || "";
         let responseMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
@@ -27714,16 +29275,12 @@ ${markdown}
           throw new Error("\u8BE5 YouTube \u89C6\u9891\u65E0\u53EF\u7528\u5B57\u5E55\u97F3\u8F68");
         }
         let track2 = captionTracks.find((t) => t.languageCode && t.languageCode.startsWith("en"));
-        if (!track2) {
+        if (!track2)
           track2 = captionTracks[0];
-        }
         let transcriptParams = null;
-        let innerTubeApiKey = "";
         let visitorData = "";
         let jsonSubtitles = null;
         try {
-          const apiKeyMatch = html.match(/"INNERTUBE_API_KEY"\s*:\s*"([^"]+)"/);
-          innerTubeApiKey = apiKeyMatch?.[1] || "";
           const visitorDataMatch = html.match(/"VISITOR_DATA"\s*:\s*"([^"]+)"/);
           visitorData = visitorDataMatch?.[1] || "";
           const ytDataMatch = html.match(/ytInitialData\s*=\s*({.+?});\s*<\/script>/);
@@ -27742,7 +29299,6 @@ ${markdown}
         if (transcriptParams) {
           try {
             const decodedParams = decodeURIComponent(transcriptParams);
-            console.log("InnerTube params (\u89E3\u7801\u540E):", decodedParams.slice(0, 60) + "...");
             const postUrl = `https://www.youtube.com/youtubei/v1/get_transcript`;
             const postBodyObj = {
               context: {
@@ -27756,7 +29312,7 @@ ${markdown}
               },
               params: decodedParams
             };
-            const transcriptRes = await obsidian.requestUrl({
+            const transcriptRes = await (0, import_obsidian8.requestUrl)({
               url: postUrl,
               method: "POST",
               contentType: "application/json",
@@ -27768,7 +29324,6 @@ ${markdown}
               },
               body: JSON.stringify(postBodyObj)
             });
-            console.log("InnerTube \u54CD\u5E94\u72B6\u6001\u7801:", transcriptRes.status);
             if (transcriptRes.status === 200) {
               const json = transcriptRes.json;
               const segments = json?.actions?.[0]?.updateEngagementPanelAction?.content?.transcriptRenderer?.content?.transcriptSearchPanelRenderer?.body?.transcriptSegmentListRenderer?.initialSegments;
@@ -27780,12 +29335,7 @@ ${markdown}
                   const text = (r?.snippet?.runs || []).map((run) => run.text || "").join("").trim();
                   return { start: startMs / 1e3, duration: (endMs - startMs) / 1e3, text };
                 }).filter((s) => s.text);
-                console.log(`InnerTube API \u6210\u529F\u83B7\u53D6 ${jsonSubtitles.length} \u6761\u5B57\u5E55`);
-              } else {
-                console.warn("InnerTube segments \u4E3A\u7A7A\uFF0C\u5B8C\u6574\u54CD\u5E94:\n", JSON.stringify(json).slice(0, 600));
               }
-            } else {
-              console.warn("InnerTube \u54CD\u5E94\u5F02\u5E38\uFF0C\u72B6\u6001\u7801:", transcriptRes.status, "\u54CD\u5E94\u4F53:", transcriptRes.text?.slice(0, 300));
             }
           } catch (innerTubeErr) {
             console.warn("InnerTube get_transcript \u8BF7\u6C42\u5931\u8D25:", innerTubeErr);
@@ -27802,17 +29352,14 @@ ${markdown}
           ];
           for (const url of unsignedFetchUrls) {
             try {
-              const r = await obsidian.requestUrl({
+              const r = await (0, import_obsidian8.requestUrl)({
                 url,
                 headers: {
                   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                  "Referer": `https://www.youtube.com/watch?v=${videoId}`,
-                  "Accept": "application/json, text/plain, */*",
-                  "Accept-Language": "en-US,en;q=0.9"
+                  "Referer": `https://www.youtube.com/watch?v=${videoId}`
                 }
               });
               const txt = r.text || "";
-              console.log(`\u65E0\u7B7E\u540D\u63A5\u53E3 [${url.slice(-30)}] \u72B6\u6001:${r.status} \u957F\u5EA6:${txt.length}`);
               if (txt && txt.trim().length > 5) {
                 try {
                   const j3 = JSON.parse(txt);
@@ -27829,7 +29376,6 @@ ${markdown}
                   }
                   if (segs.length > 0) {
                     xmlSubtitles = segs;
-                    console.log(`json3 \u683C\u5F0F\u89E3\u6790\u6210\u529F\uFF0C\u5171 ${segs.length} \u6761\u5B57\u5E55`);
                     break;
                   }
                 } catch (_) {
@@ -27857,44 +29403,12 @@ ${markdown}
             } catch (e) {
             }
           }
-          if (!xmlSubtitles) {
-            const baseUrl = (track2.baseUrl || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-            try {
-              const fetchRes = await window.fetch(baseUrl + "&fmt=json3", { method: "GET", credentials: "include" });
-              if (fetchRes.ok) {
-                const txt = await fetchRes.text();
-                if (txt && txt.trim().length > 5) {
-                  try {
-                    const j3 = JSON.parse(txt);
-                    const events = j3?.events || [];
-                    const segs = [];
-                    for (const ev of events) {
-                      if (!ev.segs)
-                        continue;
-                      const startSec = (ev.tStartMs || 0) / 1e3;
-                      const durSec = (ev.dDurationMs || 0) / 1e3;
-                      const text = ev.segs.map((s) => s.utf8 || "").join("").replace(/\n/g, " ").trim();
-                      if (text && text !== "\n")
-                        segs.push({ start: startSec, duration: durSec, text });
-                    }
-                    if (segs.length > 0)
-                      xmlSubtitles = segs;
-                  } catch (_) {
-                  }
-                }
-              }
-            } catch (_) {
-            }
-          }
         }
         const rawList = jsonSubtitles || xmlSubtitles;
         if (!rawList || rawList.length === 0) {
-          console.warn("=== YouTube \u5B57\u5E55\u62C9\u53D6\u5931\u8D25\u8BCA\u65AD ===");
-          console.log("transcriptParams:", transcriptParams);
-          console.log("\u6240\u6709\u53EF\u7528\u5B57\u5E55\u97F3\u8F68:", captionTracks);
-          throw new Error('\u65E0\u6CD5\u83B7\u53D6 YouTube \u5B57\u5E55\uFF08YouTube \u9700\u8981\u767B\u5F55\u9A8C\u8BC1\uFF09\u3002\u8BF7\u4F7F\u7528"\u{1F4C1} \u5BFC\u5165 SRT/VTT"\u529F\u80FD\u624B\u52A8\u5BFC\u5165\u5B57\u5E55\u6587\u4EF6\uFF0C\u6216\u5728 YouTube \u7F51\u7AD9\u4E0A\u6253\u5F00\u89C6\u9891\u5E76\u624B\u52A8\u4E0B\u8F7D\u5B57\u5E55\u3002');
+          throw new Error("\u65E0\u6CD5\u83B7\u53D6 YouTube \u5B57\u5E55\uFF0C\u8BF7\u624B\u52A8\u5BFC\u5165 SRT/VTT\u3002");
         }
-        const list = rawList.map((item) => {
+        subtitlesList.value = rawList.map((item) => {
           const formatted = formatSubtitleItem(item.text);
           return {
             start: item.start,
@@ -27904,11 +29418,10 @@ ${markdown}
             segments: processTextToSegments(formatted.text)
           };
         });
-        subtitlesList.value = list;
-        new import_obsidian3.Notice(`\u6210\u529F\u52A0\u8F7D\u5728\u7EBF\u5B57\u5E55\uFF1A\u5171 ${list.length} \u53E5`);
+        new import_obsidian8.Notice(`\u6210\u529F\u52A0\u8F7D\u5728\u7EBF\u5B57\u5E55\uFF1A\u5171 ${subtitlesList.value.length} \u53E5`);
       } catch (e) {
         console.error("\u6293\u53D6 YouTube \u5728\u7EBF\u5B57\u5E55\u5931\u8D25:", e);
-        new import_obsidian3.Notice(`\u6293\u53D6\u5B57\u5E55\u5931\u8D25: ${e.message || e}`);
+        new import_obsidian8.Notice(`\u6293\u53D6\u5B57\u5E55\u5931\u8D25: ${e.message || e}`);
       } finally {
         isLoadingSubtitles.value = false;
       }
@@ -27927,14 +29440,13 @@ ${markdown}
           } else {
             list = parseSRT(text);
           }
-          if (list.length === 0) {
+          if (list.length === 0)
             throw new Error("\u672A\u89E3\u6790\u5230\u6709\u6548\u7684\u5B57\u5E55\u6761\u76EE");
-          }
           subtitlesList.value = list;
           activeSubtitleIndex.value = -1;
-          new import_obsidian3.Notice(`\u6210\u529F\u5BFC\u5165\u672C\u5730\u5B57\u5E55\uFF1A\u5171 ${list.length} \u53E5`);
+          new import_obsidian8.Notice(`\u6210\u529F\u5BFC\u5165\u672C\u5730\u5B57\u5E55\uFF1A\u5171 ${list.length} \u53E5`);
         } catch (err) {
-          new import_obsidian3.Notice(`\u89E3\u6790\u5B57\u5E55\u6587\u4EF6\u5931\u8D25: ${err.message || err}`);
+          new import_obsidian8.Notice(`\u89E3\u6790\u5B57\u5E55\u6587\u4EF6\u5931\u8D25: ${err.message || err}`);
         }
       };
       reader.readAsText(file);
@@ -28005,60 +29517,19 @@ ${markdown}
       });
       return list;
     }
-    watch2(currentVideoTime, (t, oldT) => {
-      if (subtitlesList.value.length === 0)
-        return;
-      const isManualSeek = oldT !== void 0 && Math.abs(t - oldT) > 1.5;
-      if (isLoopingCurrentSentence.value && activeSubtitleIndex.value !== -1 && !isManualSeek) {
-        const sub = subtitlesList.value[activeSubtitleIndex.value];
-        const end = sub.start + sub.duration;
-        if (t >= end - 0.1 && t <= end + 2) {
-          seekToSubtitleTime(sub.start);
-          return;
-        }
-      }
-      const idx = subtitlesList.value.findIndex((sub) => t >= sub.start && t <= sub.start + sub.duration);
-      if (idx !== -1) {
-        if (idx !== activeSubtitleIndex.value) {
-          activeSubtitleIndex.value = idx;
-        }
-      } else {
-        let lastStartedIdx = -1;
-        for (let i = 0; i < subtitlesList.value.length; i++) {
-          if (t >= subtitlesList.value[i].start) {
-            lastStartedIdx = i;
-          } else {
-            break;
-          }
-        }
-        if (lastStartedIdx !== -1 && lastStartedIdx !== activeSubtitleIndex.value) {
-          activeSubtitleIndex.value = lastStartedIdx;
-        }
-      }
-    });
-    watch2(activeSubtitleIndex, (newIdx) => {
-      if (newIdx !== -1) {
-        setTimeout(() => {
-          const el = document.getElementById(`sub-line-${newIdx}`);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }, 50);
-      }
-    });
     function exportSubtitlesToNote() {
       if (subtitlesList.value.length === 0) {
-        new import_obsidian3.Notice("\u5F53\u524D\u6CA1\u6709\u53EF\u5BFC\u51FA\u7684\u5B57\u5E55");
+        new import_obsidian8.Notice("\u5F53\u524D\u6CA1\u6709\u53EF\u5BFC\u51FA\u7684\u5B57\u5E55");
         return;
       }
       const markdownView = getActiveMarkdownView();
       if (!markdownView) {
-        new import_obsidian3.Notice("\u8BF7\u5148\u5728\u4E3B\u5DE5\u4F5C\u533A\u6253\u5F00\u5E76\u805A\u7126\u4E00\u4E2A Markdown \u7B14\u8BB0");
+        new import_obsidian8.Notice("\u8BF7\u5148\u5728\u4E3B\u5DE5\u4F5C\u533A\u6253\u5F00\u5E76\u805A\u7126\u4E00\u4E2A Markdown \u7B14\u8BB0");
         return;
       }
       const editor = markdownView.editor;
       if (!editor) {
-        new import_obsidian3.Notice("\u65E0\u6CD5\u83B7\u53D6\u7F16\u8F91\u5668\u5B9E\u4F8B\uFF0C\u8BF7\u5C06\u5149\u6807\u7F6E\u4E8E Markdown \u6587\u6863\u4E2D");
+        new import_obsidian8.Notice("\u65E0\u6CD5\u83B7\u53D6\u7F16\u8F91\u5668\u5B9E\u4F8B\uFF0C\u8BF7\u5C06\u5149\u6807\u7F6E\u4E8E Markdown \u6587\u6863\u4E2D");
         return;
       }
       let output = `
@@ -28080,8 +29551,744 @@ ${markdown}
       output += `
 `;
       editor.replaceSelection(output);
-      new import_obsidian3.Notice(`\u{1F4E4} \u5DF2\u6210\u529F\u5BFC\u51FA ${subtitlesList.value.length} \u53E5\u5B57\u5E55\u81F3\u6587\u6863`);
+      new import_obsidian8.Notice(`\u{1F4E4} \u5DF2\u6210\u529F\u5BFC\u51FA ${subtitlesList.value.length} \u53E5\u5B57\u5E55\u81F3\u6587\u6863`);
     }
+    function onWordClick(word) {
+      emit2("select-word", word);
+    }
+    async function onWordDblClick(token) {
+      const currentStatus = vocabManager.get(token.lemma);
+      const displayPhonetic = token.phonetic ? ` /${token.phonetic}/` : "";
+      let trans = token.trans;
+      let phonetic = token.phonetic;
+      if (trans) {
+        new import_obsidian8.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+\u91CA\u4E49: ${trans}`, 3500);
+      } else {
+        const loadingNotice = new import_obsidian8.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+\u6B63\u5728\u67E5\u8BE2\u91CA\u4E49...`, 5e3);
+        try {
+          const result = await vocabManager.fetchOnlineTranslationAndDetails(token.lemma);
+          loadingNotice.hide();
+          if (result && result.trans) {
+            new import_obsidian8.Notice(`\u{1F4D6} ${token.lemma}${result.phonetic ? ` /${result.phonetic}/` : ""}
+\u91CA\u4E49: ${result.trans}`, 4500);
+            trans = result.trans;
+            token.trans = result.trans;
+            if (result.phonetic) {
+              phonetic = result.phonetic;
+              token.phonetic = result.phonetic;
+            }
+          }
+        } catch (err) {
+          loadingNotice.hide();
+        }
+      }
+      if (currentStatus !== "KNOWN") {
+        vocabManager.set(token.lemma, "LEARNING", trans, phonetic);
+        eventBus.emit("lang-learner:word-changed", token.lemma, "LEARNING", token.text);
+      }
+      emit2("select-word", token.lemma);
+    }
+    watch2(currentVideoTime, (t, oldT) => {
+      if (subtitlesList.value.length === 0)
+        return;
+      const isManualSeek = oldT !== void 0 && Math.abs(t - oldT) > 1.5;
+      if (isLoopingCurrentSentence.value && activeSubtitleIndex.value !== -1 && !isManualSeek) {
+        const sub = subtitlesList.value[activeSubtitleIndex.value];
+        const end = sub.start + sub.duration;
+        if (t >= end - 0.1 && t <= end + 2) {
+          seekToSubtitleTime(sub.start);
+          return;
+        }
+      }
+      const idx = subtitlesList.value.findIndex((sub) => t >= sub.start && t <= sub.start + sub.duration);
+      if (idx !== -1) {
+        if (idx !== activeSubtitleIndex.value)
+          activeSubtitleIndex.value = idx;
+      } else {
+        let lastStartedIdx = -1;
+        for (let i = 0; i < subtitlesList.value.length; i++) {
+          if (t >= subtitlesList.value[i].start) {
+            lastStartedIdx = i;
+          } else {
+            break;
+          }
+        }
+        if (lastStartedIdx !== -1 && lastStartedIdx !== activeSubtitleIndex.value) {
+          activeSubtitleIndex.value = lastStartedIdx;
+        }
+      }
+    });
+    watch2(activeSubtitleIndex, (newIdx) => {
+      if (newIdx !== -1) {
+        setTimeout(() => {
+          const el = document.getElementById(`sub-line-${newIdx}`);
+          if (el)
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 50);
+      }
+    });
+    function handlePlayMediaEvent(urlOrPath, timestamp) {
+      const isYt = urlOrPath.includes("youtube.com") || urlOrPath.includes("youtu.be");
+      if (isYt) {
+        pendingSeekTime.value = timestamp;
+        loadMediaSource(urlOrPath);
+      } else {
+        loadMediaSource(urlOrPath);
+        setTimeout(() => {
+          if (mediaVideoRef.value) {
+            mediaVideoRef.value.currentTime = timestamp;
+            mediaVideoRef.value.play().catch(() => {
+            });
+          }
+        }, 500);
+      }
+    }
+    function handleWordChanged(word, status) {
+      subtitlesList.value.forEach((sub) => {
+        sub.segments.forEach((tok) => {
+          if (tok.lemma === word)
+            tok.status = status;
+        });
+      });
+    }
+    onMounted(() => {
+      scanMediaFiles();
+      eventBus.on("lang-learner:word-changed", handleWordChanged);
+      eventBus.on("lang-learner:play-media", handlePlayMediaEvent);
+    });
+    onUnmounted(() => {
+      stopYtTimer();
+      eventBus.off("lang-learner:word-changed", handleWordChanged);
+      eventBus.off("lang-learner:play-media", handlePlayMediaEvent);
+    });
+    return {
+      currentVideoUrl,
+      activeVideoSrc,
+      mediaFiles,
+      selectedMediaFile,
+      mediaVideoRef,
+      mediaPlaybackRate,
+      currentVideoTime,
+      mediaType,
+      subtitlesList,
+      activeSubtitleIndex,
+      isLoadingSubtitles,
+      isLoopingCurrentSentence,
+      showTranslation,
+      scanMediaFiles,
+      loadMediaSource,
+      handleSelectLocalMedia,
+      setPlaybackRate,
+      onVideoTimeUpdate,
+      insertVideoTimestamp,
+      seekToSubtitleTime,
+      toggleLoopCurrentSentence,
+      goToPrevSubtitle,
+      goToNextSubtitle,
+      loadYouTubeCaptions,
+      handleLocalSubtitleUpload,
+      exportSubtitlesToNote,
+      onWordClick,
+      onWordDblClick,
+      formatTime
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=template
+var _hoisted_119 = {
+  class: "lang-learner-tab-content",
+  style: { "display": "flex", "flex-direction": "column", "gap": "12px" }
+};
+var _hoisted_28 = { class: "lang-learner-panel-section lang-learner-media-input-box" };
+var _hoisted_37 = { class: "lang-learner-media-input-row" };
+var _hoisted_47 = { class: "lang-learner-media-input-header" };
+var _hoisted_57 = ["value"];
+var _hoisted_67 = { class: "lang-learner-media-input-row lang-learner-media-input-row-divider" };
+var _hoisted_77 = { style: { "display": "flex", "gap": "6px" } };
+var _hoisted_87 = {
+  key: 0,
+  style: { "display": "flex", "flex-direction": "column", "gap": "10px" }
+};
+var _hoisted_97 = { class: "lang-learner-panel-section lang-learner-video-container-box" };
+var _hoisted_107 = ["src"];
+var _hoisted_1110 = {
+  key: 1,
+  id: "youtube-player-container"
+};
+var _hoisted_127 = ["src"];
+var _hoisted_136 = { class: "lang-learner-panel-section lang-learner-media-controls-box" };
+var _hoisted_146 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center" } };
+var _hoisted_156 = { class: "lang-learner-media-time-display" };
+var _hoisted_166 = {
+  key: 0,
+  style: { "display": "flex", "gap": "3px", "align-items": "center" }
+};
+var _hoisted_176 = ["onClick"];
+var _hoisted_186 = {
+  key: 0,
+  style: { "font-size": "0.72em", "color": "var(--text-warning)", "line-height": "1.3" }
+};
+var _hoisted_195 = {
+  key: 0,
+  class: "lang-learner-panel-section lang-learner-current-subtitle-box"
+};
+var _hoisted_205 = { class: "lang-learner-current-subtitle-header" };
+var _hoisted_214 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_225 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_233 = ["title"];
+var _hoisted_243 = { class: "lang-learner-current-subtitle-text" };
+var _hoisted_253 = { key: 0 };
+var _hoisted_262 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_272 = {
+  key: 0,
+  class: "lang-learner-current-subtitle-trans"
+};
+var _hoisted_282 = { class: "lang-learner-panel-section lang-learner-subtitles-card-box" };
+var _hoisted_29 = { class: "lang-learner-subtitles-card-header" };
+var _hoisted_30 = { style: { "display": "flex", "gap": "4px" } };
+var _hoisted_31 = ["disabled"];
+var _hoisted_322 = {
+  class: "lang-learner-btn-status-mini",
+  style: { "cursor": "pointer", "margin": "0", "display": "inline-block" }
+};
+var _hoisted_332 = {
+  key: 0,
+  class: "lang-learner-subtitles-container"
+};
+var _hoisted_342 = ["id", "onClick"];
+var _hoisted_352 = { class: "lang-learner-sub-time-label" };
+var _hoisted_362 = { class: "lang-learner-sub-text" };
+var _hoisted_372 = { key: 0 };
+var _hoisted_38 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_39 = {
+  key: 0,
+  class: "lang-learner-sub-translation"
+};
+var _hoisted_40 = {
+  key: 1,
+  style: { "font-size": "0.78em", "color": "var(--text-muted)", "text-align": "center", "padding": "16px", "font-style": "italic" }
+};
+var _hoisted_41 = {
+  key: 1,
+  class: "lang-learner-empty-hint lang-learner-media-empty-box"
+};
+function render7(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_119, [
+    _cache[22] || (_cache[22] = createBaseVNode(
+      "div",
+      {
+        class: "lang-learner-panel-dashboard",
+        style: { "margin-bottom": "0" }
+      },
+      [
+        createBaseVNode("h3", { class: "lang-learner-panel-title" }, "\u{1F3AC} \u89C6\u9891\u6233\u7B14\u8BB0 (Media Extended)"),
+        createBaseVNode("p", { style: { "font-size": "0.82em", "color": "var(--text-muted)", "margin": "-4px 0 0 0" } }, " \u5728\u4FA7\u8FB9\u680F\u64AD\u653E\u5A92\u4F53\u6587\u4EF6\uFF0C\u5E76\u53EF\u901A\u8FC7\u65F6\u95F4\u6233\u4E0E Obsidian \u7B14\u8BB0\u5B9E\u73B0\u53CC\u5411\u8DF3\u8F6C\u5B9A\u4F4D\u3002 ")
+      ],
+      -1
+      /* CACHED */
+    )),
+    createBaseVNode("div", _hoisted_28, [
+      createBaseVNode("div", _hoisted_37, [
+        createBaseVNode("div", _hoisted_47, [
+          _cache[14] || (_cache[14] = createBaseVNode(
+            "label",
+            null,
+            "\u{1F4C1} \u8F7D\u5165\u5E93\u5185\u5A92\u4F53\u6587\u4EF6",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode("button", {
+            onClick: _cache[0] || (_cache[0] = (...args) => _ctx.scanMediaFiles && _ctx.scanMediaFiles(...args)),
+            class: "lang-learner-btn-status-mini",
+            title: "\u91CD\u65B0\u626B\u63CF Vault \u5A92\u4F53\u6587\u4EF6"
+          }, " \u{1F504} \u626B\u63CF ")
+        ]),
+        withDirectives(createBaseVNode(
+          "select",
+          {
+            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.selectedMediaFile = $event),
+            onChange: _cache[2] || (_cache[2] = (...args) => _ctx.handleSelectLocalMedia && _ctx.handleSelectLocalMedia(...args))
+          },
+          [
+            _cache[15] || (_cache[15] = createBaseVNode(
+              "option",
+              { value: "" },
+              "-- \u8BF7\u9009\u62E9\u672C\u5730\u5A92\u4F53 --",
+              -1
+              /* CACHED */
+            )),
+            (openBlock(true), createElementBlock(
+              Fragment,
+              null,
+              renderList(_ctx.mediaFiles, (file) => {
+                return openBlock(), createElementBlock("option", {
+                  key: file.path,
+                  value: file.path
+                }, toDisplayString(file.name), 9, _hoisted_57);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ],
+          544
+          /* NEED_HYDRATION, NEED_PATCH */
+        ), [
+          [vModelSelect, _ctx.selectedMediaFile]
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_67, [
+        _cache[16] || (_cache[16] = createBaseVNode(
+          "label",
+          null,
+          "\u{1F310} \u5916\u90E8\u76F4\u94FE / YouTube / B\u7AD9\u94FE\u63A5",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode("div", _hoisted_77, [
+          withDirectives(createBaseVNode(
+            "input",
+            {
+              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.currentVideoUrl = $event),
+              placeholder: "\u8F93\u5165\u89C6\u9891\u7F51\u5740\u6216\u6587\u4EF6\u76F4\u94FE",
+              class: "lang-learner-media-url-input"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          ), [
+            [vModelText, _ctx.currentVideoUrl]
+          ]),
+          createBaseVNode("button", {
+            onClick: _cache[4] || (_cache[4] = ($event) => _ctx.loadMediaSource(_ctx.currentVideoUrl)),
+            class: "lang-learner-btn lang-learner-btn-primary"
+          }, " \u8F7D\u5165 ")
+        ])
+      ])
+    ]),
+    _ctx.mediaType !== "none" ? (openBlock(), createElementBlock("div", _hoisted_87, [
+      createBaseVNode("div", _hoisted_97, [
+        _ctx.mediaType === "html5" ? (openBlock(), createElementBlock("video", {
+          key: 0,
+          ref: "mediaVideoRef",
+          src: _ctx.activeVideoSrc,
+          controls: "",
+          onTimeupdate: _cache[5] || (_cache[5] = (...args) => _ctx.onVideoTimeUpdate && _ctx.onVideoTimeUpdate(...args))
+        }, null, 40, _hoisted_107)) : _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_1110, [..._cache[17] || (_cache[17] = [
+          createBaseVNode(
+            "div",
+            { id: "youtube-player-el" },
+            null,
+            -1
+            /* CACHED */
+          )
+        ])])) : _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("iframe", {
+          key: 2,
+          src: _ctx.activeVideoSrc,
+          allowfullscreen: ""
+        }, null, 8, _hoisted_127)) : createCommentVNode("v-if", true)
+      ]),
+      createBaseVNode("div", _hoisted_136, [
+        createBaseVNode("div", _hoisted_146, [
+          createBaseVNode(
+            "span",
+            _hoisted_156,
+            " \u{1F552} " + toDisplayString(_ctx.formatTime(_ctx.currentVideoTime)),
+            1
+            /* TEXT */
+          ),
+          _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_166, [
+            _cache[18] || (_cache[18] = createBaseVNode(
+              "span",
+              { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin-right": "2px" } },
+              "\u500D\u901F:",
+              -1
+              /* CACHED */
+            )),
+            (openBlock(), createElementBlock(
+              Fragment,
+              null,
+              renderList([0.8, 1, 1.25, 1.5], (rate) => {
+                return createBaseVNode("button", {
+                  key: rate,
+                  onClick: ($event) => _ctx.setPlaybackRate(rate),
+                  class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.mediaPlaybackRate === rate }])
+                }, toDisplayString(rate) + "x ", 11, _hoisted_176);
+              }),
+              64
+              /* STABLE_FRAGMENT */
+            ))
+          ])) : createCommentVNode("v-if", true)
+        ]),
+        _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("div", _hoisted_186, " \u26A0\uFE0F \u63D0\u793A\uFF1AB\u7AD9\u5185\u5D4C\u9875\u7531\u4E8E\u8DE8\u57DF\u9650\u5236\u65E0\u6CD5\u6293\u53D6\u65F6\u95F4\u8FDB\u5EA6\u6216\u652F\u6301\u53CC\u5411\u5B9A\u4F4D\u3002 ")) : createCommentVNode("v-if", true),
+        _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
+          key: 1,
+          onClick: _cache[6] || (_cache[6] = (...args) => _ctx.insertVideoTimestamp && _ctx.insertVideoTimestamp(...args)),
+          class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full"
+        }, " \u{1F4CC} \u63D2\u5165\u5F53\u524D\u89C6\u9891\u65F6\u95F4\u6233\u81F3\u6587\u6863 ")) : createCommentVNode("v-if", true)
+      ]),
+      _ctx.activeSubtitleIndex !== -1 && _ctx.subtitlesList[_ctx.activeSubtitleIndex] ? (openBlock(), createElementBlock("div", _hoisted_195, [
+        createBaseVNode("div", _hoisted_205, [
+          createBaseVNode("div", _hoisted_214, [
+            createBaseVNode("button", {
+              onClick: _cache[7] || (_cache[7] = (...args) => _ctx.goToPrevSubtitle && _ctx.goToPrevSubtitle(...args)),
+              class: "lang-learner-btn-status-mini"
+            }, "\u23EE\uFE0F \u4E0A\u4E00\u53E5"),
+            createBaseVNode("button", {
+              onClick: _cache[8] || (_cache[8] = (...args) => _ctx.goToNextSubtitle && _ctx.goToNextSubtitle(...args)),
+              class: "lang-learner-btn-status-mini"
+            }, "\u4E0B\u4E00\u53E5 \u23ED\uFE0F")
+          ]),
+          _cache[19] || (_cache[19] = createBaseVNode(
+            "div",
+            { class: "lang-learner-current-subtitle-title" },
+            "\u{1F4E2} \u5F53\u524D\u64AD\u653E\u53E5",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode("div", _hoisted_225, [
+            createBaseVNode("button", {
+              onClick: _cache[9] || (_cache[9] = (...args) => _ctx.toggleLoopCurrentSentence && _ctx.toggleLoopCurrentSentence(...args)),
+              class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.isLoopingCurrentSentence }]),
+              title: _ctx.isLoopingCurrentSentence ? "\u70B9\u51FB\u5173\u95ED\u5355\u53E5\u5FAA\u73AF" : "\u70B9\u51FB\u5F00\u542F\u5355\u53E5\u5FAA\u73AF"
+            }, " \u{1F502} " + toDisplayString(_ctx.isLoopingCurrentSentence ? "\u5FAA\u73AF\u4E2D" : "\u5355\u53E5\u5FAA\u73AF"), 11, _hoisted_233)
+          ])
+        ]),
+        createBaseVNode("div", _hoisted_243, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.subtitlesList[_ctx.activeSubtitleIndex].segments, (token, index) => {
+              return openBlock(), createElementBlock(
+                Fragment,
+                { key: index },
+                [
+                  token.type === "text" ? (openBlock(), createElementBlock(
+                    "span",
+                    _hoisted_253,
+                    toDisplayString(token.text),
+                    1
+                    /* TEXT */
+                  )) : (openBlock(), createElementBlock("span", {
+                    key: 1,
+                    class: normalizeClass(["lang-learner-word lang-learner-subtitle-interactive-word", {
+                      "lang-learner-unknown": token.status === "UNKNOWN",
+                      "lang-learner-learning": token.status === "LEARNING",
+                      "lang-learner-known": token.status === "KNOWN",
+                      "lang-learner-phrase": token.isPhrase
+                    }]),
+                    "data-lemma": token.lemma,
+                    "data-trans": token.trans,
+                    "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
+                    onClick: withModifiers(($event) => _ctx.onWordClick(token.lemma), ["stop"]),
+                    onDblclick: withModifiers(($event) => _ctx.onWordDblClick(token), ["stop"])
+                  }, toDisplayString(token.text), 43, _hoisted_262))
+                ],
+                64
+                /* STABLE_FRAGMENT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ]),
+        _ctx.subtitlesList[_ctx.activeSubtitleIndex].translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
+          "div",
+          _hoisted_272,
+          toDisplayString(_ctx.subtitlesList[_ctx.activeSubtitleIndex].translation),
+          1
+          /* TEXT */
+        )) : createCommentVNode("v-if", true)
+      ])) : createCommentVNode("v-if", true),
+      createBaseVNode("div", _hoisted_282, [
+        createBaseVNode("div", _hoisted_29, [
+          createBaseVNode(
+            "span",
+            null,
+            "\u{1F4AC} \u5B57\u5E55\u5217\u8868 (" + toDisplayString(_ctx.subtitlesList.length) + " \u53E5)",
+            1
+            /* TEXT */
+          ),
+          createBaseVNode("div", _hoisted_30, [
+            _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock(
+              "button",
+              {
+                key: 0,
+                onClick: _cache[10] || (_cache[10] = ($event) => _ctx.showTranslation = !_ctx.showTranslation),
+                class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.showTranslation }]),
+                title: "\u5207\u6362\u53CC\u8BED\u6A21\u5F0F"
+              },
+              " \u{1F441}\uFE0F " + toDisplayString(_ctx.showTranslation ? "\u53CC\u8BED\u6A21\u5F0F (\u8BD1\u6587\u663E\u793A)" : "\u539F\u6587\u6A21\u5F0F (\u8BD1\u6587\u9690\u85CF)"),
+              3
+              /* TEXT, CLASS */
+            )) : createCommentVNode("v-if", true),
+            _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
+              key: 1,
+              onClick: _cache[11] || (_cache[11] = (...args) => _ctx.loadYouTubeCaptions && _ctx.loadYouTubeCaptions(...args)),
+              class: "lang-learner-btn-status-mini",
+              disabled: _ctx.isLoadingSubtitles
+            }, toDisplayString(_ctx.isLoadingSubtitles ? "\u6293\u53D6\u4E2D..." : "\u{1F310} \u6293\u53D6\u5B57\u5E55"), 9, _hoisted_31)) : createCommentVNode("v-if", true),
+            createBaseVNode("label", _hoisted_322, [
+              _cache[20] || (_cache[20] = createTextVNode(
+                " \u{1F4C1} \u5BFC\u5165 ",
+                -1
+                /* CACHED */
+              )),
+              createBaseVNode(
+                "input",
+                {
+                  type: "file",
+                  accept: ".srt,.vtt",
+                  onChange: _cache[12] || (_cache[12] = (...args) => _ctx.handleLocalSubtitleUpload && _ctx.handleLocalSubtitleUpload(...args)),
+                  style: { "display": "none" }
+                },
+                null,
+                32
+                /* NEED_HYDRATION */
+              )
+            ]),
+            _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("button", {
+              key: 2,
+              onClick: _cache[13] || (_cache[13] = (...args) => _ctx.exportSubtitlesToNote && _ctx.exportSubtitlesToNote(...args)),
+              class: "lang-learner-btn-status-mini active",
+              title: "\u5BFC\u51FA\u5B8C\u6574\u5B57\u5E55\u81F3\u6B63\u5728\u7F16\u8F91\u7684\u6587\u6863\u533A"
+            }, " \u{1F4E4} \u5BFC\u51FA ")) : createCommentVNode("v-if", true)
+          ])
+        ]),
+        _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_332, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.subtitlesList, (sub, idx) => {
+              return openBlock(), createElementBlock("div", {
+                key: idx,
+                id: "sub-line-" + idx,
+                class: normalizeClass(["lang-learner-sub-line", { "lang-learner-active-sub": _ctx.activeSubtitleIndex === idx }]),
+                onClick: ($event) => _ctx.seekToSubtitleTime(sub.start)
+              }, [
+                createBaseVNode(
+                  "span",
+                  _hoisted_352,
+                  toDisplayString(_ctx.formatTime(sub.start)),
+                  1
+                  /* TEXT */
+                ),
+                createBaseVNode("span", _hoisted_362, [
+                  (openBlock(true), createElementBlock(
+                    Fragment,
+                    null,
+                    renderList(sub.segments, (token, index) => {
+                      return openBlock(), createElementBlock(
+                        Fragment,
+                        { key: index },
+                        [
+                          token.type === "text" ? (openBlock(), createElementBlock(
+                            "span",
+                            _hoisted_372,
+                            toDisplayString(token.text),
+                            1
+                            /* TEXT */
+                          )) : (openBlock(), createElementBlock("span", {
+                            key: 1,
+                            class: normalizeClass(["lang-learner-word", {
+                              "lang-learner-unknown": token.status === "UNKNOWN",
+                              "lang-learner-learning": token.status === "LEARNING",
+                              "lang-learner-known": token.status === "KNOWN",
+                              "lang-learner-phrase": token.isPhrase
+                            }]),
+                            "data-lemma": token.lemma,
+                            "data-trans": token.trans,
+                            "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
+                            onClick: withModifiers(($event) => _ctx.onWordClick(token.lemma), ["stop"]),
+                            onDblclick: withModifiers(($event) => _ctx.onWordDblClick(token), ["stop"])
+                          }, toDisplayString(token.text), 43, _hoisted_38))
+                        ],
+                        64
+                        /* STABLE_FRAGMENT */
+                      );
+                    }),
+                    128
+                    /* KEYED_FRAGMENT */
+                  ))
+                ]),
+                sub.translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
+                  "div",
+                  _hoisted_39,
+                  toDisplayString(sub.translation),
+                  1
+                  /* TEXT */
+                )) : createCommentVNode("v-if", true)
+              ], 10, _hoisted_342);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])) : (openBlock(), createElementBlock("div", _hoisted_40, " \u6682\u65E0\u5B57\u5E55\uFF0C\u8BF7\u6293\u53D6\u5728\u7EBF\u5B57\u5E55\u6216\u5BFC\u5165\u672C\u5730 SRT/VTT \u6587\u4EF6 "))
+      ])
+    ])) : (openBlock(), createElementBlock("div", _hoisted_41, [..._cache[21] || (_cache[21] = [
+      createBaseVNode(
+        "div",
+        { style: { "font-size": "2.5em", "margin-bottom": "10px", "filter": "grayscale(0.2)" } },
+        "\u{1F3AC}",
+        -1
+        /* CACHED */
+      ),
+      createBaseVNode(
+        "p",
+        { style: { "margin": "0 0 4px 0", "font-weight": "600", "font-size": "1em", "color": "var(--text-normal)" } },
+        "\u6682\u65E0\u8F7D\u5165\u5A92\u4F53",
+        -1
+        /* CACHED */
+      ),
+      createBaseVNode(
+        "p",
+        { style: { "font-size": "0.8em", "color": "var(--text-muted)", "margin": "0", "padding": "0 16px", "line-height": "1.4" } },
+        " \u8BF7\u5728\u4E0A\u65B9\u9009\u62E9\u5E93\u5185\u5A92\u4F53\uFF0C\u6216\u8F93\u5165 YouTube \u7B49\u94FE\u63A5\u8F7D\u5165\u64AD\u653E\u3002\u8F7D\u5165\u540E\u5373\u53EF\u5BFC\u5165\u6216\u81EA\u52A8\u6293\u53D6\u5B57\u5E55\u3002 ",
+        -1
+        /* CACHED */
+      )
+    ])]))
+  ]);
+}
+
+// src/ui/components/MediaTab.vue
+MediaTab_default.render = render7;
+MediaTab_default.__file = "src/ui/components/MediaTab.vue";
+MediaTab_default.__scopeId = "data-v-90c8bbfa";
+var MediaTab_default2 = MediaTab_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
+var import_obsidian10 = require("obsidian");
+
+// src/services/RSSService.ts
+var import_obsidian9 = require("obsidian");
+var _RSSService = class _RSSService {
+  /**
+   * 加载已订阅的 RSS 源列表
+   */
+  loadFeeds() {
+    try {
+      const saved = localStorage.getItem(_RSSService.RSS_FEEDS_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("\u52A0\u8F7D RSS \u6E90\u5931\u8D25:", e);
+    }
+    const defaultFeeds = [
+      { name: "Hacker News", url: "https://news.ycombinator.com/rss" },
+      { name: "BBC Global News", url: "http://feeds.bbci.co.uk/news/world/rss.xml" }
+    ];
+    this.saveFeeds(defaultFeeds);
+    return defaultFeeds;
+  }
+  /**
+   * 保存 RSS 订阅源列表
+   */
+  saveFeeds(feeds) {
+    try {
+      localStorage.setItem(_RSSService.RSS_FEEDS_KEY, JSON.stringify(feeds));
+    } catch (e) {
+      console.error("\u4FDD\u5B58 RSS \u6E90\u5931\u8D25:", e);
+    }
+  }
+  /**
+   * 跨域拉取订阅源 XML 数据
+   */
+  async fetchFeedXml(url) {
+    try {
+      const res2 = await (0, import_obsidian9.requestUrl)({ url });
+      return res2.text || "";
+    } catch (e) {
+      console.warn("Obsidian requestUrl \u83B7\u53D6 RSS \u5931\u8D25\uFF0C\u56DE\u9000\u5230 fetch:", e);
+    }
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`\u7F51\u7EDC\u54CD\u5E94\u9519\u8BEF\uFF0C\u72B6\u6001\u7801: ${res.status}`);
+    }
+    return await res.text();
+  }
+  /**
+   * 解析 RSS/Atom XML 字符串，转换为标准文章格式
+   */
+  parseRssXml(xmlText) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const items = xmlDoc.querySelectorAll("item");
+    const parsedItems = [];
+    items.forEach((item) => {
+      const title = item.querySelector("title")?.textContent || "";
+      const link = item.querySelector("link")?.textContent || "";
+      const date = item.querySelector("pubDate")?.textContent || item.querySelector("date")?.textContent || "";
+      let content = "";
+      const contentEncoded = item.getElementsByTagName("content:encoded");
+      if (contentEncoded && contentEncoded.length > 0) {
+        content = contentEncoded[0].textContent || "";
+      }
+      if (!content) {
+        content = item.querySelector("description")?.textContent || "";
+      }
+      parsedItems.push({
+        title: title.trim(),
+        link: link.trim(),
+        date: date.trim(),
+        content,
+        description: item.querySelector("description")?.textContent || ""
+      });
+    });
+    if (parsedItems.length === 0) {
+      const entries = xmlDoc.querySelectorAll("entry");
+      entries.forEach((entry) => {
+        const title = entry.querySelector("title")?.textContent || "";
+        const link = entry.querySelector("link")?.getAttribute("href") || entry.querySelector("link")?.textContent || "";
+        const date = entry.querySelector("updated")?.textContent || entry.querySelector("published")?.textContent || "";
+        const content = entry.querySelector("content")?.textContent || entry.querySelector("summary")?.textContent || "";
+        parsedItems.push({
+          title: title.trim(),
+          link: link.trim(),
+          date: date.trim(),
+          content,
+          description: entry.querySelector("summary")?.textContent || ""
+        });
+      });
+    }
+    return parsedItems;
+  }
+  /**
+   * 解析文章正文段落
+   */
+  extractParagraphs(article) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = article.content || article.description || "";
+    let paragraphs = [];
+    const pEls = tempDiv.querySelectorAll("p");
+    if (pEls.length > 0) {
+      pEls.forEach((p2) => {
+        const txt = p2.textContent?.trim();
+        if (txt)
+          paragraphs.push(txt);
+      });
+    } else {
+      paragraphs = tempDiv.textContent?.split(/\n+/).map((p2) => p2.trim()).filter(Boolean) || [];
+    }
+    if (paragraphs.length === 0 && tempDiv.textContent?.trim()) {
+      paragraphs.push(tempDiv.textContent.trim());
+    }
+    return paragraphs;
+  }
+};
+_RSSService.RSS_FEEDS_KEY = "lang-learner-rss-feeds";
+var RSSService = _RSSService;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
+var ReaderTab_default = defineComponent({
+  name: "ReaderTab",
+  emits: ["select-word"],
+  setup(props, { emit: emit2 }) {
+    const vocabManager = inject("vocabManager");
+    const rssService = new RSSService();
     const showRssConfig = ref(false);
     const newFeedName = ref("");
     const newFeedUrl = ref("");
@@ -28091,45 +30298,30 @@ ${markdown}
     const feedItems = ref([]);
     const selectedArticle = ref(null);
     const selectedArticleParagraphs = ref([]);
-    const RSS_FEEDS_KEY = "lang-learner-rss-feeds";
-    function loadRssFeeds() {
-      try {
-        const saved = localStorage.getItem(RSS_FEEDS_KEY);
-        if (saved) {
-          rssFeeds.value = JSON.parse(saved);
-        } else {
-          const defaultFeeds = [
-            { name: "Hacker News", url: "https://news.ycombinator.com/rss" },
-            { name: "BBC Global News", url: "http://feeds.bbci.co.uk/news/world/rss.xml" }
-          ];
-          rssFeeds.value = defaultFeeds;
-          localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(defaultFeeds));
-        }
-      } catch (e) {
-        console.error("\u52A0\u8F7D RSS \u5217\u8868\u51FA\u9519:", e);
-      }
+    function loadFeeds() {
+      rssFeeds.value = rssService.loadFeeds();
     }
     function addRssFeed() {
       const name = newFeedName.value.trim();
       const url = newFeedUrl.value.trim();
       if (!name || !url) {
-        new import_obsidian3.Notice("\u8BF7\u8F93\u5165\u5B8C\u6574\u7684\u8BA2\u9605\u6E90\u540D\u79F0\u548C\u94FE\u63A5");
+        new import_obsidian10.Notice("\u8BF7\u8F93\u5165\u5B8C\u6574\u7684\u8BA2\u9605\u6E90\u540D\u79F0\u548C\u94FE\u63A5");
         return;
       }
       if (rssFeeds.value.some((f) => f.url === url)) {
-        new import_obsidian3.Notice("\u8BE5\u8BA2\u9605\u6E90\u5DF2\u5B58\u5728");
+        new import_obsidian10.Notice("\u8BE5\u8BA2\u9605\u6E90\u5DF2\u5B58\u5728");
         return;
       }
       rssFeeds.value.push({ name, url });
-      localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(rssFeeds.value));
+      rssService.saveFeeds(rssFeeds.value);
       newFeedName.value = "";
       newFeedUrl.value = "";
-      new import_obsidian3.Notice("\u8BA2\u9605\u6E90\u6DFB\u52A0\u6210\u529F");
+      new import_obsidian10.Notice("\u8BA2\u9605\u6E90\u6DFB\u52A0\u6210\u529F");
     }
     function removeRssFeed(idx) {
       rssFeeds.value.splice(idx, 1);
-      localStorage.setItem(RSS_FEEDS_KEY, JSON.stringify(rssFeeds.value));
-      new import_obsidian3.Notice("\u8BA2\u9605\u6E90\u5DF2\u5220\u9664");
+      rssService.saveFeeds(rssFeeds.value);
+      new import_obsidian10.Notice("\u8BA2\u9605\u6E90\u5DF2\u5220\u9664");
     }
     async function handleSelectFeed() {
       if (!selectedFeedUrl.value) {
@@ -28139,96 +30331,15 @@ ${markdown}
       isLoadingFeeds.value = true;
       selectedArticle.value = null;
       try {
-        const xmlText = await fetchRssFeedXml(selectedFeedUrl.value);
-        feedItems.value = parseRssXml(xmlText);
-        new import_obsidian3.Notice(`\u6210\u529F\u62C9\u53D6 ${feedItems.value.length} \u7BC7\u6587\u7AE0`);
+        const xmlText = await rssService.fetchFeedXml(selectedFeedUrl.value);
+        feedItems.value = rssService.parseRssXml(xmlText);
+        new import_obsidian10.Notice(`\u6210\u529F\u62C9\u53D6 ${feedItems.value.length} \u7BC7\u6587\u7AE0`);
       } catch (e) {
         console.error(e);
-        new import_obsidian3.Notice("RSS \u8BA2\u9605\u6E90\u62C9\u53D6\u6216\u89E3\u6790\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u6216 URL \u662F\u5426\u6B63\u786E");
+        new import_obsidian10.Notice("RSS \u8BA2\u9605\u6E90\u62C9\u53D6\u6216\u89E3\u6790\u5931\u8D25");
       } finally {
         isLoadingFeeds.value = false;
       }
-    }
-    async function fetchRssFeedXml(url) {
-      try {
-        const obsidian = require("obsidian");
-        if (obsidian && obsidian.requestUrl) {
-          const res2 = await obsidian.requestUrl({ url });
-          return res2.text || "";
-        }
-      } catch (e) {
-        console.warn("Obsidian requestUrl \u83B7\u53D6 RSS \u5931\u8D25\uFF0C\u5C1D\u8BD5 fetch:", e);
-      }
-      const res = await fetch(url);
-      return await res.text();
-    }
-    function parseRssXml(xmlText) {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-      const items = xmlDoc.querySelectorAll("item");
-      const parsedItems = [];
-      items.forEach((item) => {
-        const title = item.querySelector("title")?.textContent || "";
-        const link = item.querySelector("link")?.textContent || "";
-        const date = item.querySelector("pubDate")?.textContent || item.querySelector("date")?.textContent || "";
-        let content = "";
-        const contentEncoded = item.getElementsByTagName("content:encoded");
-        if (contentEncoded && contentEncoded.length > 0) {
-          content = contentEncoded[0].textContent || "";
-        }
-        if (!content) {
-          content = item.querySelector("description")?.textContent || "";
-        }
-        parsedItems.push({
-          title: title.trim(),
-          link: link.trim(),
-          date: date.trim(),
-          content,
-          description: item.querySelector("description")?.textContent || ""
-        });
-      });
-      if (parsedItems.length === 0) {
-        const entries = xmlDoc.querySelectorAll("entry");
-        entries.forEach((entry) => {
-          const title = entry.querySelector("title")?.textContent || "";
-          const link = entry.querySelector("link")?.getAttribute("href") || entry.querySelector("link")?.textContent || "";
-          const date = entry.querySelector("updated")?.textContent || entry.querySelector("published")?.textContent || "";
-          const content = entry.querySelector("content")?.textContent || entry.querySelector("summary")?.textContent || "";
-          parsedItems.push({
-            title: title.trim(),
-            link: link.trim(),
-            date: date.trim(),
-            content,
-            description: entry.querySelector("summary")?.textContent || ""
-          });
-        });
-      }
-      return parsedItems;
-    }
-    function readArticle(item) {
-      selectedArticle.value = item;
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = item.content || item.description || "";
-      let paragraphs = [];
-      const pEls = tempDiv.querySelectorAll("p");
-      if (pEls.length > 0) {
-        pEls.forEach((p2) => {
-          const txt = p2.textContent?.trim();
-          if (txt)
-            paragraphs.push(txt);
-        });
-      } else {
-        paragraphs = tempDiv.textContent?.split(/\n+/).map((p2) => p2.trim()).filter(Boolean) || [];
-      }
-      if (paragraphs.length === 0 && tempDiv.textContent?.trim()) {
-        paragraphs.push(tempDiv.textContent.trim());
-      }
-      selectedArticleParagraphs.value = paragraphs.map((pText) => {
-        return {
-          text: pText,
-          segments: processTextToSegments(pText)
-        };
-      });
     }
     function processTextToSegments(text) {
       if (!text)
@@ -28240,16 +30351,15 @@ ${markdown}
           phraseRanges.push({ start: token.start, end: token.end });
         }
       }
-      function isCoveredByPhrase(token) {
+      const isCoveredByPhrase = (token) => {
         if (token.isPhrase)
           return false;
         for (const range of phraseRanges) {
-          if (token.start >= range.start && token.end <= range.end) {
+          if (token.start >= range.start && token.end <= range.end)
             return true;
-          }
         }
         return false;
-      }
+      };
       const segments = [];
       let lastIndex = 0;
       for (const token of tokens) {
@@ -28299,90 +30409,65 @@ ${markdown}
       }
       return segments;
     }
+    function readArticle(item) {
+      selectedArticle.value = item;
+      const paragraphs = rssService.extractParagraphs(item);
+      selectedArticleParagraphs.value = paragraphs.map((pText) => {
+        return {
+          text: pText,
+          segments: processTextToSegments(pText)
+        };
+      });
+    }
+    function onWordClick(word) {
+      emit2("select-word", word);
+    }
+    async function onWordDblClick(token) {
+      const currentStatus = vocabManager.get(token.lemma);
+      const displayPhonetic = token.phonetic ? ` /${token.phonetic}/` : "";
+      let trans = token.trans;
+      let phonetic = token.phonetic;
+      if (trans) {
+        new import_obsidian10.Notice(`\u{1F4D6} ${token.lemma}${displayPhonetic}
+\u91CA\u4E49: ${trans}`, 3500);
+      } else {
+        try {
+          const result = await vocabManager.fetchOnlineTranslationAndDetails(token.lemma);
+          if (result && result.trans) {
+            new import_obsidian10.Notice(`\u{1F4D6} ${token.lemma}${result.phonetic ? ` /${result.phonetic}/` : ""}
+\u91CA\u4E49: ${result.trans}`, 4500);
+            trans = result.trans;
+            token.trans = result.trans;
+            if (result.phonetic) {
+              phonetic = result.phonetic;
+              token.phonetic = result.phonetic;
+            }
+          }
+        } catch (err) {
+        }
+      }
+      if (currentStatus !== "KNOWN") {
+        vocabManager.set(token.lemma, "LEARNING", trans, phonetic);
+        eventBus.emit("lang-learner:word-changed", token.lemma, "LEARNING", token.text);
+      }
+      emit2("select-word", token.lemma);
+    }
+    function handleWordChanged(word, status) {
+      selectedArticleParagraphs.value.forEach((p2) => {
+        p2.segments.forEach((tok) => {
+          if (tok.lemma === word)
+            tok.status = status;
+        });
+      });
+    }
+    onMounted(() => {
+      loadFeeds();
+      eventBus.on("lang-learner:word-changed", handleWordChanged);
+    });
+    onUnmounted(() => {
+      eventBus.off("lang-learner:word-changed", handleWordChanged);
+    });
     return {
-      speak,
-      availableVoices,
-      showVoiceConfig,
-      voiceSettings,
-      saveVoiceSettings,
-      stats,
-      activeTab,
-      wordListCache,
-      unknownList,
-      learningList,
-      currentTabList,
-      selectedWord,
-      estimationState,
-      currentQuestionIndex,
-      totalQuestions,
-      currentTestWord,
-      estimatedLevel,
-      batchMarkedCount,
-      progressPercent,
-      mainTab,
-      sentenceInput,
-      isAnalyzing,
-      hasAnalyzed,
-      isTranslating,
-      sentenceTranslation,
-      analyzedSentenceTokens,
-      analyzedWordsList,
-      activeTokenIndex,
-      selectWord,
-      changeWordStatus,
-      quickAdvance,
-      startEstimation,
-      answerEstimation,
-      learnArticle,
-      analyzeInputSentence,
-      importSelection,
-      onSentenceWordClick,
-      onSentenceWordDblClick,
-      updateWordStatusInList,
-      displayWord,
-      toggleSyllableSplit,
-      exampleSentences,
-      isLoadingExamples,
-      searchQuery,
-      performSearch,
-      searchResultsList,
-      selectResultWord,
-      backToSearchResults,
-      lookupInSystemDict,
-      getWordTranslation,
-      toggleAddWord,
-      copyCardContent,
-      showAiConfig,
-      aiSettings,
-      saveAiSettings,
-      isAiLoading,
-      aiResponse,
-      aiMarkdownEl,
-      askAITeacher,
-      exportAIResponse,
-      dueWords,
-      currentReviewWord,
-      showReviewAnswer,
-      reviewExampleSentences,
-      isLoadingReviewExamples,
-      submitReviewGrade,
-      getGradeLabel,
-      currentVideoUrl,
-      activeVideoSrc,
-      mediaFiles,
-      selectedMediaFile,
-      mediaVideoRef,
-      mediaPlaybackRate,
-      currentVideoTime,
-      formatTime,
-      scanMediaFiles,
-      loadMediaSource,
-      handleSelectLocalMedia,
-      insertVideoTimestamp,
-      setPlaybackRate,
-      onVideoTimeUpdate,
-      mediaType,
-      // RSS
       showRssConfig,
       newFeedName,
       newFeedUrl,
@@ -28392,508 +30477,610 @@ ${markdown}
       feedItems,
       selectedArticle,
       selectedArticleParagraphs,
-      loadRssFeeds,
       addRssFeed,
       removeRssFeed,
       handleSelectFeed,
       readArticle,
-      // 字幕
-      subtitlesList,
-      activeSubtitleIndex,
-      isLoadingSubtitles,
-      seekToSubtitleTime,
-      loadYouTubeCaptions,
-      handleLocalSubtitleUpload,
-      exportSubtitlesToNote,
-      isLoopingCurrentSentence,
-      isSubtitleMasked,
-      showTranslation,
-      toggleLoopCurrentSentence,
-      goToPrevSubtitle,
-      goToNextSubtitle
+      onWordClick,
+      onWordDblClick
     };
   }
 });
 
-// sfc-template:/Users/up_dong/Documents/open_workspace/obsidian-english-learner/src/ui/Panel.vue?type=template
-var _hoisted_1 = { class: "lang-learner-panel" };
-var _hoisted_2 = {
-  class: "lang-learner-search-bar",
-  style: { "display": "flex", "gap": "6px", "width": "100%" }
-};
-var _hoisted_3 = {
-  class: "lang-learner-settings-row",
-  style: { "display": "flex", "gap": "12px", "margin-bottom": "12px", "border-bottom": "1px solid var(--background-modifier-border)", "padding-bottom": "8px", "align-items": "flex-start" }
-};
-var _hoisted_4 = {
-  class: "lang-learner-panel-section lang-learner-voice-settings-section",
-  style: { "flex": "1", "margin-bottom": "0", "padding-bottom": "0", "border-bottom": "none" }
-};
-var _hoisted_5 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_6 = {
-  class: "lang-learner-voice-settings-body",
-  style: { "padding-top": "10px", "display": "flex", "flex-direction": "column", "gap": "8px", "max-height": "120px", "overflow-y": "auto", "padding-right": "4px" }
-};
-var _hoisted_7 = {
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_8 = {
-  key: 0,
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_9 = {
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_10 = ["value"];
-var _hoisted_11 = {
-  key: 0,
-  value: ""
-};
-var _hoisted_12 = {
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "align-items": "center", "justify-content": "space-between" }
-};
-var _hoisted_13 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_14 = {
-  class: "lang-learner-voice-setting-item",
-  style: { "display": "flex", "align-items": "center", "justify-content": "space-between" }
-};
-var _hoisted_15 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_16 = {
-  class: "lang-learner-panel-section lang-learner-ai-settings-section",
-  style: { "flex": "1", "margin-bottom": "0", "padding-bottom": "0", "border-bottom": "none" }
-};
-var _hoisted_17 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_18 = {
-  class: "lang-learner-ai-settings-body",
-  style: { "padding-top": "10px", "display": "flex", "flex-direction": "column", "gap": "8px", "max-height": "120px", "overflow-y": "auto", "padding-right": "4px" }
-};
-var _hoisted_19 = {
-  class: "lang-learner-ai-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_20 = {
-  class: "lang-learner-ai-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_21 = {
-  class: "lang-learner-ai-setting-item",
-  style: { "display": "flex", "flex-direction": "column", "gap": "4px" }
-};
-var _hoisted_22 = {
-  key: 0,
-  class: "lang-learner-panel-section lang-learner-search-results",
-  style: { "margin-bottom": "12px", "border-bottom": "1px solid var(--background-modifier-border)", "padding-bottom": "12px" }
-};
-var _hoisted_23 = {
-  class: "lang-learner-section-title",
-  style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px" }
-};
-var _hoisted_24 = {
-  class: "lang-learner-search-results-list",
-  style: { "max-height": "250px", "overflow-y": "auto", "display": "flex", "flex-direction": "column", "gap": "6px", "padding": "2px" }
-};
-var _hoisted_25 = ["onClick"];
-var _hoisted_26 = { style: { "font-weight": "600", "color": "var(--text-accent)" } };
-var _hoisted_27 = ["title"];
-var _hoisted_28 = {
-  key: 1,
-  class: "lang-learner-panel-section lang-learner-word-detail"
-};
-var _hoisted_29 = {
-  class: "lang-learner-section-title",
-  style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
-};
-var _hoisted_30 = { style: { "display": "flex", "align-items": "center", "gap": "6px" } };
-var _hoisted_31 = { class: "lang-learner-word-info-card" };
-var _hoisted_32 = {
-  class: "lang-learner-word-detail-header",
-  style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
-};
-var _hoisted_33 = { class: "lang-learner-word-lemma" };
-var _hoisted_34 = {
-  key: 0,
-  class: "lang-learner-word-phonetic-inline"
-};
-var _hoisted_35 = { style: { "display": "flex", "align-items": "center", "gap": "4px" } };
-var _hoisted_36 = ["title"];
-var _hoisted_37 = { class: "lang-learner-word-trans" };
-var _hoisted_38 = {
-  key: 0,
-  class: "lang-learner-word-etymology-container",
-  style: { "margin-top": "10px", "padding-top": "10px", "border-top": "1px dashed var(--background-modifier-border)" }
-};
-var _hoisted_39 = {
-  class: "lang-learner-etymology-content",
-  style: { "font-size": "0.85em", "color": "var(--text-normal)", "line-height": "1.4", "background-color": "var(--background-secondary-alt)", "padding": "6px 8px", "border-radius": "4px", "border-left": "3px solid var(--text-accent)", "white-space": "pre-wrap" }
-};
-var _hoisted_40 = { class: "lang-learner-word-examples-container" };
-var _hoisted_41 = {
-  key: 0,
-  class: "lang-learner-examples-loading"
-};
-var _hoisted_42 = {
-  key: 1,
-  class: "lang-learner-example-list"
-};
-var _hoisted_43 = {
-  key: 2,
-  class: "lang-learner-examples-empty"
-};
-var _hoisted_44 = {
-  class: "lang-learner-ai-teacher-container",
-  style: { "margin-top": "12px", "padding-top": "12px", "border-top": "1px solid var(--background-modifier-border)" }
-};
-var _hoisted_45 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px" } };
-var _hoisted_46 = ["disabled"];
-var _hoisted_47 = {
-  key: 0,
-  class: "lang-learner-ai-response-box",
-  style: { "margin-top": "8px" }
-};
-var _hoisted_48 = {
-  key: 0,
-  style: { "margin-bottom": "8px", "display": "flex", "gap": "8px", "align-items": "center", "background-color": "rgba(var(--interactive-accent-rgb, 99, 102, 241), 0.1)", "padding": "4px 8px", "border-radius": "4px" }
-};
-var _hoisted_49 = { style: { "font-size": "0.85em", "font-weight": "bold", "color": "var(--text-accent)" } };
-var _hoisted_50 = {
-  ref: "aiMarkdownEl",
-  class: "lang-learner-ai-markdown markdown-preview-view markdown-rendered",
-  style: { "font-size": "0.85em", "color": "var(--text-normal)", "line-height": "1.5", "background-color": "var(--background-secondary)", "padding": "8px", "border-radius": "6px", "max-height": "300px", "overflow-y": "auto" }
-};
-var _hoisted_51 = { class: "lang-learner-main-tabs" };
-var _hoisted_52 = { class: "lang-learner-tab-content" };
-var _hoisted_53 = { class: "lang-learner-panel-dashboard" };
-var _hoisted_54 = { class: "lang-learner-stats-grid" };
-var _hoisted_55 = { class: "lang-learner-stat-item lang-learner-stat-total" };
-var _hoisted_56 = { class: "lang-learner-stat-value" };
-var _hoisted_57 = { class: "lang-learner-stat-item lang-learner-stat-known" };
-var _hoisted_58 = { class: "lang-learner-stat-value" };
-var _hoisted_59 = { class: "lang-learner-stat-item lang-learner-stat-learning" };
-var _hoisted_60 = { class: "lang-learner-stat-value" };
-var _hoisted_61 = { class: "lang-learner-stat-item lang-learner-stat-unknown" };
-var _hoisted_62 = { class: "lang-learner-stat-value" };
-var _hoisted_63 = { class: "lang-learner-panel-section lang-learner-wordlist-area" };
-var _hoisted_64 = { class: "lang-learner-tab-bar" };
-var _hoisted_65 = { class: "lang-learner-wordlist-container" };
-var _hoisted_66 = ["onClick"];
-var _hoisted_67 = { class: "lang-learner-wl-word" };
-var _hoisted_68 = { class: "lang-learner-wl-trans" };
-var _hoisted_69 = {
-  class: "lang-learner-wordlist-actions",
-  style: { "display": "flex", "align-items": "center", "gap": "6px" }
-};
-var _hoisted_70 = ["onClick"];
-var _hoisted_71 = ["title", "onClick"];
-var _hoisted_72 = {
-  key: 0,
-  class: "lang-learner-empty-hint"
-};
-var _hoisted_73 = { class: "lang-learner-panel-section" };
-var _hoisted_74 = { class: "lang-learner-tab-content" };
-var _hoisted_75 = {
-  key: 0,
-  class: "lang-learner-panel-section"
-};
-var _hoisted_76 = {
-  key: 1,
-  class: "lang-learner-panel-section lang-learner-estimation-area"
-};
-var _hoisted_77 = { class: "lang-learner-estimation-header" };
-var _hoisted_78 = { class: "lang-learner-estimation-progress" };
-var _hoisted_79 = { class: "lang-learner-progress-bar" };
-var _hoisted_80 = { class: "lang-learner-estimation-word" };
-var _hoisted_81 = { class: "lang-learner-big-word" };
-var _hoisted_82 = { class: "lang-learner-estimation-actions" };
-var _hoisted_83 = {
-  key: 2,
-  class: "lang-learner-panel-section lang-learner-estimation-result"
-};
-var _hoisted_84 = { class: "lang-learner-result-value" };
-var _hoisted_85 = { class: "lang-learner-result-detail" };
-var _hoisted_86 = { class: "lang-learner-tab-content" };
-var _hoisted_87 = { class: "lang-learner-panel-section" };
-var _hoisted_88 = { class: "lang-learner-sentence-actions" };
-var _hoisted_89 = ["disabled"];
-var _hoisted_90 = {
-  key: 0,
-  class: "lang-learner-panel-section lang-learner-analysis-result"
-};
-var _hoisted_91 = { class: "lang-learner-result-box" };
-var _hoisted_92 = {
-  class: "lang-learner-box-title",
-  style: { "display": "flex", "justify-content": "space-between", "align-items": "center" }
-};
-var _hoisted_93 = {
-  key: 0,
-  class: "lang-learner-loading-text"
-};
-var _hoisted_94 = {
-  key: 1,
-  class: "lang-learner-translation-text"
-};
-var _hoisted_95 = { class: "lang-learner-result-box" };
-var _hoisted_96 = { class: "lang-learner-interactive-sentence" };
-var _hoisted_97 = { key: 0 };
-var _hoisted_98 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_99 = { class: "lang-learner-result-box" };
-var _hoisted_100 = { class: "lang-learner-box-title" };
-var _hoisted_101 = {
-  class: "lang-learner-wordlist-container",
-  style: { "max-height": "250px" }
-};
-var _hoisted_102 = ["onClick"];
-var _hoisted_103 = {
-  key: 0,
-  style: { "opacity": "0.6", "font-size": "0.7em" }
-};
-var _hoisted_104 = { class: "lang-learner-wl-trans" };
-var _hoisted_105 = {
-  class: "lang-learner-sentence-word-status-btns",
-  style: { "display": "flex", "align-items": "center", "gap": "4px" }
-};
-var _hoisted_106 = ["onClick"];
-var _hoisted_107 = ["onClick"];
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=template
+var _hoisted_120 = { class: "lang-learner-tab-content" };
+var _hoisted_210 = { class: "lang-learner-panel-section lang-learner-rss-config-box" };
+var _hoisted_310 = { class: "lang-learner-rss-config-arrow" };
+var _hoisted_48 = { class: "lang-learner-rss-config-body" };
+var _hoisted_58 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px" } };
+var _hoisted_68 = { style: { "display": "flex", "gap": "6px" } };
+var _hoisted_78 = { class: "lang-learner-rss-list-container" };
+var _hoisted_88 = { class: "lang-learner-rss-feeds-list" };
+var _hoisted_98 = { class: "lang-learner-feed-name-span" };
 var _hoisted_108 = ["onClick"];
-var _hoisted_109 = ["onClick"];
-var _hoisted_110 = {
-  key: 0,
-  class: "lang-learner-empty-hint"
-};
-var _hoisted_111 = { class: "lang-learner-tab-content" };
-var _hoisted_112 = { class: "lang-learner-panel-dashboard" };
-var _hoisted_113 = { class: "lang-learner-stats-grid" };
-var _hoisted_114 = {
-  class: "lang-learner-stat-item lang-learner-stat-learning",
-  style: { "grid-column": "span 2" }
-};
-var _hoisted_115 = { class: "lang-learner-stat-value" };
-var _hoisted_116 = {
-  key: 0,
-  class: "lang-learner-review-card-container"
-};
-var _hoisted_117 = { class: "lang-learner-estimation-word" };
-var _hoisted_118 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "padding": "0 10px 10px 10px" } };
-var _hoisted_119 = { class: "lang-learner-big-word" };
-var _hoisted_120 = {
-  key: 0,
-  class: "lang-learner-word-phonetic",
-  style: { "margin-top": "4px" }
-};
-var _hoisted_121 = {
-  key: 0,
-  class: "lang-learner-panel-section lang-learner-review-answer-section",
-  style: { "margin-top": "12px" }
-};
-var _hoisted_122 = {
-  class: "lang-learner-word-trans",
-  style: { "border-top": "none", "padding-top": "0", "font-size": "0.95em" }
-};
-var _hoisted_123 = {
-  key: 0,
-  class: "lang-learner-word-etymology-container",
-  style: { "margin-top": "10px", "padding-top": "10px", "border-top": "1px dashed var(--background-modifier-border)" }
-};
-var _hoisted_124 = {
-  class: "lang-learner-etymology-content",
-  style: { "font-size": "0.85em", "color": "var(--text-normal)", "line-height": "1.4", "background-color": "var(--background-secondary-alt)", "padding": "6px 8px", "border-radius": "4px", "border-left": "3px solid var(--text-accent)" }
-};
-var _hoisted_125 = {
-  class: "lang-learner-word-examples-container",
-  style: { "margin-top": "12px" }
-};
-var _hoisted_126 = {
-  key: 0,
-  class: "lang-learner-examples-loading",
-  style: { "font-size": "0.8em", "color": "var(--text-muted)" }
-};
-var _hoisted_127 = {
-  key: 1,
-  class: "lang-learner-example-list",
-  style: { "margin": "0", "padding-left": "14px", "font-size": "0.85em", "line-height": "1.4" }
-};
-var _hoisted_128 = {
-  key: 2,
-  class: "lang-learner-examples-empty",
-  style: { "font-size": "0.8em", "color": "var(--text-muted)", "font-style": "italic" }
-};
-var _hoisted_129 = { style: { "margin-top": "16px" } };
-var _hoisted_130 = {
-  key: 1,
-  style: { "display": "flex", "gap": "8px" }
-};
-var _hoisted_131 = {
-  key: 1,
-  class: "lang-learner-empty-hint",
-  style: { "padding": "40px 0", "text-align": "center" }
-};
-var _hoisted_132 = {
-  class: "lang-learner-tab-content",
-  style: { "display": "flex", "flex-direction": "column", "gap": "12px" }
-};
-var _hoisted_133 = {
-  class: "lang-learner-panel-section",
-  style: { "padding": "10px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)", "display": "flex", "flex-direction": "column", "gap": "8px" }
-};
-var _hoisted_134 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px" } };
-var _hoisted_135 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center" } };
-var _hoisted_136 = ["value"];
-var _hoisted_137 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px", "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "8px" } };
-var _hoisted_138 = { style: { "display": "flex", "gap": "6px" } };
-var _hoisted_139 = {
-  key: 0,
-  style: { "display": "flex", "flex-direction": "column", "gap": "10px" }
-};
-var _hoisted_140 = {
-  class: "lang-learner-panel-section",
-  style: { "text-align": "center", "background": "#000", "border-radius": "8px", "padding": "2px", "overflow": "hidden", "box-shadow": "0 4px 10px rgba(0, 0, 0, 0.25)" }
-};
-var _hoisted_141 = ["src"];
-var _hoisted_142 = {
-  key: 1,
-  id: "youtube-player-container",
-  style: { "width": "100%", "height": "240px", "display": "block", "border-radius": "6px", "background": "#000" }
-};
-var _hoisted_143 = ["src"];
-var _hoisted_144 = {
-  class: "lang-learner-panel-section",
-  style: { "padding": "8px 12px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)", "display": "flex", "flex-direction": "column", "gap": "8px" }
-};
-var _hoisted_145 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center" } };
-var _hoisted_146 = { style: { "font-size": "0.85em", "font-weight": "600", "color": "var(--text-accent)", "display": "flex", "align-items": "center", "gap": "4px" } };
-var _hoisted_147 = {
-  key: 0,
-  style: { "display": "flex", "gap": "3px", "align-items": "center" }
-};
-var _hoisted_148 = ["onClick"];
-var _hoisted_149 = {
-  key: 0,
-  style: { "font-size": "0.72em", "color": "var(--text-warning)", "line-height": "1.3" }
-};
-var _hoisted_150 = {
-  key: 0,
-  class: "lang-learner-panel-section",
-  style: { "padding": "12px", "border-radius": "8px", "border": "1.5px solid var(--interactive-accent)", "background": "var(--background-primary)", "box-shadow": "0 2px 8px rgba(0, 0, 0, 0.05)", "text-align": "center" }
-};
-var _hoisted_151 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px", "border-bottom": "1px dashed var(--background-modifier-border)", "padding-bottom": "6px" } };
-var _hoisted_152 = { style: { "display": "flex", "gap": "4px" } };
-var _hoisted_153 = { style: { "display": "flex", "gap": "4px" } };
-var _hoisted_154 = ["title"];
-var _hoisted_155 = { style: { "font-size": "1.08em", "font-weight": "600", "line-height": "1.5", "color": "var(--text-normal)" } };
-var _hoisted_156 = { key: 0 };
-var _hoisted_157 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_158 = {
-  key: 0,
-  style: { "font-size": "0.88em", "color": "var(--text-muted)", "margin-top": "8px", "font-weight": "normal", "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "6px", "text-align": "center" }
-};
-var _hoisted_159 = {
-  class: "lang-learner-panel-section",
-  style: { "padding": "10px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)" }
-};
-var _hoisted_160 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "8px" } };
-var _hoisted_161 = { style: { "font-size": "0.82em", "font-weight": "700", "color": "var(--text-muted)", "display": "flex", "align-items": "center", "gap": "4px" } };
-var _hoisted_162 = { style: { "display": "flex", "gap": "4px" } };
-var _hoisted_163 = ["title"];
-var _hoisted_164 = ["disabled"];
-var _hoisted_165 = {
-  class: "lang-learner-btn-status-mini",
-  style: { "padding": "2px 5px", "font-size": "0.7em", "cursor": "pointer", "display": "inline-block", "margin": "0" }
-};
-var _hoisted_166 = {
-  key: 0,
-  class: "lang-learner-subtitles-container",
-  style: { "max-height": "220px", "overflow-y": "auto", "border": "1px solid var(--background-modifier-border)", "border-radius": "6px", "padding": "6px", "background": "var(--background-primary)", "display": "flex", "flex-direction": "column", "gap": "6px" }
-};
-var _hoisted_167 = ["id", "onClick"];
-var _hoisted_168 = { style: { "font-size": "0.72em", "color": "var(--text-muted)", "font-family": "monospace", "display": "block", "margin-bottom": "2px" } };
-var _hoisted_169 = {
-  class: "lang-learner-sub-text",
-  style: { "color": "var(--text-normal)", "display": "block" }
-};
-var _hoisted_170 = { key: 0 };
-var _hoisted_171 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_172 = {
-  key: 0,
-  class: "lang-learner-sub-translation",
-  style: { "font-size": "0.8em", "color": "var(--text-muted)", "margin-top": "3px", "font-weight": "normal", "display": "block" }
-};
-var _hoisted_173 = {
-  key: 1,
-  style: { "font-size": "0.78em", "color": "var(--text-muted)", "text-align": "center", "padding": "16px", "font-style": "italic" }
-};
-var _hoisted_174 = {
-  key: 1,
-  class: "lang-learner-empty-hint",
-  style: { "padding": "40px 0", "text-align": "center", "background": "var(--background-secondary)", "border-radius": "8px", "border": "1px dashed var(--background-modifier-border)", "margin-top": "10px" }
-};
-var _hoisted_175 = { class: "lang-learner-tab-content" };
-var _hoisted_176 = {
-  class: "lang-learner-panel-section",
-  style: { "margin-bottom": "12px", "padding": "12px", "border-radius": "8px", "border": "1px solid var(--background-modifier-border)", "background": "var(--background-secondary)" }
-};
-var _hoisted_177 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_178 = { style: { "padding-top": "10px", "display": "flex", "flex-direction": "column", "gap": "8px" } };
-var _hoisted_179 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px" } };
-var _hoisted_180 = { style: { "display": "flex", "gap": "6px" } };
-var _hoisted_181 = { style: { "border-top": "1px dashed var(--background-modifier-border)", "padding-top": "8px", "margin-top": "4px" } };
-var _hoisted_182 = { style: { "display": "flex", "flex-direction": "column", "gap": "4px", "max-height": "120px", "overflow-y": "auto" } };
-var _hoisted_183 = { style: { "font-size": "0.8em", "color": "var(--text-normal)", "font-weight": "500", "overflow": "hidden", "text-overflow": "ellipsis", "white-space": "nowrap", "max-width": "150px" } };
-var _hoisted_184 = ["onClick"];
-var _hoisted_185 = {
-  class: "lang-learner-panel-section",
-  style: { "margin-bottom": "12px", "display": "flex", "flex-direction": "column", "gap": "6px" }
-};
-var _hoisted_186 = ["value"];
-var _hoisted_187 = {
+var _hoisted_1111 = { class: "lang-learner-panel-section lang-learner-rss-selector-box" };
+var _hoisted_128 = ["value"];
+var _hoisted_137 = {
   class: "lang-learner-panel-section",
   style: { "min-height": "200px" }
 };
-var _hoisted_188 = {
+var _hoisted_147 = {
   key: 0,
   class: "lang-learner-loading-text",
   style: { "padding": "30px 0", "text-align": "center" }
 };
-var _hoisted_189 = {
+var _hoisted_157 = {
   key: 1,
   class: "lang-learner-rss-article-detail"
 };
-var _hoisted_190 = { style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "margin-bottom": "10px", "border-bottom": "1px solid var(--background-modifier-border)", "padding-bottom": "8px" } };
-var _hoisted_191 = ["href"];
-var _hoisted_192 = { style: { "font-size": "1.2em", "font-weight": "bold", "margin": "0 0 6px 0", "line-height": "1.3", "color": "var(--text-normal)" } };
-var _hoisted_193 = { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin": "0 0 16px 0" } };
-var _hoisted_194 = {
-  class: "lang-learner-rss-article-body",
-  style: { "line-height": "1.6", "font-size": "0.95em", "color": "var(--text-normal)", "display": "flex", "flex-direction": "column", "gap": "14px" }
-};
-var _hoisted_195 = { key: 0 };
-var _hoisted_196 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
-var _hoisted_197 = {
+var _hoisted_167 = { class: "lang-learner-rss-detail-header" };
+var _hoisted_177 = ["href"];
+var _hoisted_187 = { class: "lang-learner-rss-title" };
+var _hoisted_196 = { class: "lang-learner-rss-date-label" };
+var _hoisted_206 = { class: "lang-learner-rss-article-body" };
+var _hoisted_215 = { key: 0 };
+var _hoisted_226 = ["data-lemma", "data-trans", "data-phonetic", "onClick", "onDblclick"];
+var _hoisted_234 = {
   key: 2,
-  class: "lang-learner-rss-items-list",
-  style: { "display": "flex", "flex-direction": "column", "gap": "8px" }
+  class: "lang-learner-rss-items-list"
 };
-var _hoisted_198 = ["onClick"];
-var _hoisted_199 = { style: { "font-weight": "600", "font-size": "0.95em", "color": "var(--text-normal)", "line-height": "1.3", "text-align": "left" } };
-var _hoisted_200 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
-var _hoisted_201 = {
+var _hoisted_244 = ["onClick"];
+var _hoisted_254 = { style: { "font-weight": "600", "font-size": "0.95em", "color": "var(--text-normal)", "line-height": "1.3", "text-align": "left" } };
+var _hoisted_263 = { style: { "font-size": "0.75em", "color": "var(--text-muted)" } };
+var _hoisted_273 = {
   key: 3,
-  class: "lang-learner-empty-hint",
-  style: { "padding": "40px 0", "text-align": "center", "background": "var(--background-secondary)", "border-radius": "8px", "border": "1px dashed var(--background-modifier-border)" }
+  class: "lang-learner-empty-hint"
 };
-function render(_ctx, _cache) {
-  return openBlock(), createElementBlock("div", _hoisted_1, [
-    createBaseVNode("div", _hoisted_2, [
+function render8(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_120, [
+    _cache[12] || (_cache[12] = createBaseVNode(
+      "div",
+      { class: "lang-learner-panel-dashboard" },
+      [
+        createBaseVNode("h3", { class: "lang-learner-panel-title" }, "\u{1F4F0} RSS \u8BA2\u9605\u9605\u8BFB"),
+        createBaseVNode("p", { style: { "font-size": "0.82em", "color": "var(--text-muted)", "margin": "-4px 0 12px 0" } }, " \u5728\u6B64\u5904\u8BA2\u9605\u82F1\u8BED\u6587\u7AE0\u6E90\uFF0C\u4EAB\u53D7\u5373\u8BFB\u5373\u5212\u3001\u7EB3\u7C73\u7EA7\u67E5\u8BCD\u4E0E\u53D1\u97F3\u7684\u9605\u8BFB\u4F53\u9A8C\u3002 ")
+      ],
+      -1
+      /* CACHED */
+    )),
+    createBaseVNode("div", _hoisted_210, [
+      createBaseVNode("div", {
+        class: "lang-learner-voice-settings-header",
+        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.showRssConfig = !_ctx.showRssConfig)
+      }, [
+        _cache[7] || (_cache[7] = createBaseVNode(
+          "span",
+          { class: "lang-learner-rss-config-title" },
+          "\u2795 \u7BA1\u7406 RSS \u8BA2\u9605\u6E90",
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode(
+          "span",
+          _hoisted_310,
+          toDisplayString(_ctx.showRssConfig ? "\u25BC \u6536\u8D77" : "\u25B6 \u5C55\u5F00"),
+          1
+          /* TEXT */
+        )
+      ]),
+      withDirectives(createBaseVNode(
+        "div",
+        _hoisted_48,
+        [
+          createBaseVNode("div", _hoisted_58, [
+            withDirectives(createBaseVNode(
+              "input",
+              {
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.newFeedName = $event),
+                placeholder: "\u8BA2\u9605\u6E90\u540D\u79F0 (\u5982: Hacker News)",
+                class: "lang-learner-rss-input"
+              },
+              null,
+              512
+              /* NEED_PATCH */
+            ), [
+              [vModelText, _ctx.newFeedName]
+            ]),
+            createBaseVNode("div", _hoisted_68, [
+              withDirectives(createBaseVNode(
+                "input",
+                {
+                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => _ctx.newFeedUrl = $event),
+                  placeholder: "\u8BA2\u9605\u6E90 RSS URL",
+                  class: "lang-learner-rss-input",
+                  style: { "flex": "1" }
+                },
+                null,
+                512
+                /* NEED_PATCH */
+              ), [
+                [vModelText, _ctx.newFeedUrl]
+              ]),
+              createBaseVNode("button", {
+                onClick: _cache[3] || (_cache[3] = (...args) => _ctx.addRssFeed && _ctx.addRssFeed(...args)),
+                class: "lang-learner-btn lang-learner-btn-primary"
+              }, " \u6DFB\u52A0 ")
+            ])
+          ]),
+          createBaseVNode("div", _hoisted_78, [
+            _cache[8] || (_cache[8] = createBaseVNode(
+              "label",
+              null,
+              "\u5DF2\u8BA2\u9605\u6E90\u5217\u8868:",
+              -1
+              /* CACHED */
+            )),
+            createBaseVNode("div", _hoisted_88, [
+              (openBlock(true), createElementBlock(
+                Fragment,
+                null,
+                renderList(_ctx.rssFeeds, (feed, idx) => {
+                  return openBlock(), createElementBlock("div", {
+                    key: idx,
+                    class: "lang-learner-rss-feed-item"
+                  }, [
+                    createBaseVNode(
+                      "span",
+                      _hoisted_98,
+                      toDisplayString(feed.name),
+                      1
+                      /* TEXT */
+                    ),
+                    createBaseVNode("button", {
+                      onClick: ($event) => _ctx.removeRssFeed(idx),
+                      class: "lang-learner-btn-icon",
+                      title: "\u5220\u9664\u8BE5\u6E90"
+                    }, " \u274C ", 8, _hoisted_108)
+                  ]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ])
+          ])
+        ],
+        512
+        /* NEED_PATCH */
+      ), [
+        [vShow, _ctx.showRssConfig]
+      ])
+    ]),
+    createBaseVNode("div", _hoisted_1111, [
+      _cache[10] || (_cache[10] = createBaseVNode(
+        "label",
+        null,
+        "\u{1F4F0} \u9009\u62E9\u8BA2\u9605\u6E90\u8FDB\u884C\u9605\u8BFB",
+        -1
+        /* CACHED */
+      )),
+      withDirectives(createBaseVNode(
+        "select",
+        {
+          "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.selectedFeedUrl = $event),
+          onChange: _cache[5] || (_cache[5] = (...args) => _ctx.handleSelectFeed && _ctx.handleSelectFeed(...args))
+        },
+        [
+          _cache[9] || (_cache[9] = createBaseVNode(
+            "option",
+            { value: "" },
+            "-- \u8BF7\u9009\u62E9 RSS \u8BA2\u9605\u6E90 --",
+            -1
+            /* CACHED */
+          )),
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.rssFeeds, (feed) => {
+              return openBlock(), createElementBlock("option", {
+                key: feed.url,
+                value: feed.url
+              }, toDisplayString(feed.name), 9, _hoisted_128);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ],
+        544
+        /* NEED_HYDRATION, NEED_PATCH */
+      ), [
+        [vModelSelect, _ctx.selectedFeedUrl]
+      ])
+    ]),
+    createBaseVNode("div", _hoisted_137, [
+      _ctx.isLoadingFeeds ? (openBlock(), createElementBlock("div", _hoisted_147, " \u6B63\u5728\u62C9\u53D6 RSS \u6570\u636E\u5E76\u5206\u8BCD\u9AD8\u4EAE\uFF0C\u8BF7\u7A0D\u5019... ")) : _ctx.selectedArticle ? (openBlock(), createElementBlock("div", _hoisted_157, [
+        createBaseVNode("div", _hoisted_167, [
+          createBaseVNode("button", {
+            onClick: _cache[6] || (_cache[6] = ($event) => _ctx.selectedArticle = null),
+            class: "lang-learner-btn",
+            style: { "padding": "4px 10px", "font-size": "0.8em", "display": "flex", "align-items": "center", "gap": "4px" }
+          }, " \u2B05\uFE0F \u8FD4\u56DE\u6587\u7AE0\u5217\u8868 "),
+          createBaseVNode("a", {
+            href: _ctx.selectedArticle.link,
+            target: "_blank",
+            class: "lang-learner-btn-icon",
+            title: "\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00\u539F\u6587",
+            style: { "text-decoration": "none" }
+          }, " \u{1F310} ", 8, _hoisted_177)
+        ]),
+        createBaseVNode(
+          "h3",
+          _hoisted_187,
+          toDisplayString(_ctx.selectedArticle.title),
+          1
+          /* TEXT */
+        ),
+        createBaseVNode(
+          "p",
+          _hoisted_196,
+          " \u53D1\u5E03\u65E5\u671F: " + toDisplayString(_ctx.selectedArticle.date),
+          1
+          /* TEXT */
+        ),
+        createBaseVNode("div", _hoisted_206, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.selectedArticleParagraphs, (p2, pIdx) => {
+              return openBlock(), createElementBlock("p", {
+                key: pIdx,
+                class: "lang-learner-rss-para"
+              }, [
+                (openBlock(true), createElementBlock(
+                  Fragment,
+                  null,
+                  renderList(p2.segments, (token, index) => {
+                    return openBlock(), createElementBlock(
+                      Fragment,
+                      { key: index },
+                      [
+                        token.type === "text" ? (openBlock(), createElementBlock(
+                          "span",
+                          _hoisted_215,
+                          toDisplayString(token.text),
+                          1
+                          /* TEXT */
+                        )) : (openBlock(), createElementBlock("span", {
+                          key: 1,
+                          class: normalizeClass(["lang-learner-word", {
+                            "lang-learner-unknown": token.status === "UNKNOWN",
+                            "lang-learner-learning": token.status === "LEARNING",
+                            "lang-learner-known": token.status === "KNOWN",
+                            "lang-learner-phrase": token.isPhrase
+                          }]),
+                          "data-lemma": token.lemma,
+                          "data-trans": token.trans,
+                          "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
+                          onClick: ($event) => _ctx.onWordClick(token.lemma),
+                          onDblclick: ($event) => _ctx.onWordDblClick(token)
+                        }, toDisplayString(token.text), 43, _hoisted_226))
+                      ],
+                      64
+                      /* STABLE_FRAGMENT */
+                    );
+                  }),
+                  128
+                  /* KEYED_FRAGMENT */
+                ))
+              ]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ])) : _ctx.feedItems.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_234, [
+        (openBlock(true), createElementBlock(
+          Fragment,
+          null,
+          renderList(_ctx.feedItems, (item, idx) => {
+            return openBlock(), createElementBlock("div", {
+              key: idx,
+              onClick: ($event) => _ctx.readArticle(item),
+              class: "lang-learner-wordlist-item",
+              style: { "display": "flex", "flex-direction": "column", "align-items": "flex-start", "gap": "4px", "padding": "10px", "cursor": "pointer" }
+            }, [
+              createBaseVNode(
+                "span",
+                _hoisted_254,
+                toDisplayString(item.title),
+                1
+                /* TEXT */
+              ),
+              createBaseVNode(
+                "span",
+                _hoisted_263,
+                toDisplayString(item.date),
+                1
+                /* TEXT */
+              )
+            ], 8, _hoisted_244);
+          }),
+          128
+          /* KEYED_FRAGMENT */
+        ))
+      ])) : (openBlock(), createElementBlock("div", _hoisted_273, [..._cache[11] || (_cache[11] = [
+        createBaseVNode(
+          "div",
+          { style: { "font-size": "2.5em", "margin-bottom": "8px" } },
+          "\u{1F4F0}",
+          -1
+          /* CACHED */
+        ),
+        createBaseVNode(
+          "p",
+          { style: { "margin": "0", "font-size": "0.85em", "color": "var(--text-muted)", "padding": "0 16px" } },
+          " \u672A\u62C9\u53D6\u5230\u6587\u7AE0\u5217\u8868\u3002\u8BF7\u5728\u4E0A\u65B9\u9009\u62E9\u6216\u6DFB\u52A0 RSS \u8BA2\u9605\u6E90\u5E76\u8F7D\u5165\u3002 ",
+          -1
+          /* CACHED */
+        )
+      ])]))
+    ])
+  ]);
+}
+
+// src/ui/components/ReaderTab.vue
+ReaderTab_default.render = render8;
+ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
+ReaderTab_default.__scopeId = "data-v-40c9e23f";
+var ReaderTab_default2 = ReaderTab_default;
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
+var Panel_default = defineComponent({
+  name: "Panel",
+  components: {
+    SettingsHeader: SettingsHeader_default2,
+    WordDetailCard: WordDetailCard_default2,
+    VocabularyTab: VocabularyTab_default2,
+    EstimateTab: EstimateTab_default2,
+    SentenceTab: SentenceTab_default2,
+    ReviewTab: ReviewTab_default2,
+    MediaTab: MediaTab_default2,
+    ReaderTab: ReaderTab_default2
+  },
+  setup() {
+    const vocabManager = inject("vocabManager");
+    const plugin = inject("plugin");
+    console.log("EIR DEBUG: Panel setup running!");
+    console.log("EIR DEBUG: vocabManager is", vocabManager);
+    console.log("EIR DEBUG: plugin is", plugin);
+    const audioService = new AudioService();
+    const mainTab = ref("vocabulary");
+    const searchQuery = ref("");
+    const selectedWord = ref(null);
+    const searchResultsList = ref([]);
+    const availableVoices = ref([]);
+    const voiceSettings = ref({
+      engine: "online",
+      onlineAccent: 2,
+      voiceName: "",
+      rate: 0.9,
+      pitch: 1
+    });
+    const aiSettings = ref({
+      apiKey: "",
+      baseUrl: "https://api.deepseek.com/v1",
+      model: "deepseek-chat"
+    });
+    const onlineTransCache = /* @__PURE__ */ new Map();
+    async function speak(text, customSettings, customVoices, onBoundary, onEnd) {
+      const settings = customSettings || voiceSettings.value;
+      const voices = customVoices || availableVoices.value;
+      await audioService.speak(text, settings, voices, onBoundary, onEnd);
+    }
+    provide("speak", speak);
+    provide("getAiSettings", () => aiSettings.value);
+    provide("getVoiceSettings", () => voiceSettings.value);
+    provide("getAvailableVoices", () => availableVoices.value);
+    function onVoiceSettingsChanged(settings) {
+      voiceSettings.value = settings;
+    }
+    function onAiSettingsChanged(settings) {
+      aiSettings.value = settings;
+    }
+    function onWordSelected(wordInfo) {
+      selectedWord.value = wordInfo;
+    }
+    function onWordSelectedByString(word) {
+      handleWordSelected(word);
+    }
+    function selectResultWord(word) {
+      handleWordSelected(word, true);
+    }
+    function backToSearchResults() {
+      selectedWord.value = null;
+    }
+    function setTab(tab) {
+      mainTab.value = tab;
+    }
+    function clearSearchResults() {
+      searchResultsList.value = [];
+    }
+    function lookupInSystemDict(query) {
+      const clean = query.trim();
+      if (!clean)
+        return;
+      window.open(`dict://${encodeURIComponent(clean)}`);
+    }
+    function getWordTranslation(word) {
+      const info = vocabManager.getInfo(word);
+      if (info && info.trans)
+        return info.trans;
+      const cached = onlineTransCache.get(word);
+      if (cached)
+        return cached;
+      const dictEntry = OFFLINE_DICT[word];
+      if (dictEntry)
+        return dictEntry.trans;
+      return "\u6682\u65E0\u91CA\u4E49";
+    }
+    async function fetchOnlineChineseSuggestions(query) {
+      const url = `https://dict.youdao.com/suggest?q=${encodeURIComponent(query)}&num=20&doctype=json`;
+      try {
+        const res = await (0, import_obsidian11.requestUrl)({ url });
+        const data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "{}");
+        if (data?.data?.entries) {
+          return data.data.entries.filter((e) => e.entry && e.explain).map((e) => ({ word: e.entry, trans: e.explain }));
+        }
+      } catch (e) {
+        console.error("\u83B7\u53D6\u5728\u7EBF\u63A8\u8350\u5931\u8D25:", e);
+      }
+      return [];
+    }
+    async function performSearch() {
+      const query = searchQuery.value.trim();
+      if (!query)
+        return;
+      const hasChinese = /[\u4e00-\u9fa5]/.test(query);
+      if (hasChinese) {
+        const queryLower = query.toLowerCase();
+        let matches = [];
+        const customEntries = vocabManager.getAllEntries();
+        for (const entry of customEntries.values()) {
+          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
+            matches.push(entry.word);
+          }
+        }
+        for (const [word, entry] of Object.entries(OFFLINE_DICT)) {
+          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
+            if (!matches.includes(word))
+              matches.push(word);
+          }
+        }
+        const onlineResults = await fetchOnlineChineseSuggestions(query);
+        for (const item of onlineResults) {
+          const wordLower = item.word.toLowerCase();
+          const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
+          if (isEnglishWord && !matches.includes(wordLower)) {
+            matches.push(wordLower);
+            onlineTransCache.set(wordLower, item.trans);
+          }
+        }
+        if (matches.length === 0) {
+          new import_obsidian11.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
+          return;
+        }
+        if (matches.length === 1) {
+          searchResultsList.value = [];
+          handleWordSelected(matches[0]);
+        } else {
+          let totalMatches = matches.length;
+          if (totalMatches > 100) {
+            matches = matches.slice(0, 100);
+            new import_obsidian11.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
+          } else {
+            new import_obsidian11.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
+          }
+          selectedWord.value = null;
+          searchResultsList.value = matches;
+        }
+      } else {
+        searchResultsList.value = [];
+        const result = lemmatize(query.toLowerCase());
+        handleWordSelected(result.lemma);
+      }
+      searchQuery.value = "";
+    }
+    function handleWordSelected(word, keepSearchResults = false) {
+      if (!keepSearchResults) {
+        searchResultsList.value = [];
+      }
+      const info = vocabManager.getInfo(word);
+      if (info) {
+        selectedWord.value = { ...info };
+      } else {
+        let trans = "";
+        let phonetic;
+        const dictEntry = OFFLINE_DICT[word];
+        if (dictEntry) {
+          trans = dictEntry.trans;
+          phonetic = dictEntry.phonetic || void 0;
+        }
+        selectedWord.value = {
+          word,
+          status: "UNKNOWN",
+          trans,
+          phonetic,
+          added: Date.now(),
+          updated: Date.now()
+        };
+      }
+    }
+    function updateVoices() {
+      if (typeof window === "undefined" || !window.speechSynthesis)
+        return;
+      const allVoices = window.speechSynthesis.getVoices();
+      availableVoices.value = allVoices.filter((v) => v.lang.toLowerCase().startsWith("en"));
+    }
+    onMounted(() => {
+      eventBus.on("lang-learner:word-selected", (word) => {
+        handleWordSelected(word);
+      });
+      updateVoices();
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = updateVoices;
+      }
+    });
+    onUnmounted(() => {
+      audioService.stopAllAudio();
+      eventBus.off("lang-learner:word-selected");
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    });
+    return {
+      mainTab,
+      searchQuery,
+      selectedWord,
+      searchResultsList,
+      availableVoices,
+      voiceSettings,
+      aiSettings,
+      speak,
+      onVoiceSettingsChanged,
+      onAiSettingsChanged,
+      onWordSelected,
+      onWordSelectedByString,
+      selectResultWord,
+      backToSearchResults,
+      setTab,
+      clearSearchResults,
+      lookupInSystemDict,
+      getWordTranslation,
+      performSearch
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=template
+var _hoisted_121 = { class: "lang-learner-panel" };
+var _hoisted_211 = { class: "lang-learner-search-bar" };
+var _hoisted_311 = {
+  key: 0,
+  class: "lang-learner-panel-section lang-learner-search-results"
+};
+var _hoisted_49 = { class: "lang-learner-section-title" };
+var _hoisted_59 = { class: "lang-learner-search-results-list" };
+var _hoisted_69 = ["onClick"];
+var _hoisted_79 = { class: "lang-learner-result-word-span" };
+var _hoisted_89 = ["title"];
+var _hoisted_99 = { class: "lang-learner-main-tabs" };
+function render9(_ctx, _cache) {
+  const _component_SettingsHeader = resolveComponent("SettingsHeader");
+  const _component_WordDetailCard = resolveComponent("WordDetailCard");
+  const _component_VocabularyTab = resolveComponent("VocabularyTab");
+  const _component_EstimateTab = resolveComponent("EstimateTab");
+  const _component_SentenceTab = resolveComponent("SentenceTab");
+  const _component_ReviewTab = resolveComponent("ReviewTab");
+  const _component_MediaTab = resolveComponent("MediaTab");
+  const _component_ReaderTab = resolveComponent("ReaderTab");
+  return openBlock(), createElementBlock("div", _hoisted_121, [
+    createBaseVNode("div", _hoisted_211, [
       withDirectives(createBaseVNode(
         "input",
         {
           "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.searchQuery = $event),
           onKeyup: _cache[1] || (_cache[1] = withKeys((...args) => _ctx.performSearch && _ctx.performSearch(...args), ["enter"])),
           placeholder: "\u8F93\u5165\u5355\u8BCD/\u4E2D\u6587\u67E5\u8BE2...",
-          class: "lang-learner-search-input",
-          style: { "flex": "1", "min-width": "0" }
+          class: "lang-learner-search-input"
         },
         null,
         544
@@ -28903,561 +31090,75 @@ function render(_ctx, _cache) {
       ]),
       createBaseVNode("button", {
         onClick: _cache[2] || (_cache[2] = (...args) => _ctx.performSearch && _ctx.performSearch(...args)),
-        class: "lang-learner-btn lang-learner-btn-primary lang-learner-search-btn",
-        style: { "flex-shrink": "0" }
+        class: "lang-learner-btn lang-learner-btn-primary lang-learner-search-btn"
       }, "\u{1F50D} \u67E5\u8BE2"),
-      _ctx.searchQuery.trim() ? (openBlock(), createElementBlock("button", {
+      _ctx.searchQuery && _ctx.searchQuery.trim() ? (openBlock(), createElementBlock("button", {
         key: 0,
         onClick: _cache[3] || (_cache[3] = ($event) => _ctx.lookupInSystemDict(_ctx.searchQuery)),
         class: "lang-learner-btn",
-        style: { "flex-shrink": "0", "padding": "4px 8px", "font-size": "0.85em", "display": "inline-flex", "align-items": "center", "justify-content": "center" },
         title: "\u5728 macOS \u7CFB\u7EDF\u8BCD\u5178\u4E2D\u67E5\u8BE2"
       }, " \u{1F4D6} \u7CFB\u7EDF ")) : createCommentVNode("v-if", true)
     ]),
-    createBaseVNode("div", _hoisted_3, [
-      createBaseVNode("div", _hoisted_4, [
-        createBaseVNode("div", {
-          class: "lang-learner-voice-settings-header",
-          onClick: _cache[4] || (_cache[4] = ($event) => _ctx.showVoiceConfig = !_ctx.showVoiceConfig),
-          style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
-        }, [
-          _cache[75] || (_cache[75] = createBaseVNode(
-            "span",
-            { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
-            "\u2699\uFE0F \u53D1\u97F3\u914D\u7F6E",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode(
-            "span",
-            _hoisted_5,
-            toDisplayString(_ctx.showVoiceConfig ? "\u25BC" : "\u25B6"),
-            1
-            /* TEXT */
-          )
-        ]),
-        withDirectives(createBaseVNode(
-          "div",
-          _hoisted_6,
-          [
-            createBaseVNode("div", _hoisted_7, [
-              _cache[77] || (_cache[77] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                "\u53D1\u97F3\u5F15\u64CE:",
-                -1
-                /* CACHED */
-              )),
-              withDirectives(createBaseVNode(
-                "select",
-                {
-                  "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => _ctx.voiceSettings.engine = $event),
-                  onChange: _cache[6] || (_cache[6] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                  style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                },
-                [..._cache[76] || (_cache[76] = [
-                  createBaseVNode(
-                    "option",
-                    { value: "online" },
-                    "\u{1F310} \u5728\u7EBF\u53D1\u97F3",
-                    -1
-                    /* CACHED */
-                  ),
-                  createBaseVNode(
-                    "option",
-                    { value: "local" },
-                    "\u{1F4BB} \u7CFB\u7EDF\u53D1\u97F3",
-                    -1
-                    /* CACHED */
-                  )
-                ])],
-                544
-                /* NEED_HYDRATION, NEED_PATCH */
-              ), [
-                [vModelSelect, _ctx.voiceSettings.engine]
-              ])
-            ]),
-            _ctx.voiceSettings.engine === "online" ? (openBlock(), createElementBlock("div", _hoisted_8, [
-              _cache[79] || (_cache[79] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                "\u53E3\u97F3\u9009\u62E9:",
-                -1
-                /* CACHED */
-              )),
-              withDirectives(createBaseVNode(
-                "select",
-                {
-                  "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => _ctx.voiceSettings.onlineAccent = $event),
-                  onChange: _cache[8] || (_cache[8] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                  style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                },
-                [..._cache[78] || (_cache[78] = [
-                  createBaseVNode(
-                    "option",
-                    { value: 2 },
-                    "\u{1F1FA}\u{1F1F8} \u7F8E\u97F3",
-                    -1
-                    /* CACHED */
-                  ),
-                  createBaseVNode(
-                    "option",
-                    { value: 1 },
-                    "\u{1F1EC}\u{1F1E7} \u82F1\u97F3",
-                    -1
-                    /* CACHED */
-                  )
-                ])],
-                544
-                /* NEED_HYDRATION, NEED_PATCH */
-              ), [
-                [vModelSelect, _ctx.voiceSettings.onlineAccent]
-              ])
-            ])) : (openBlock(), createElementBlock(
-              Fragment,
-              { key: 1 },
-              [
-                createBaseVNode("div", _hoisted_9, [
-                  _cache[80] || (_cache[80] = createBaseVNode(
-                    "label",
-                    { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                    "\u7CFB\u7EDF\u97F3\u8272\u9009\u62E9:",
-                    -1
-                    /* CACHED */
-                  )),
-                  withDirectives(createBaseVNode(
-                    "select",
-                    {
-                      "onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => _ctx.voiceSettings.voiceName = $event),
-                      onChange: _cache[10] || (_cache[10] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                      style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                    },
-                    [
-                      (openBlock(true), createElementBlock(
-                        Fragment,
-                        null,
-                        renderList(_ctx.availableVoices, (voice) => {
-                          return openBlock(), createElementBlock("option", {
-                            key: voice.name,
-                            value: voice.name
-                          }, toDisplayString(voice.name), 9, _hoisted_10);
-                        }),
-                        128
-                        /* KEYED_FRAGMENT */
-                      )),
-                      _ctx.availableVoices.length === 0 ? (openBlock(), createElementBlock("option", _hoisted_11, "\u9ED8\u8BA4")) : createCommentVNode("v-if", true)
-                    ],
-                    544
-                    /* NEED_HYDRATION, NEED_PATCH */
-                  ), [
-                    [vModelSelect, _ctx.voiceSettings.voiceName]
-                  ])
-                ]),
-                createBaseVNode("div", _hoisted_12, [
-                  createBaseVNode(
-                    "label",
-                    _hoisted_13,
-                    "\u8BED\u901F: " + toDisplayString(_ctx.voiceSettings.rate.toFixed(1)) + "x",
-                    1
-                    /* TEXT */
-                  ),
-                  withDirectives(createBaseVNode(
-                    "input",
-                    {
-                      type: "range",
-                      "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => _ctx.voiceSettings.rate = $event),
-                      min: "0.5",
-                      max: "1.8",
-                      step: "0.1",
-                      onChange: _cache[12] || (_cache[12] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                      style: { "width": "60%", "cursor": "pointer" }
-                    },
-                    null,
-                    544
-                    /* NEED_HYDRATION, NEED_PATCH */
-                  ), [
-                    [
-                      vModelText,
-                      _ctx.voiceSettings.rate,
-                      void 0,
-                      { number: true }
-                    ]
-                  ])
-                ]),
-                createBaseVNode("div", _hoisted_14, [
-                  createBaseVNode(
-                    "label",
-                    _hoisted_15,
-                    "\u97F3\u8C03: " + toDisplayString(_ctx.voiceSettings.pitch.toFixed(1)),
-                    1
-                    /* TEXT */
-                  ),
-                  withDirectives(createBaseVNode(
-                    "input",
-                    {
-                      type: "range",
-                      "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => _ctx.voiceSettings.pitch = $event),
-                      min: "0.5",
-                      max: "1.5",
-                      step: "0.1",
-                      onChange: _cache[14] || (_cache[14] = (...args) => _ctx.saveVoiceSettings && _ctx.saveVoiceSettings(...args)),
-                      style: { "width": "60%", "cursor": "pointer" }
-                    },
-                    null,
-                    544
-                    /* NEED_HYDRATION, NEED_PATCH */
-                  ), [
-                    [
-                      vModelText,
-                      _ctx.voiceSettings.pitch,
-                      void 0,
-                      { number: true }
-                    ]
-                  ])
-                ])
-              ],
-              64
-              /* STABLE_FRAGMENT */
-            ))
-          ],
-          512
-          /* NEED_PATCH */
-        ), [
-          [vShow, _ctx.showVoiceConfig]
-        ])
-      ]),
-      _cache[85] || (_cache[85] = createBaseVNode(
-        "div",
-        { style: { "align-self": "stretch", "width": "1px", "background-color": "var(--background-modifier-border)", "margin": "4px 0" } },
-        null,
-        -1
-        /* CACHED */
-      )),
-      createBaseVNode("div", _hoisted_16, [
-        createBaseVNode("div", {
-          class: "lang-learner-ai-settings-header",
-          onClick: _cache[15] || (_cache[15] = ($event) => _ctx.showAiConfig = !_ctx.showAiConfig),
-          style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
-        }, [
-          _cache[81] || (_cache[81] = createBaseVNode(
-            "span",
-            { style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-muted)" } },
-            "\u{1F916} AI \u6559\u5E08\u914D\u7F6E",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode(
-            "span",
-            _hoisted_17,
-            toDisplayString(_ctx.showAiConfig ? "\u25BC" : "\u25B6"),
-            1
-            /* TEXT */
-          )
-        ]),
-        withDirectives(createBaseVNode(
-          "div",
-          _hoisted_18,
-          [
-            createBaseVNode("div", _hoisted_19, [
-              _cache[82] || (_cache[82] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                "API Key:",
-                -1
-                /* CACHED */
-              )),
-              withDirectives(createBaseVNode(
-                "input",
-                {
-                  type: "password",
-                  "onUpdate:modelValue": _cache[16] || (_cache[16] = ($event) => _ctx.aiSettings.apiKey = $event),
-                  onChange: _cache[17] || (_cache[17] = (...args) => _ctx.saveAiSettings && _ctx.saveAiSettings(...args)),
-                  placeholder: "sk-...",
-                  style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                },
-                null,
-                544
-                /* NEED_HYDRATION, NEED_PATCH */
-              ), [
-                [vModelText, _ctx.aiSettings.apiKey]
-              ])
-            ]),
-            createBaseVNode("div", _hoisted_20, [
-              _cache[83] || (_cache[83] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                "Base URL:",
-                -1
-                /* CACHED */
-              )),
-              withDirectives(createBaseVNode(
-                "input",
-                {
-                  type: "text",
-                  "onUpdate:modelValue": _cache[18] || (_cache[18] = ($event) => _ctx.aiSettings.baseUrl = $event),
-                  onChange: _cache[19] || (_cache[19] = (...args) => _ctx.saveAiSettings && _ctx.saveAiSettings(...args)),
-                  placeholder: "https://api.deepseek.com/v1",
-                  style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                },
-                null,
-                544
-                /* NEED_HYDRATION, NEED_PATCH */
-              ), [
-                [vModelText, _ctx.aiSettings.baseUrl]
-              ])
-            ]),
-            createBaseVNode("div", _hoisted_21, [
-              _cache[84] || (_cache[84] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.75em", "color": "var(--text-muted)" } },
-                "Model:",
-                -1
-                /* CACHED */
-              )),
-              withDirectives(createBaseVNode(
-                "input",
-                {
-                  type: "text",
-                  "onUpdate:modelValue": _cache[20] || (_cache[20] = ($event) => _ctx.aiSettings.model = $event),
-                  onChange: _cache[21] || (_cache[21] = (...args) => _ctx.saveAiSettings && _ctx.saveAiSettings(...args)),
-                  placeholder: "deepseek-chat",
-                  style: { "width": "100%", "padding": "4px", "font-size": "0.85em", "border-radius": "4px", "border": "1px solid var(--background-modifier-border)", "background-color": "var(--background-primary)", "color": "var(--text-normal)" }
-                },
-                null,
-                544
-                /* NEED_HYDRATION, NEED_PATCH */
-              ), [
-                [vModelText, _ctx.aiSettings.model]
-              ])
-            ])
-          ],
-          512
-          /* NEED_PATCH */
-        ), [
-          [vShow, _ctx.showAiConfig]
-        ])
-      ])
-    ]),
-    _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_22, [
-      createBaseVNode("h4", _hoisted_23, [
+    createVNode(_component_SettingsHeader, {
+      "available-voices": _ctx.availableVoices,
+      onVoiceSettingsChanged: _ctx.onVoiceSettingsChanged,
+      onAiSettingsChanged: _ctx.onAiSettingsChanged
+    }, null, 8, ["available-voices", "onVoiceSettingsChanged", "onAiSettingsChanged"]),
+    _ctx.searchResultsList && _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_311, [
+      createBaseVNode("h4", _hoisted_49, [
         createBaseVNode(
           "span",
           null,
-          "\u{1F50D} \u641C\u7D22\u7ED3\u679C (" + toDisplayString(_ctx.searchResultsList.length) + " \u4E2A)",
+          "\u{1F50D} \u641C\u7D22\u7ED3\u679C (" + toDisplayString(_ctx.searchResultsList ? _ctx.searchResultsList.length : 0) + " \u4E2A)",
           1
           /* TEXT */
         ),
         createBaseVNode("button", {
-          onClick: _cache[22] || (_cache[22] = ($event) => _ctx.searchResultsList = []),
-          style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "color": "var(--text-muted)" },
+          onClick: _cache[4] || (_cache[4] = (...args) => _ctx.clearSearchResults && _ctx.clearSearchResults(...args)),
+          class: "lang-learner-btn-close-results",
           title: "\u5173\u95ED\u5217\u8868"
         }, " \u2715 ")
       ]),
-      createBaseVNode("div", _hoisted_24, [
+      createBaseVNode("div", _hoisted_59, [
         (openBlock(true), createElementBlock(
           Fragment,
           null,
-          renderList(_ctx.searchResultsList, (word) => {
+          renderList(_ctx.searchResultsList || [], (word) => {
             return openBlock(), createElementBlock("div", {
               key: word,
               class: "lang-learner-search-result-item",
-              onClick: ($event) => _ctx.selectResultWord(word),
-              style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "padding": "8px 12px", "border-radius": "6px", "background-color": "var(--background-secondary)", "cursor": "pointer", "border": "1px solid var(--border-color)", "transition": "all 0.2s ease" }
+              onClick: ($event) => _ctx.selectResultWord(word)
             }, [
               createBaseVNode(
                 "span",
-                _hoisted_26,
+                _hoisted_79,
                 toDisplayString(word),
                 1
                 /* TEXT */
               ),
               createBaseVNode("span", {
-                style: { "font-size": "0.85em", "color": "var(--text-muted)", "text-align": "right", "overflow": "hidden", "text-overflow": "ellipsis", "white-space": "nowrap", "max-width": "60%" },
+                class: "lang-learner-result-trans-span",
                 title: _ctx.getWordTranslation(word)
-              }, toDisplayString(_ctx.getWordTranslation(word)), 9, _hoisted_27)
-            ], 8, _hoisted_25);
+              }, toDisplayString(_ctx.getWordTranslation(word)), 9, _hoisted_89)
+            ], 8, _hoisted_69);
           }),
           128
           /* KEYED_FRAGMENT */
         ))
       ])
     ])) : createCommentVNode("v-if", true),
-    _ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_28, [
-      createBaseVNode("h4", _hoisted_29, [
-        createBaseVNode("span", _hoisted_30, [
-          _ctx.searchResultsList.length > 0 ? (openBlock(), createElementBlock("button", {
-            key: 0,
-            onClick: _cache[23] || (_cache[23] = (...args) => _ctx.backToSearchResults && _ctx.backToSearchResults(...args)),
-            style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1em", "padding": "0 4px", "display": "inline-flex", "align-items": "center" },
-            title: "\u8FD4\u56DE\u641C\u7D22\u5217\u8868"
-          }, " \u2B05\uFE0F ")) : createCommentVNode("v-if", true),
-          _cache[86] || (_cache[86] = createBaseVNode(
-            "span",
-            null,
-            "\u{1F4DD} \u5355\u8BCD\u8BE6\u60C5",
-            -1
-            /* CACHED */
-          ))
-        ]),
-        createBaseVNode("button", {
-          class: "lang-learner-btn-icon",
-          title: "\u590D\u5236\u5361\u7247\u5185\u5BB9",
-          onClick: _cache[24] || (_cache[24] = (...args) => _ctx.copyCardContent && _ctx.copyCardContent(...args))
-        }, "\u{1F4CB}")
-      ]),
-      createBaseVNode("div", _hoisted_31, [
-        createBaseVNode("div", _hoisted_32, [
-          createBaseVNode("div", {
-            class: "lang-learner-word-detail-word-box",
-            title: "\u70B9\u51FB\u5207\u6362\u97F3\u8282\u5212\u5206",
-            onClick: _cache[25] || (_cache[25] = (...args) => _ctx.toggleSyllableSplit && _ctx.toggleSyllableSplit(...args))
-          }, [
-            createBaseVNode(
-              "span",
-              _hoisted_33,
-              toDisplayString(_ctx.displayWord),
-              1
-              /* TEXT */
-            ),
-            _ctx.selectedWord.phonetic ? (openBlock(), createElementBlock(
-              "span",
-              _hoisted_34,
-              "/" + toDisplayString(_ctx.selectedWord.phonetic) + "/",
-              1
-              /* TEXT */
-            )) : createCommentVNode("v-if", true)
-          ]),
-          createBaseVNode("div", _hoisted_35, [
-            createBaseVNode("button", {
-              class: "lang-learner-btn-voice-word",
-              title: "\u6717\u8BFB\u5355\u8BCD",
-              onClick: _cache[26] || (_cache[26] = ($event) => _ctx.speak(_ctx.selectedWord.word)),
-              style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
-            }, " \u{1F50A} "),
-            createBaseVNode("button", {
-              class: "lang-learner-btn-voice-word",
-              title: "\u5728\u7CFB\u7EDF\u8BCD\u5178\u4E2D\u67E5\u770B",
-              onClick: _cache[27] || (_cache[27] = ($event) => _ctx.lookupInSystemDict(_ctx.selectedWord.word)),
-              style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
-            }, " \u{1F4D6} "),
-            createBaseVNode("button", {
-              class: "lang-learner-btn-add-word",
-              title: _ctx.selectedWord.status === "LEARNING" ? "\u5DF2\u5728\u751F\u8BCD\u672C\uFF0C\u70B9\u51FB\u79FB\u51FA" : "\u6DFB\u52A0\u5230\u751F\u8BCD\u672C",
-              onClick: _cache[28] || (_cache[28] = ($event) => _ctx.toggleAddWord(_ctx.selectedWord.word)),
-              style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
-            }, toDisplayString(_ctx.selectedWord.status === "LEARNING" ? "\u{1F4CC}" : "\u2795"), 9, _hoisted_36)
-          ])
-        ]),
-        createBaseVNode(
-          "div",
-          _hoisted_37,
-          toDisplayString(_ctx.selectedWord.trans || "\u6682\u65E0\u91CA\u4E49"),
-          1
-          /* TEXT */
-        ),
-        _ctx.selectedWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_38, [
-          _cache[87] || (_cache[87] = createBaseVNode(
-            "div",
-            {
-              class: "lang-learner-etymology-title",
-              style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-accent)", "margin-bottom": "4px", "display": "flex", "align-items": "center", "gap": "4px" }
-            },
-            [
-              createBaseVNode("span", null, "\u{1F4A1} \u8BCD\u6E90\u4E0E\u8BB0\u5FC6\u8F85\u52A9")
-            ],
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode(
-            "div",
-            _hoisted_39,
-            toDisplayString(_ctx.selectedWord.etymology),
-            1
-            /* TEXT */
-          )
-        ])) : createCommentVNode("v-if", true),
-        createBaseVNode("div", _hoisted_40, [
-          _cache[88] || (_cache[88] = createBaseVNode(
-            "div",
-            { class: "lang-learner-examples-title" },
-            " \u{1F4A1} \u4F8B\u53E5\u8054\u60F3 ",
-            -1
-            /* CACHED */
-          )),
-          _ctx.isLoadingExamples ? (openBlock(), createElementBlock("div", _hoisted_41, " \u6B63\u5728\u83B7\u53D6\u4F8B\u53E5... ")) : _ctx.exampleSentences.length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_42, [
-            (openBlock(true), createElementBlock(
-              Fragment,
-              null,
-              renderList(_ctx.exampleSentences, (sentence, idx) => {
-                return openBlock(), createElementBlock(
-                  "li",
-                  {
-                    key: idx,
-                    class: "lang-learner-example-item"
-                  },
-                  toDisplayString(sentence),
-                  1
-                  /* TEXT */
-                );
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : (openBlock(), createElementBlock("div", _hoisted_43, " \u6682\u65E0\u76F8\u5173\u4F8B\u53E5 "))
-        ]),
-        createBaseVNode("div", _hoisted_44, [
-          createBaseVNode("div", _hoisted_45, [
-            _cache[89] || (_cache[89] = createBaseVNode(
-              "div",
-              { class: "lang-learner-examples-title" },
-              "\u{1F916} AI \u6559\u5E08\u6DF1\u5EA6\u89E3\u6790",
-              -1
-              /* CACHED */
-            )),
-            createBaseVNode("button", {
-              onClick: _cache[29] || (_cache[29] = (...args) => _ctx.askAITeacher && _ctx.askAITeacher(...args)),
-              disabled: _ctx.isAiLoading,
-              style: { "font-size": "0.8em", "padding": "4px 8px", "border-radius": "4px", "background-color": "var(--interactive-accent)", "color": "var(--text-on-accent)", "border": "none", "cursor": "pointer", "opacity": "0.9" }
-            }, toDisplayString(_ctx.isAiLoading ? "\u601D\u8003\u4E2D..." : "\u8BE2\u95EE AI \u6559\u5E08"), 9, _hoisted_46)
-          ]),
-          _ctx.aiResponse ? (openBlock(), createElementBlock("div", _hoisted_47, [
-            _ctx.aiResponse.root ? (openBlock(), createElementBlock("div", _hoisted_48, [
-              _cache[90] || (_cache[90] = createBaseVNode(
-                "span",
-                { style: { "font-size": "0.8em", "color": "var(--text-muted)" } },
-                "\u8BCD\u6839\u67A2\u7EBD:",
-                -1
-                /* CACHED */
-              )),
-              createBaseVNode(
-                "span",
-                _hoisted_49,
-                toDisplayString(_ctx.aiResponse.root) + " (" + toDisplayString(_ctx.aiResponse.rootMeaning) + ")",
-                1
-                /* TEXT */
-              )
-            ])) : createCommentVNode("v-if", true),
-            createBaseVNode(
-              "div",
-              _hoisted_50,
-              null,
-              512
-              /* NEED_PATCH */
-            ),
-            createBaseVNode("button", {
-              onClick: _cache[30] || (_cache[30] = (...args) => _ctx.exportAIResponse && _ctx.exportAIResponse(...args)),
-              style: { "margin-top": "8px", "width": "100%", "padding": "6px", "background-color": "var(--background-secondary-alt)", "border": "1px solid var(--interactive-accent)", "color": "var(--interactive-accent)", "border-radius": "4px", "cursor": "pointer", "font-size": "0.85em" }
-            }, " \u270D\uFE0F \u4E00\u952E\u5F52\u7EB3\u5E76\u6784\u5EFA\u8BCD\u6839\u7F51\u7EDC ")
-          ])) : createCommentVNode("v-if", true)
-        ])
-      ])
-    ])) : createCommentVNode("v-if", true),
-    createBaseVNode("div", _hoisted_51, [
+    _ctx.selectedWord ? (openBlock(), createBlock(_component_WordDetailCard, {
+      key: 1,
+      "word-info": _ctx.selectedWord,
+      "has-search-results": _ctx.searchResultsList && _ctx.searchResultsList.length > 0,
+      onBackToResults: _ctx.backToSearchResults
+    }, null, 8, ["word-info", "has-search-results", "onBackToResults"])) : createCommentVNode("v-if", true),
+    createBaseVNode("div", _hoisted_99, [
       createBaseVNode(
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "vocabulary" }]),
-          onClick: _cache[31] || (_cache[31] = ($event) => _ctx.mainTab = "vocabulary")
+          onClick: _cache[5] || (_cache[5] = ($event) => _ctx.setTab("vocabulary"))
         },
         " \u{1F4CB} \u8BCD\u6C47\u672C ",
         2
@@ -29467,7 +31168,7 @@ function render(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "estimate" }]),
-          onClick: _cache[32] || (_cache[32] = ($event) => _ctx.mainTab = "estimate")
+          onClick: _cache[6] || (_cache[6] = ($event) => _ctx.setTab("estimate"))
         },
         " \u{1F3AF} \u8BCD\u6C47\u91CF\u6D4B\u8BD5 ",
         2
@@ -29477,7 +31178,7 @@ function render(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "sentence" }]),
-          onClick: _cache[33] || (_cache[33] = ($event) => _ctx.mainTab = "sentence")
+          onClick: _cache[7] || (_cache[7] = ($event) => _ctx.setTab("sentence"))
         },
         " \u{1F50D} \u6574\u53E5\u5206\u6790 ",
         2
@@ -29487,7 +31188,7 @@ function render(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "review" }]),
-          onClick: _cache[34] || (_cache[34] = ($event) => _ctx.mainTab = "review")
+          onClick: _cache[8] || (_cache[8] = ($event) => _ctx.setTab("review"))
         },
         " \u{1F4C5} \u95F4\u9694\u590D\u4E60 ",
         2
@@ -29497,10 +31198,7 @@ function render(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "media" }]),
-          onClick: _cache[35] || (_cache[35] = ($event) => {
-            _ctx.mainTab = "media";
-            _ctx.scanMediaFiles();
-          })
+          onClick: _cache[9] || (_cache[9] = ($event) => _ctx.setTab("media"))
         },
         " \u{1F3AC} \u89C6\u9891\u7B14\u8BB0 ",
         2
@@ -29510,1382 +31208,49 @@ function render(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "reader" }]),
-          onClick: _cache[36] || (_cache[36] = ($event) => {
-            _ctx.mainTab = "reader";
-            _ctx.loadRssFeeds();
-          })
+          onClick: _cache[10] || (_cache[10] = ($event) => _ctx.setTab("reader"))
         },
         " \u{1F4F0} RSS \u9605\u8BFB ",
         2
         /* CLASS */
       )
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_52,
-      [
-        createBaseVNode("div", _hoisted_53, [
-          _cache[95] || (_cache[95] = createBaseVNode(
-            "h3",
-            { class: "lang-learner-panel-title" },
-            "\u{1F4D6} \u8BED\u8A00\u5B66\u4E60\u52A9\u624B",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("div", _hoisted_54, [
-            createBaseVNode("div", _hoisted_55, [
-              createBaseVNode(
-                "span",
-                _hoisted_56,
-                toDisplayString(_ctx.stats.total),
-                1
-                /* TEXT */
-              ),
-              _cache[91] || (_cache[91] = createBaseVNode(
-                "span",
-                { class: "lang-learner-stat-label" },
-                "\u603B\u8BCD\u91CF",
-                -1
-                /* CACHED */
-              ))
-            ]),
-            createBaseVNode("div", _hoisted_57, [
-              createBaseVNode(
-                "span",
-                _hoisted_58,
-                toDisplayString(_ctx.stats.known),
-                1
-                /* TEXT */
-              ),
-              _cache[92] || (_cache[92] = createBaseVNode(
-                "span",
-                { class: "lang-learner-stat-label" },
-                "\u5DF2\u638C\u63E1",
-                -1
-                /* CACHED */
-              ))
-            ]),
-            createBaseVNode("div", _hoisted_59, [
-              createBaseVNode(
-                "span",
-                _hoisted_60,
-                toDisplayString(_ctx.stats.learning),
-                1
-                /* TEXT */
-              ),
-              _cache[93] || (_cache[93] = createBaseVNode(
-                "span",
-                { class: "lang-learner-stat-label" },
-                "\u5B66\u4E60\u4E2D",
-                -1
-                /* CACHED */
-              ))
-            ]),
-            createBaseVNode("div", _hoisted_61, [
-              createBaseVNode(
-                "span",
-                _hoisted_62,
-                toDisplayString(_ctx.stats.unknown),
-                1
-                /* TEXT */
-              ),
-              _cache[94] || (_cache[94] = createBaseVNode(
-                "span",
-                { class: "lang-learner-stat-label" },
-                "\u751F\u8BCD",
-                -1
-                /* CACHED */
-              ))
-            ])
-          ])
-        ]),
-        createBaseVNode("div", _hoisted_63, [
-          _cache[96] || (_cache[96] = createBaseVNode(
-            "h4",
-            { class: "lang-learner-section-title" },
-            "\u{1F4CB} \u751F\u8BCD\u672C",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("div", _hoisted_64, [
-            createBaseVNode(
-              "button",
-              {
-                class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "UNKNOWN" }]),
-                onClick: _cache[37] || (_cache[37] = ($event) => _ctx.activeTab = "UNKNOWN")
-              },
-              "\u751F\u8BCD (" + toDisplayString(_ctx.unknownList.length) + ")",
-              3
-              /* TEXT, CLASS */
-            ),
-            createBaseVNode(
-              "button",
-              {
-                class: normalizeClass(["lang-learner-tab-btn", { "lang-learner-active": _ctx.activeTab === "LEARNING" }]),
-                onClick: _cache[38] || (_cache[38] = ($event) => _ctx.activeTab = "LEARNING")
-              },
-              "\u5B66\u4E60\u4E2D (" + toDisplayString(_ctx.learningList.length) + ")",
-              3
-              /* TEXT, CLASS */
-            )
-          ]),
-          createBaseVNode("div", _hoisted_65, [
-            (openBlock(true), createElementBlock(
-              Fragment,
-              null,
-              renderList(_ctx.currentTabList, (item) => {
-                return openBlock(), createElementBlock("div", {
-                  key: item.word,
-                  class: "lang-learner-wordlist-item",
-                  onClick: ($event) => _ctx.selectWord(item)
-                }, [
-                  createBaseVNode(
-                    "span",
-                    _hoisted_67,
-                    toDisplayString(item.word),
-                    1
-                    /* TEXT */
-                  ),
-                  createBaseVNode(
-                    "span",
-                    _hoisted_68,
-                    toDisplayString(item.trans || "\u2014"),
-                    1
-                    /* TEXT */
-                  ),
-                  createBaseVNode("div", _hoisted_69, [
-                    createBaseVNode("button", {
-                      class: "lang-learner-btn-voice-mini",
-                      title: "\u53D1\u97F3",
-                      onClick: withModifiers(($event) => _ctx.speak(item.word), ["stop"]),
-                      style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "0.9em", "padding": "2px 4px", "opacity": "0.8" }
-                    }, "\u{1F50A}", 8, _hoisted_70),
-                    createBaseVNode("button", {
-                      class: "lang-learner-btn-icon",
-                      title: item.status === "UNKNOWN" ? "\u6807\u4E3A\u5B66\u4E60\u4E2D" : "\u6807\u4E3A\u5DF2\u638C\u63E1",
-                      onClick: withModifiers(($event) => _ctx.quickAdvance(item), ["stop"])
-                    }, toDisplayString(item.status === "UNKNOWN" ? "\u{1F4CC}" : "\u2705"), 9, _hoisted_71)
-                  ])
-                ], 8, _hoisted_66);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            )),
-            _ctx.currentTabList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_72, "\u6682\u65E0\u6570\u636E")) : createCommentVNode("v-if", true)
-          ])
-        ]),
-        createBaseVNode("div", _hoisted_73, [
-          createBaseVNode("button", {
-            class: "lang-learner-btn lang-learner-btn-accent lang-learner-btn-full",
-            onClick: _cache[39] || (_cache[39] = (...args) => _ctx.learnArticle && _ctx.learnArticle(...args))
-          }, " \u26A1 \u4E00\u952E\u5B66\u5B8C\u5F53\u524D\u6587\u7AE0 "),
-          _cache[97] || (_cache[97] = createBaseVNode(
-            "p",
-            { class: "lang-learner-hint-text" },
-            "\u5C06\u5F53\u524D\u6587\u7AE0\u4E2D\u9AD8\u9891\u8BCD\u8868\u5185\u7684\u672A\u6807\u8BB0\u8BCD\u6279\u91CF\u6807\u4E3A\u5DF2\u638C\u63E1",
-            -1
-            /* CACHED */
-          ))
-        ])
-      ],
-      512
-      /* NEED_PATCH */
-    ), [
+    withDirectives(createVNode(_component_VocabularyTab, { onSelectWord: _ctx.onWordSelected }, null, 8, ["onSelectWord"]), [
       [vShow, _ctx.mainTab === "vocabulary"]
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_74,
-      [
-        _ctx.estimationState === "idle" ? (openBlock(), createElementBlock("div", _hoisted_75, [
-          createBaseVNode("button", {
-            class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
-            onClick: _cache[40] || (_cache[40] = (...args) => _ctx.startEstimation && _ctx.startEstimation(...args))
-          }, " \u{1F3AF} \u5F00\u59CB\u8BCD\u6C47\u91CF\u4F30\u7B97 "),
-          _cache[98] || (_cache[98] = createBaseVNode(
-            "p",
-            { class: "lang-learner-hint-text" },
-            "\u901A\u8FC7\u7EA6 20 \u9053\u9898\u5FEB\u901F\u6D4B\u5B9A\u4F60\u7684\u82F1\u8BED\u8BCD\u6C47\u6C34\u4F4D\u7EBF",
-            -1
-            /* CACHED */
-          ))
-        ])) : createCommentVNode("v-if", true),
-        _ctx.estimationState === "running" ? (openBlock(), createElementBlock("div", _hoisted_76, [
-          createBaseVNode("div", _hoisted_77, [
-            createBaseVNode(
-              "span",
-              _hoisted_78,
-              "\u7B2C " + toDisplayString(_ctx.currentQuestionIndex + 1) + " / " + toDisplayString(_ctx.totalQuestions) + " \u9898",
-              1
-              /* TEXT */
-            ),
-            createBaseVNode("div", _hoisted_79, [
-              createBaseVNode(
-                "div",
-                {
-                  class: "lang-learner-progress-fill",
-                  style: normalizeStyle({ width: _ctx.progressPercent + "%" })
-                },
-                null,
-                4
-                /* STYLE */
-              )
-            ])
-          ]),
-          createBaseVNode("div", _hoisted_80, [
-            createBaseVNode(
-              "span",
-              _hoisted_81,
-              toDisplayString(_ctx.currentTestWord),
-              1
-              /* TEXT */
-            )
-          ]),
-          _cache[99] || (_cache[99] = createBaseVNode(
-            "p",
-            { class: "lang-learner-estimation-prompt" },
-            "\u4F60\u8BA4\u8BC6\u8FD9\u4E2A\u5355\u8BCD\u5417\uFF1F",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("div", _hoisted_82, [
-            createBaseVNode("button", {
-              class: "lang-learner-btn lang-learner-btn-yes",
-              onClick: _cache[41] || (_cache[41] = ($event) => _ctx.answerEstimation(true))
-            }, "\u2705 \u8BA4\u8BC6"),
-            createBaseVNode("button", {
-              class: "lang-learner-btn lang-learner-btn-no",
-              onClick: _cache[42] || (_cache[42] = ($event) => _ctx.answerEstimation(false))
-            }, "\u274C \u4E0D\u8BA4\u8BC6")
-          ])
-        ])) : createCommentVNode("v-if", true),
-        _ctx.estimationState === "done" ? (openBlock(), createElementBlock("div", _hoisted_83, [
-          _cache[102] || (_cache[102] = createBaseVNode(
-            "p",
-            { class: "lang-learner-result-title" },
-            "\u{1F389} \u4F30\u7B97\u5B8C\u6210\uFF01",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("p", _hoisted_84, [
-            _cache[100] || (_cache[100] = createTextVNode(
-              "\u4F60\u7684\u8BCD\u6C47\u91CF\u7EA6\u4E3A ",
-              -1
-              /* CACHED */
-            )),
-            createBaseVNode(
-              "strong",
-              null,
-              toDisplayString(_ctx.estimatedLevel),
-              1
-              /* TEXT */
-            ),
-            _cache[101] || (_cache[101] = createTextVNode(
-              " \u8BCD",
-              -1
-              /* CACHED */
-            ))
-          ]),
-          createBaseVNode(
-            "p",
-            _hoisted_85,
-            "\u5DF2\u5C06\u6C34\u4F4D\u7EBF\u4EE5\u4E0B\u7684 " + toDisplayString(_ctx.batchMarkedCount) + " \u4E2A\u9AD8\u9891\u8BCD\u6807\u8BB0\u4E3A\u5DF2\u638C\u63E1",
-            1
-            /* TEXT */
-          ),
-          createBaseVNode("button", {
-            class: "lang-learner-btn lang-learner-btn-secondary",
-            onClick: _cache[43] || (_cache[43] = ($event) => _ctx.estimationState = "idle")
-          }, "\u5173\u95ED")
-        ])) : createCommentVNode("v-if", true)
-      ],
+    withDirectives(createVNode(
+      _component_EstimateTab,
+      null,
+      null,
       512
       /* NEED_PATCH */
     ), [
       [vShow, _ctx.mainTab === "estimate"]
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_86,
-      [
-        createBaseVNode("div", _hoisted_87, [
-          _cache[103] || (_cache[103] = createBaseVNode(
-            "h4",
-            { class: "lang-learner-section-title" },
-            "\u{1F50D} \u8F93\u5165\u5F85\u5206\u6790\u53E5\u5B50",
-            -1
-            /* CACHED */
-          )),
-          withDirectives(createBaseVNode(
-            "textarea",
-            {
-              "onUpdate:modelValue": _cache[44] || (_cache[44] = ($event) => _ctx.sentenceInput = $event),
-              class: "lang-learner-textarea",
-              placeholder: "\u5728\u6B64\u8F93\u5165\u6216\u7C98\u8D34\u4E00\u6BB5\u82F1\u6587\u53E5\u5B50...",
-              rows: "4"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          ), [
-            [vModelText, _ctx.sentenceInput]
-          ]),
-          createBaseVNode("div", _hoisted_88, [
-            createBaseVNode("button", {
-              class: "lang-learner-btn lang-learner-btn-primary",
-              onClick: _cache[45] || (_cache[45] = (...args) => _ctx.analyzeInputSentence && _ctx.analyzeInputSentence(...args)),
-              disabled: _ctx.isAnalyzing,
-              style: { "flex": "1" }
-            }, toDisplayString(_ctx.isAnalyzing ? "\u6B63\u5728\u5206\u6790..." : "\u5206\u6790\u53E5\u5B50"), 9, _hoisted_89),
-            createBaseVNode("button", {
-              class: "lang-learner-btn lang-learner-btn-secondary",
-              onClick: _cache[46] || (_cache[46] = (...args) => _ctx.importSelection && _ctx.importSelection(...args)),
-              style: { "flex": "1" }
-            }, " \u5BFC\u5165\u9009\u4E2D\u6587\u672C ")
-          ])
-        ]),
-        _ctx.hasAnalyzed ? (openBlock(), createElementBlock("div", _hoisted_90, [
-          _cache[107] || (_cache[107] = createBaseVNode(
-            "h4",
-            { class: "lang-learner-section-title" },
-            "\u{1F4D6} \u5206\u6790\u7ED3\u679C",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("div", _hoisted_91, [
-            createBaseVNode("div", _hoisted_92, [
-              _cache[104] || (_cache[104] = createBaseVNode(
-                "span",
-                null,
-                "\u{1F310} \u673A\u5668\u7FFB\u8BD1",
-                -1
-                /* CACHED */
-              )),
-              _ctx.sentenceInput.trim() ? (openBlock(), createElementBlock("button", {
-                key: 0,
-                class: "lang-learner-btn-voice-sentence",
-                title: "\u6717\u8BFB\u6574\u53E5",
-                onClick: _cache[47] || (_cache[47] = ($event) => _ctx.speak(_ctx.sentenceInput)),
-                style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.1em", "padding": "2px 6px", "opacity": "0.85" }
-              }, " \u{1F50A} ")) : createCommentVNode("v-if", true)
-            ]),
-            _ctx.isTranslating ? (openBlock(), createElementBlock("p", _hoisted_93, "\u6B63\u5728\u7FFB\u8BD1\u4E2D...")) : (openBlock(), createElementBlock(
-              "p",
-              _hoisted_94,
-              toDisplayString(_ctx.sentenceTranslation || "\u6682\u65E0\u7FFB\u8BD1\u7ED3\u679C"),
-              1
-              /* TEXT */
-            ))
-          ]),
-          createBaseVNode("div", _hoisted_95, [
-            _cache[105] || (_cache[105] = createBaseVNode(
-              "div",
-              { class: "lang-learner-box-title" },
-              "\u{1F3A8} \u53E5\u5B50\u9AD8\u4EAE\u4E0E\u4EA4\u4E92",
-              -1
-              /* CACHED */
-            )),
-            createBaseVNode("div", _hoisted_96, [
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.analyzedSentenceTokens, (token, index) => {
-                  return openBlock(), createElementBlock(
-                    Fragment,
-                    { key: index },
-                    [
-                      token.type === "text" ? (openBlock(), createElementBlock(
-                        "span",
-                        _hoisted_97,
-                        toDisplayString(token.text),
-                        1
-                        /* TEXT */
-                      )) : (openBlock(), createElementBlock("span", {
-                        key: 1,
-                        class: normalizeClass(["lang-learner-word", {
-                          "lang-learner-unknown": token.status === "UNKNOWN",
-                          "lang-learner-learning": token.status === "LEARNING",
-                          "lang-learner-known": token.status === "KNOWN",
-                          "lang-learner-phrase": token.isPhrase,
-                          "lang-learner-word-speaking": _ctx.activeTokenIndex === index
-                        }]),
-                        "data-lemma": token.lemma,
-                        "data-trans": token.trans,
-                        "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
-                        onClick: ($event) => _ctx.onSentenceWordClick(token.lemma),
-                        onDblclick: ($event) => _ctx.onSentenceWordDblClick(token)
-                      }, toDisplayString(token.text), 43, _hoisted_98))
-                    ],
-                    64
-                    /* STABLE_FRAGMENT */
-                  );
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ]),
-            _cache[106] || (_cache[106] = createBaseVNode(
-              "p",
-              {
-                class: "lang-learner-hint-text",
-                style: { "text-align": "left", "margin-top": "8px" }
-              },
-              "\u63D0\u793A: \u5355\u51FB\u5355\u8BCD\u9009\u4E2D\uFF0C\u53CC\u51FB\u5355\u8BCD\u5F39\u51FA\u91CA\u4E49\u5E76\u52A0\u5165\u5B66\u4E60\u3002",
-              -1
-              /* CACHED */
-            ))
-          ]),
-          createBaseVNode("div", _hoisted_99, [
-            createBaseVNode(
-              "div",
-              _hoisted_100,
-              "\u{1F4CA} \u8BCD\u6C47\u5206\u6790\u6E05\u5355 (\u5171 " + toDisplayString(_ctx.analyzedWordsList.length) + " \u4E2A)",
-              1
-              /* TEXT */
-            ),
-            createBaseVNode("div", _hoisted_101, [
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.analyzedWordsList, (item) => {
-                  return openBlock(), createElementBlock("div", {
-                    key: item.word,
-                    class: "lang-learner-wordlist-item",
-                    onClick: ($event) => _ctx.onSentenceWordClick(item.word)
-                  }, [
-                    createBaseVNode(
-                      "span",
-                      {
-                        class: normalizeClass(["lang-learner-wl-word", { "lang-learner-wl-phrase": item.isPhrase }])
-                      },
-                      [
-                        createTextVNode(
-                          toDisplayString(item.word) + " ",
-                          1
-                          /* TEXT */
-                        ),
-                        item.isPhrase ? (openBlock(), createElementBlock("small", _hoisted_103, "(\u77ED\u8BED)")) : createCommentVNode("v-if", true)
-                      ],
-                      2
-                      /* CLASS */
-                    ),
-                    createBaseVNode(
-                      "span",
-                      _hoisted_104,
-                      toDisplayString(item.trans || "\u2014"),
-                      1
-                      /* TEXT */
-                    ),
-                    createBaseVNode("div", _hoisted_105, [
-                      createBaseVNode("button", {
-                        class: "lang-learner-btn-voice-mini",
-                        title: "\u53D1\u97F3",
-                        onClick: withModifiers(($event) => _ctx.speak(item.word), ["stop"]),
-                        style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "0.9em", "padding": "2px 4px", "opacity": "0.8" }
-                      }, "\u{1F50A}", 8, _hoisted_106),
-                      createBaseVNode("button", {
-                        class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "UNKNOWN" }]),
-                        onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "UNKNOWN"), ["stop"])
-                      }, "\u751F", 10, _hoisted_107),
-                      createBaseVNode("button", {
-                        class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "LEARNING" }]),
-                        onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "LEARNING"), ["stop"])
-                      }, "\u5B66", 10, _hoisted_108),
-                      createBaseVNode("button", {
-                        class: normalizeClass(["lang-learner-btn-status-mini", { active: item.status === "KNOWN" }]),
-                        onClick: withModifiers(($event) => _ctx.updateWordStatusInList(item.word, "KNOWN"), ["stop"])
-                      }, "\u719F", 10, _hoisted_109)
-                    ])
-                  ], 8, _hoisted_102);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              )),
-              _ctx.analyzedWordsList.length === 0 ? (openBlock(), createElementBlock("p", _hoisted_110, "\u672A\u63D0\u53D6\u51FA\u82F1\u6587\u8BCD\u6C47")) : createCommentVNode("v-if", true)
-            ])
-          ])
-        ])) : createCommentVNode("v-if", true)
-      ],
-      512
-      /* NEED_PATCH */
-    ), [
+    withDirectives(createVNode(_component_SentenceTab, { onSelectWord: _ctx.onWordSelectedByString }, null, 8, ["onSelectWord"]), [
       [vShow, _ctx.mainTab === "sentence"]
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_111,
-      [
-        createBaseVNode("div", _hoisted_112, [
-          _cache[109] || (_cache[109] = createBaseVNode(
-            "h3",
-            { class: "lang-learner-panel-title" },
-            "\u{1F4C5} \u95F4\u9694\u590D\u4E60",
-            -1
-            /* CACHED */
-          )),
-          createBaseVNode("div", _hoisted_113, [
-            createBaseVNode("div", _hoisted_114, [
-              createBaseVNode(
-                "span",
-                _hoisted_115,
-                toDisplayString(_ctx.dueWords.length),
-                1
-                /* TEXT */
-              ),
-              _cache[108] || (_cache[108] = createBaseVNode(
-                "span",
-                { class: "lang-learner-stat-label" },
-                "\u4ECA\u65E5\u5F85\u590D\u4E60",
-                -1
-                /* CACHED */
-              ))
-            ])
-          ])
-        ]),
-        _ctx.currentReviewWord ? (openBlock(), createElementBlock("div", _hoisted_116, [
-          createBaseVNode("div", _hoisted_117, [
-            createBaseVNode("div", _hoisted_118, [
-              createBaseVNode(
-                "span",
-                _hoisted_119,
-                toDisplayString(_ctx.currentReviewWord.word),
-                1
-                /* TEXT */
-              ),
-              createBaseVNode("button", {
-                class: "lang-learner-btn-voice-word",
-                title: "\u6717\u8BFB\u5355\u8BCD",
-                onClick: _cache[48] || (_cache[48] = ($event) => _ctx.speak(_ctx.currentReviewWord.word)),
-                style: { "background": "transparent", "border": "none", "cursor": "pointer", "font-size": "1.2em", "opacity": "0.85" }
-              }, " \u{1F50A} ")
-            ]),
-            _ctx.currentReviewWord.phonetic ? (openBlock(), createElementBlock(
-              "div",
-              _hoisted_120,
-              " /" + toDisplayString(_ctx.currentReviewWord.phonetic) + "/ ",
-              1
-              /* TEXT */
-            )) : createCommentVNode("v-if", true)
-          ]),
-          _ctx.showReviewAnswer ? (openBlock(), createElementBlock("div", _hoisted_121, [
-            createBaseVNode(
-              "div",
-              _hoisted_122,
-              toDisplayString(_ctx.currentReviewWord.trans || "\u6682\u65E0\u91CA\u4E49"),
-              1
-              /* TEXT */
-            ),
-            _ctx.currentReviewWord.etymology ? (openBlock(), createElementBlock("div", _hoisted_123, [
-              _cache[110] || (_cache[110] = createBaseVNode(
-                "div",
-                {
-                  class: "lang-learner-etymology-title",
-                  style: { "font-weight": "500", "font-size": "0.85em", "color": "var(--text-accent)", "margin-bottom": "4px" }
-                },
-                " \u{1F4A1} \u8BCD\u6E90\u8BB0\u5FC6 ",
-                -1
-                /* CACHED */
-              )),
-              createBaseVNode(
-                "div",
-                _hoisted_124,
-                toDisplayString(_ctx.currentReviewWord.etymology),
-                1
-                /* TEXT */
-              )
-            ])) : createCommentVNode("v-if", true),
-            createBaseVNode("div", _hoisted_125, [
-              _cache[111] || (_cache[111] = createBaseVNode(
-                "div",
-                {
-                  class: "lang-learner-examples-title",
-                  style: { "font-size": "0.85em", "font-weight": "700", "color": "var(--text-muted)", "margin-bottom": "6px" }
-                },
-                " \u{1F4A1} \u4F8B\u53E5\u4E0A\u4E0B\u6587 ",
-                -1
-                /* CACHED */
-              )),
-              _ctx.isLoadingReviewExamples ? (openBlock(), createElementBlock("div", _hoisted_126, " \u6B63\u5728\u83B7\u53D6\u4F8B\u53E5... ")) : _ctx.reviewExampleSentences.length > 0 ? (openBlock(), createElementBlock("ul", _hoisted_127, [
-                (openBlock(true), createElementBlock(
-                  Fragment,
-                  null,
-                  renderList(_ctx.reviewExampleSentences, (sentence, idx) => {
-                    return openBlock(), createElementBlock(
-                      "li",
-                      {
-                        key: idx,
-                        class: "lang-learner-example-item",
-                        style: { "margin-bottom": "4px" }
-                      },
-                      toDisplayString(sentence),
-                      1
-                      /* TEXT */
-                    );
-                  }),
-                  128
-                  /* KEYED_FRAGMENT */
-                ))
-              ])) : (openBlock(), createElementBlock("div", _hoisted_128, " \u6682\u65E0\u4F8B\u53E5 "))
-            ])
-          ])) : createCommentVNode("v-if", true),
-          createBaseVNode("div", _hoisted_129, [
-            !_ctx.showReviewAnswer ? (openBlock(), createElementBlock("button", {
-              key: 0,
-              onClick: _cache[49] || (_cache[49] = ($event) => _ctx.showReviewAnswer = true),
-              class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
-              style: { "font-size": "0.95em", "padding": "10px" }
-            }, " \u663E\u793A\u91CA\u4E49 ")) : (openBlock(), createElementBlock("div", _hoisted_130, [
-              createBaseVNode("button", {
-                onClick: _cache[50] || (_cache[50] = ($event) => _ctx.submitReviewGrade(0)),
-                class: "lang-learner-btn lang-learner-btn-no",
-                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
-              }, " \u{1F534} \u5FD8\u8BB0 "),
-              createBaseVNode("button", {
-                onClick: _cache[51] || (_cache[51] = ($event) => _ctx.submitReviewGrade(1)),
-                class: "lang-learner-btn",
-                style: { "background": "#f39c12", "color": "#fff", "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
-              }, " \u{1F7E1} \u6A21\u7CCA "),
-              createBaseVNode("button", {
-                onClick: _cache[52] || (_cache[52] = ($event) => _ctx.submitReviewGrade(2)),
-                class: "lang-learner-btn lang-learner-btn-yes",
-                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
-              }, " \u{1F7E2} \u8BB0\u5F97 "),
-              createBaseVNode("button", {
-                onClick: _cache[53] || (_cache[53] = ($event) => _ctx.submitReviewGrade(3)),
-                class: "lang-learner-btn lang-learner-btn-accent",
-                style: { "font-size": "0.85em", "padding": "8px 4px", "flex": "1" }
-              }, " \u26A1 \u719F\u7EC3 ")
-            ]))
-          ])
-        ])) : (openBlock(), createElementBlock("div", _hoisted_131, [..._cache[112] || (_cache[112] = [
-          createBaseVNode(
-            "div",
-            { style: { "font-size": "3em", "margin-bottom": "12px" } },
-            "\u{1F389}",
-            -1
-            /* CACHED */
-          ),
-          createBaseVNode(
-            "p",
-            { style: { "font-weight": "600", "color": "var(--text-success, #27ae60)", "margin": "0 0 4px 0" } },
-            "\u5DF2\u5B8C\u6210\u4ECA\u65E5\u590D\u4E60\uFF01",
-            -1
-            /* CACHED */
-          ),
-          createBaseVNode(
-            "p",
-            { style: { "font-size": "0.85em", "color": "var(--text-muted)", "margin": "0" } },
-            "\u592A\u68D2\u4E86\uFF0C\u76EE\u524D\u6CA1\u6709\u5F85\u590D\u4E60\u7684\u5230\u671F\u5355\u8BCD\u3002",
-            -1
-            /* CACHED */
-          )
-        ])]))
-      ],
-      512
-      /* NEED_PATCH */
-    ), [
+    withDirectives(createVNode(_component_ReviewTab, { onSelectWord: _ctx.onWordSelectedByString }, null, 8, ["onSelectWord"]), [
       [vShow, _ctx.mainTab === "review"]
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_132,
-      [
-        _cache[121] || (_cache[121] = createBaseVNode(
-          "div",
-          {
-            class: "lang-learner-panel-dashboard",
-            style: { "margin-bottom": "0" }
-          },
-          [
-            createBaseVNode("h3", { class: "lang-learner-panel-title" }, "\u{1F3AC} \u89C6\u9891\u6233\u7B14\u8BB0 (Media Extended)"),
-            createBaseVNode("p", { style: { "font-size": "0.82em", "color": "var(--text-muted)", "margin": "-4px 0 0 0" } }, " \u5728\u4FA7\u8FB9\u680F\u64AD\u653E\u5A92\u4F53\u6587\u4EF6\uFF0C\u5E76\u53EF\u901A\u8FC7\u65F6\u95F4\u6233\u4E0E Obsidian \u7B14\u8BB0\u5B9E\u73B0\u53CC\u5411\u8DF3\u8F6C\u5B9A\u4F4D\u3002 ")
-          ],
-          -1
-          /* CACHED */
-        )),
-        createBaseVNode("div", _hoisted_133, [
-          createBaseVNode("div", _hoisted_134, [
-            createBaseVNode("div", _hoisted_135, [
-              _cache[113] || (_cache[113] = createBaseVNode(
-                "label",
-                { style: { "font-size": "0.8em", "font-weight": "600", "color": "var(--text-muted)" } },
-                "\u{1F4C1} \u8F7D\u5165\u5E93\u5185\u5A92\u4F53\u6587\u4EF6",
-                -1
-                /* CACHED */
-              )),
-              createBaseVNode("button", {
-                onClick: _cache[54] || (_cache[54] = (...args) => _ctx.scanMediaFiles && _ctx.scanMediaFiles(...args)),
-                class: "lang-learner-btn-status-mini",
-                style: { "padding": "1px 4px", "font-size": "0.7em" },
-                title: "\u91CD\u65B0\u626B\u63CF Vault \u5A92\u4F53\u6587\u4EF6"
-              }, " \u{1F504} \u626B\u63CF ")
-            ]),
-            withDirectives(createBaseVNode(
-              "select",
-              {
-                "onUpdate:modelValue": _cache[55] || (_cache[55] = ($event) => _ctx.selectedMediaFile = $event),
-                onChange: _cache[56] || (_cache[56] = (...args) => _ctx.handleSelectLocalMedia && _ctx.handleSelectLocalMedia(...args)),
-                style: { "width": "100%", "padding": "5px 8px", "border-radius": "6px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.82em", "cursor": "pointer" }
-              },
-              [
-                _cache[114] || (_cache[114] = createBaseVNode(
-                  "option",
-                  { value: "" },
-                  "-- \u8BF7\u9009\u62E9\u672C\u5730\u5A92\u4F53 --",
-                  -1
-                  /* CACHED */
-                )),
-                (openBlock(true), createElementBlock(
-                  Fragment,
-                  null,
-                  renderList(_ctx.mediaFiles, (file) => {
-                    return openBlock(), createElementBlock("option", {
-                      key: file.path,
-                      value: file.path
-                    }, toDisplayString(file.name), 9, _hoisted_136);
-                  }),
-                  128
-                  /* KEYED_FRAGMENT */
-                ))
-              ],
-              544
-              /* NEED_HYDRATION, NEED_PATCH */
-            ), [
-              [vModelSelect, _ctx.selectedMediaFile]
-            ])
-          ]),
-          createBaseVNode("div", _hoisted_137, [
-            _cache[115] || (_cache[115] = createBaseVNode(
-              "label",
-              { style: { "font-size": "0.8em", "font-weight": "600", "color": "var(--text-muted)" } },
-              "\u{1F310} \u5916\u90E8\u76F4\u94FE / YouTube / B\u7AD9\u94FE\u63A5",
-              -1
-              /* CACHED */
-            )),
-            createBaseVNode("div", _hoisted_138, [
-              withDirectives(createBaseVNode(
-                "input",
-                {
-                  "onUpdate:modelValue": _cache[57] || (_cache[57] = ($event) => _ctx.currentVideoUrl = $event),
-                  placeholder: "\u8F93\u5165\u89C6\u9891\u7F51\u5740\u6216\u6587\u4EF6\u76F4\u94FE",
-                  style: { "flex": "1", "padding": "5px 8px", "border-radius": "6px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.82em" }
-                },
-                null,
-                512
-                /* NEED_PATCH */
-              ), [
-                [vModelText, _ctx.currentVideoUrl]
-              ]),
-              createBaseVNode("button", {
-                onClick: _cache[58] || (_cache[58] = ($event) => _ctx.loadMediaSource(_ctx.currentVideoUrl)),
-                class: "lang-learner-btn lang-learner-btn-primary",
-                style: { "padding": "5px 12px", "font-size": "0.82em", "font-weight": "600", "border-radius": "6px" }
-              }, " \u8F7D\u5165 ")
-            ])
-          ])
-        ]),
-        _ctx.mediaType !== "none" ? (openBlock(), createElementBlock("div", _hoisted_139, [
-          createBaseVNode("div", _hoisted_140, [
-            _ctx.mediaType === "html5" ? (openBlock(), createElementBlock("video", {
-              key: 0,
-              ref: "mediaVideoRef",
-              src: _ctx.activeVideoSrc,
-              controls: "",
-              onTimeupdate: _cache[59] || (_cache[59] = (...args) => _ctx.onVideoTimeUpdate && _ctx.onVideoTimeUpdate(...args)),
-              style: { "width": "100%", "max-height": "280px", "aspect-ratio": "16/9", "display": "block", "border-radius": "6px" }
-            }, null, 40, _hoisted_141)) : _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_142, [..._cache[116] || (_cache[116] = [
-              createBaseVNode(
-                "div",
-                { id: "youtube-player-el" },
-                null,
-                -1
-                /* CACHED */
-              )
-            ])])) : _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("iframe", {
-              key: 2,
-              src: _ctx.activeVideoSrc,
-              style: { "width": "100%", "height": "240px", "border": "none", "border-radius": "6px", "display": "block" },
-              allowfullscreen: ""
-            }, null, 8, _hoisted_143)) : createCommentVNode("v-if", true)
-          ]),
-          createBaseVNode("div", _hoisted_144, [
-            createBaseVNode("div", _hoisted_145, [
-              createBaseVNode(
-                "span",
-                _hoisted_146,
-                " \u{1F552} " + toDisplayString(_ctx.formatTime(_ctx.currentVideoTime)),
-                1
-                /* TEXT */
-              ),
-              _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("div", _hoisted_147, [
-                _cache[117] || (_cache[117] = createBaseVNode(
-                  "span",
-                  { style: { "font-size": "0.75em", "color": "var(--text-muted)", "margin-right": "2px" } },
-                  "\u500D\u901F:",
-                  -1
-                  /* CACHED */
-                )),
-                (openBlock(), createElementBlock(
-                  Fragment,
-                  null,
-                  renderList([0.8, 1, 1.25, 1.5], (rate) => {
-                    return createBaseVNode("button", {
-                      key: rate,
-                      onClick: ($event) => _ctx.setPlaybackRate(rate),
-                      class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.mediaPlaybackRate === rate }]),
-                      style: { "padding": "1px 4px", "font-size": "0.7em", "font-weight": "600" }
-                    }, toDisplayString(rate) + "x ", 11, _hoisted_148);
-                  }),
-                  64
-                  /* STABLE_FRAGMENT */
-                ))
-              ])) : createCommentVNode("v-if", true)
-            ]),
-            _ctx.mediaType === "bilibili" ? (openBlock(), createElementBlock("div", _hoisted_149, " \u26A0\uFE0F \u63D0\u793A\uFF1AB\u7AD9\u5185\u5D4C\u9875\u7531\u4E8E\u8DE8\u57DF\u9650\u5236\u65E0\u6CD5\u6293\u53D6\u65F6\u95F4\u8FDB\u5EA6\u6216\u652F\u6301\u53CC\u5411\u5B9A\u4F4D\u3002 ")) : createCommentVNode("v-if", true),
-            _ctx.mediaType === "html5" || _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
-              key: 1,
-              onClick: _cache[60] || (_cache[60] = (...args) => _ctx.insertVideoTimestamp && _ctx.insertVideoTimestamp(...args)),
-              class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-full",
-              style: { "font-size": "0.85em", "padding": "7px", "font-weight": "600", "display": "flex", "justify-content": "center", "align-items": "center", "gap": "4px", "border-radius": "6px" }
-            }, " \u{1F4CC} \u63D2\u5165\u5F53\u524D\u89C6\u9891\u65F6\u95F4\u6233\u81F3\u6587\u6863 ")) : createCommentVNode("v-if", true)
-          ]),
-          _ctx.activeSubtitleIndex !== -1 && _ctx.subtitlesList[_ctx.activeSubtitleIndex] ? (openBlock(), createElementBlock("div", _hoisted_150, [
-            createBaseVNode("div", _hoisted_151, [
-              createBaseVNode("div", _hoisted_152, [
-                createBaseVNode("button", {
-                  onClick: _cache[61] || (_cache[61] = (...args) => _ctx.goToPrevSubtitle && _ctx.goToPrevSubtitle(...args)),
-                  class: "lang-learner-btn-status-mini",
-                  style: { "padding": "2px 5px", "font-size": "0.7em" },
-                  title: "\u4E0A\u4E00\u53E5"
-                }, " \u23EE\uFE0F \u4E0A\u4E00\u53E5 "),
-                createBaseVNode("button", {
-                  onClick: _cache[62] || (_cache[62] = (...args) => _ctx.goToNextSubtitle && _ctx.goToNextSubtitle(...args)),
-                  class: "lang-learner-btn-status-mini",
-                  style: { "padding": "2px 5px", "font-size": "0.7em" },
-                  title: "\u4E0B\u4E00\u53E5"
-                }, " \u4E0B\u4E00\u53E5 \u23ED\uFE0F ")
-              ]),
-              _cache[118] || (_cache[118] = createBaseVNode(
-                "div",
-                { style: { "font-size": "0.75em", "color": "var(--interactive-accent)", "font-weight": "700", "letter-spacing": "0.5px" } },
-                "\u{1F4E2} \u5F53\u524D\u64AD\u653E\u53E5",
-                -1
-                /* CACHED */
-              )),
-              createBaseVNode("div", _hoisted_153, [
-                createBaseVNode("button", {
-                  onClick: _cache[63] || (_cache[63] = (...args) => _ctx.toggleLoopCurrentSentence && _ctx.toggleLoopCurrentSentence(...args)),
-                  class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.isLoopingCurrentSentence }]),
-                  style: { "padding": "2px 6px", "font-size": "0.7em", "font-weight": "600" },
-                  title: _ctx.isLoopingCurrentSentence ? "\u70B9\u51FB\u5173\u95ED\u5355\u53E5\u5FAA\u73AF" : "\u70B9\u51FB\u5F00\u542F\u5355\u53E5\u5FAA\u73AF"
-                }, " \u{1F502} " + toDisplayString(_ctx.isLoopingCurrentSentence ? "\u5FAA\u73AF\u4E2D" : "\u5355\u53E5\u5FAA\u73AF"), 11, _hoisted_154)
-              ])
-            ]),
-            createBaseVNode("div", _hoisted_155, [
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.subtitlesList[_ctx.activeSubtitleIndex].segments, (token, index) => {
-                  return openBlock(), createElementBlock(
-                    Fragment,
-                    { key: index },
-                    [
-                      token.type === "text" ? (openBlock(), createElementBlock(
-                        "span",
-                        _hoisted_156,
-                        toDisplayString(token.text),
-                        1
-                        /* TEXT */
-                      )) : (openBlock(), createElementBlock("span", {
-                        key: 1,
-                        class: normalizeClass(["lang-learner-word", {
-                          "lang-learner-unknown": token.status === "UNKNOWN",
-                          "lang-learner-learning": token.status === "LEARNING",
-                          "lang-learner-known": token.status === "KNOWN",
-                          "lang-learner-phrase": token.isPhrase
-                        }]),
-                        "data-lemma": token.lemma,
-                        "data-trans": token.trans,
-                        "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
-                        onClick: withModifiers(($event) => _ctx.onSentenceWordClick(token.lemma), ["stop"]),
-                        onDblclick: withModifiers(($event) => _ctx.onSentenceWordDblClick(token), ["stop"]),
-                        style: { "border-bottom": "1.5px dashed var(--text-accent)", "padding": "0 1px", "margin": "0 1px", "cursor": "pointer" }
-                      }, toDisplayString(token.text), 43, _hoisted_157))
-                    ],
-                    64
-                    /* STABLE_FRAGMENT */
-                  );
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ]),
-            _ctx.subtitlesList[_ctx.activeSubtitleIndex].translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
-              "div",
-              _hoisted_158,
-              toDisplayString(_ctx.subtitlesList[_ctx.activeSubtitleIndex].translation),
-              1
-              /* TEXT */
-            )) : createCommentVNode("v-if", true)
-          ])) : createCommentVNode("v-if", true),
-          createBaseVNode("div", _hoisted_159, [
-            createBaseVNode("div", _hoisted_160, [
-              createBaseVNode(
-                "span",
-                _hoisted_161,
-                " \u{1F4AC} \u5B57\u5E55\u5217\u8868 (" + toDisplayString(_ctx.subtitlesList.length) + " \u53E5) ",
-                1
-                /* TEXT */
-              ),
-              createBaseVNode("div", _hoisted_162, [
-                _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("button", {
-                  key: 0,
-                  onClick: _cache[64] || (_cache[64] = ($event) => _ctx.showTranslation = !_ctx.showTranslation),
-                  class: normalizeClass(["lang-learner-btn-status-mini", { active: _ctx.showTranslation }]),
-                  style: { "padding": "2px 5px", "font-size": "0.7em", "font-weight": "600" },
-                  title: _ctx.showTranslation ? "\u70B9\u51FB\u663E\u793A\u539F\u6587\uFF0C\u9690\u85CF\u7FFB\u8BD1" : "\u70B9\u51FB\u53CC\u8BED\u5BF9\u7167\u663E\u793A"
-                }, " \u{1F441}\uFE0F " + toDisplayString(_ctx.showTranslation ? "\u53CC\u8BED\u6A21\u5F0F (\u8BD1\u6587\u663E\u793A)" : "\u539F\u6587\u6A21\u5F0F (\u8BD1\u6587\u9690\u85CF)"), 11, _hoisted_163)) : createCommentVNode("v-if", true),
-                _ctx.mediaType === "youtube" ? (openBlock(), createElementBlock("button", {
-                  key: 1,
-                  onClick: _cache[65] || (_cache[65] = (...args) => _ctx.loadYouTubeCaptions && _ctx.loadYouTubeCaptions(...args)),
-                  class: "lang-learner-btn-status-mini",
-                  style: { "padding": "2px 5px", "font-size": "0.7em" },
-                  disabled: _ctx.isLoadingSubtitles
-                }, toDisplayString(_ctx.isLoadingSubtitles ? "\u6293\u53D6\u4E2D..." : "\u{1F310} \u6293\u53D6\u5B57\u5E55"), 9, _hoisted_164)) : createCommentVNode("v-if", true),
-                createBaseVNode("label", _hoisted_165, [
-                  _cache[119] || (_cache[119] = createTextVNode(
-                    " \u{1F4C1} \u5BFC\u5165 ",
-                    -1
-                    /* CACHED */
-                  )),
-                  createBaseVNode(
-                    "input",
-                    {
-                      type: "file",
-                      accept: ".srt,.vtt",
-                      onChange: _cache[66] || (_cache[66] = (...args) => _ctx.handleLocalSubtitleUpload && _ctx.handleLocalSubtitleUpload(...args)),
-                      style: { "display": "none" }
-                    },
-                    null,
-                    32
-                    /* NEED_HYDRATION */
-                  )
-                ]),
-                _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("button", {
-                  key: 2,
-                  onClick: _cache[67] || (_cache[67] = (...args) => _ctx.exportSubtitlesToNote && _ctx.exportSubtitlesToNote(...args)),
-                  class: "lang-learner-btn-status-mini active",
-                  style: { "padding": "2px 5px", "font-size": "0.7em" },
-                  title: "\u5BFC\u51FA\u5B8C\u6574\u5B57\u5E55\u81F3\u6B63\u5728\u7F16\u8F91\u7684\u6587\u6863\u533A"
-                }, " \u{1F4E4} \u5BFC\u51FA ")) : createCommentVNode("v-if", true)
-              ])
-            ]),
-            _ctx.subtitlesList.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_166, [
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.subtitlesList, (sub, idx) => {
-                  return openBlock(), createElementBlock("div", {
-                    key: idx,
-                    id: "sub-line-" + idx,
-                    class: normalizeClass(["lang-learner-sub-line", { "lang-learner-active-sub": _ctx.activeSubtitleIndex === idx }]),
-                    style: { "padding": "5px 8px", "border-radius": "6px", "line-height": "1.45", "font-size": "0.88em", "transition": "all 0.15s ease", "cursor": "pointer", "display": "flex", "flex-direction": "column" },
-                    onClick: ($event) => _ctx.seekToSubtitleTime(sub.start)
-                  }, [
-                    createBaseVNode(
-                      "span",
-                      _hoisted_168,
-                      toDisplayString(_ctx.formatTime(sub.start)),
-                      1
-                      /* TEXT */
-                    ),
-                    createBaseVNode("span", _hoisted_169, [
-                      (openBlock(true), createElementBlock(
-                        Fragment,
-                        null,
-                        renderList(sub.segments, (token, index) => {
-                          return openBlock(), createElementBlock(
-                            Fragment,
-                            { key: index },
-                            [
-                              token.type === "text" ? (openBlock(), createElementBlock(
-                                "span",
-                                _hoisted_170,
-                                toDisplayString(token.text),
-                                1
-                                /* TEXT */
-                              )) : (openBlock(), createElementBlock("span", {
-                                key: 1,
-                                class: normalizeClass(["lang-learner-word", {
-                                  "lang-learner-unknown": token.status === "UNKNOWN",
-                                  "lang-learner-learning": token.status === "LEARNING",
-                                  "lang-learner-known": token.status === "KNOWN",
-                                  "lang-learner-phrase": token.isPhrase
-                                }]),
-                                "data-lemma": token.lemma,
-                                "data-trans": token.trans,
-                                "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
-                                onClick: withModifiers(($event) => _ctx.onSentenceWordClick(token.lemma), ["stop"]),
-                                onDblclick: withModifiers(($event) => _ctx.onSentenceWordDblClick(token), ["stop"])
-                              }, toDisplayString(token.text), 43, _hoisted_171))
-                            ],
-                            64
-                            /* STABLE_FRAGMENT */
-                          );
-                        }),
-                        128
-                        /* KEYED_FRAGMENT */
-                      ))
-                    ]),
-                    sub.translation && _ctx.showTranslation ? (openBlock(), createElementBlock(
-                      "div",
-                      _hoisted_172,
-                      toDisplayString(sub.translation),
-                      1
-                      /* TEXT */
-                    )) : createCommentVNode("v-if", true)
-                  ], 10, _hoisted_167);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ])) : (openBlock(), createElementBlock("div", _hoisted_173, " \u6682\u65E0\u5B57\u5E55\uFF0C\u8BF7\u6293\u53D6\u5728\u7EBF\u5B57\u5E55\u6216\u5BFC\u5165\u672C\u5730 SRT/VTT \u6587\u4EF6 "))
-          ])
-        ])) : (openBlock(), createElementBlock("div", _hoisted_174, [..._cache[120] || (_cache[120] = [
-          createBaseVNode(
-            "div",
-            { style: { "font-size": "2.5em", "margin-bottom": "10px", "filter": "grayscale(0.2)" } },
-            "\u{1F3AC}",
-            -1
-            /* CACHED */
-          ),
-          createBaseVNode(
-            "p",
-            { style: { "margin": "0 0 4px 0", "font-weight": "600", "font-size": "1em", "color": "var(--text-normal)" } },
-            "\u6682\u65E0\u8F7D\u5165\u5A92\u4F53",
-            -1
-            /* CACHED */
-          ),
-          createBaseVNode(
-            "p",
-            { style: { "font-size": "0.8em", "color": "var(--text-muted)", "margin": "0", "padding": "0 16px", "line-height": "1.4" } },
-            " \u8BF7\u5728\u4E0A\u65B9\u9009\u62E9\u5E93\u5185\u5A92\u4F53\uFF0C\u6216\u8F93\u5165 YouTube \u7B49\u94FE\u63A5\u8F7D\u5165\u64AD\u653E\u3002\u8F7D\u5165\u540E\u5373\u53EF\u5BFC\u5165\u6216\u81EA\u52A8\u6293\u53D6\u5B57\u5E55\u3002 ",
-            -1
-            /* CACHED */
-          )
-        ])]))
-      ],
-      512
-      /* NEED_PATCH */
-    ), [
+    withDirectives(createVNode(_component_MediaTab, { onSelectWord: _ctx.onWordSelectedByString }, null, 8, ["onSelectWord"]), [
       [vShow, _ctx.mainTab === "media"]
     ]),
-    withDirectives(createBaseVNode(
-      "div",
-      _hoisted_175,
-      [
-        _cache[127] || (_cache[127] = createBaseVNode(
-          "div",
-          { class: "lang-learner-panel-dashboard" },
-          [
-            createBaseVNode("h3", { class: "lang-learner-panel-title" }, "\u{1F4F0} RSS \u8BA2\u9605\u9605\u8BFB"),
-            createBaseVNode("p", { style: { "font-size": "0.82em", "color": "var(--text-muted)", "margin": "-4px 0 12px 0" } }, " \u5728\u6B64\u5904\u8BA2\u9605\u82F1\u8BED\u6587\u7AE0\u6E90\uFF0C\u4EAB\u53D7\u5373\u8BFB\u5373\u5212\u3001\u7EB3\u7C73\u7EA7\u67E5\u8BCD\u4E0E\u53D1\u97F3\u7684\u9605\u8BFB\u4F53\u9A8C\u3002 ")
-          ],
-          -1
-          /* CACHED */
-        )),
-        createBaseVNode("div", _hoisted_176, [
-          createBaseVNode("div", {
-            class: "lang-learner-voice-settings-header",
-            onClick: _cache[68] || (_cache[68] = ($event) => _ctx.showRssConfig = !_ctx.showRssConfig),
-            style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "cursor": "pointer", "padding": "4px 0" }
-          }, [
-            _cache[122] || (_cache[122] = createBaseVNode(
-              "span",
-              { style: { "font-weight": "600", "font-size": "0.85em", "color": "var(--text-muted)" } },
-              "\u2795 \u7BA1\u7406 RSS \u8BA2\u9605\u6E90",
-              -1
-              /* CACHED */
-            )),
-            createBaseVNode(
-              "span",
-              _hoisted_177,
-              toDisplayString(_ctx.showRssConfig ? "\u25BC \u6536\u8D77" : "\u25B6 \u5C55\u5F00"),
-              1
-              /* TEXT */
-            )
-          ]),
-          withDirectives(createBaseVNode(
-            "div",
-            _hoisted_178,
-            [
-              createBaseVNode("div", _hoisted_179, [
-                withDirectives(createBaseVNode(
-                  "input",
-                  {
-                    "onUpdate:modelValue": _cache[69] || (_cache[69] = ($event) => _ctx.newFeedName = $event),
-                    placeholder: "\u8BA2\u9605\u6E90\u540D\u79F0 (\u5982: Hacker News)",
-                    style: { "width": "100%", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em" }
-                  },
-                  null,
-                  512
-                  /* NEED_PATCH */
-                ), [
-                  [vModelText, _ctx.newFeedName]
-                ]),
-                createBaseVNode("div", _hoisted_180, [
-                  withDirectives(createBaseVNode(
-                    "input",
-                    {
-                      "onUpdate:modelValue": _cache[70] || (_cache[70] = ($event) => _ctx.newFeedUrl = $event),
-                      placeholder: "\u8BA2\u9605\u6E90 RSS URL",
-                      style: { "flex": "1", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em" }
-                    },
-                    null,
-                    512
-                    /* NEED_PATCH */
-                  ), [
-                    [vModelText, _ctx.newFeedUrl]
-                  ]),
-                  createBaseVNode("button", {
-                    onClick: _cache[71] || (_cache[71] = (...args) => _ctx.addRssFeed && _ctx.addRssFeed(...args)),
-                    class: "lang-learner-btn lang-learner-btn-primary",
-                    style: { "padding": "6px 12px", "font-size": "0.85em", "font-weight": "500" }
-                  }, " \u6DFB\u52A0 ")
-                ])
-              ]),
-              createBaseVNode("div", _hoisted_181, [
-                _cache[123] || (_cache[123] = createBaseVNode(
-                  "label",
-                  { style: { "font-size": "0.75em", "color": "var(--text-muted)", "font-weight": "600", "display": "block", "margin-bottom": "4px" } },
-                  "\u5DF2\u8BA2\u9605\u6E90\u5217\u8868:",
-                  -1
-                  /* CACHED */
-                )),
-                createBaseVNode("div", _hoisted_182, [
-                  (openBlock(true), createElementBlock(
-                    Fragment,
-                    null,
-                    renderList(_ctx.rssFeeds, (feed, idx) => {
-                      return openBlock(), createElementBlock("div", {
-                        key: idx,
-                        style: { "display": "flex", "justify-content": "space-between", "align-items": "center", "padding": "4px 6px", "border-radius": "4px", "background": "var(--background-primary)", "border": "1px solid var(--background-modifier-border)" }
-                      }, [
-                        createBaseVNode(
-                          "span",
-                          _hoisted_183,
-                          toDisplayString(feed.name),
-                          1
-                          /* TEXT */
-                        ),
-                        createBaseVNode("button", {
-                          onClick: ($event) => _ctx.removeRssFeed(idx),
-                          class: "lang-learner-btn-icon",
-                          title: "\u5220\u9664\u8BE5\u6E90",
-                          style: { "padding": "2px 4px", "font-size": "0.8em", "opacity": "0.7" }
-                        }, " \u274C ", 8, _hoisted_184)
-                      ]);
-                    }),
-                    128
-                    /* KEYED_FRAGMENT */
-                  ))
-                ])
-              ])
-            ],
-            512
-            /* NEED_PATCH */
-          ), [
-            [vShow, _ctx.showRssConfig]
-          ])
-        ]),
-        createBaseVNode("div", _hoisted_185, [
-          _cache[125] || (_cache[125] = createBaseVNode(
-            "label",
-            { style: { "font-size": "0.85em", "font-weight": "600", "color": "var(--text-muted)" } },
-            "\u{1F4F0} \u9009\u62E9\u8BA2\u9605\u6E90\u8FDB\u884C\u9605\u8BFB",
-            -1
-            /* CACHED */
-          )),
-          withDirectives(createBaseVNode(
-            "select",
-            {
-              "onUpdate:modelValue": _cache[72] || (_cache[72] = ($event) => _ctx.selectedFeedUrl = $event),
-              onChange: _cache[73] || (_cache[73] = (...args) => _ctx.handleSelectFeed && _ctx.handleSelectFeed(...args)),
-              style: { "width": "100%", "padding": "6px 8px", "border-radius": "4px", "background": "var(--background-modifier-form-field)", "border": "1px solid var(--background-modifier-border)", "color": "var(--text-normal)", "font-size": "0.85em", "cursor": "pointer" }
-            },
-            [
-              _cache[124] || (_cache[124] = createBaseVNode(
-                "option",
-                { value: "" },
-                "-- \u8BF7\u9009\u62E9 RSS \u8BA2\u9605\u6E90 --",
-                -1
-                /* CACHED */
-              )),
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.rssFeeds, (feed) => {
-                  return openBlock(), createElementBlock("option", {
-                    key: feed.url,
-                    value: feed.url
-                  }, toDisplayString(feed.name), 9, _hoisted_186);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ],
-            544
-            /* NEED_HYDRATION, NEED_PATCH */
-          ), [
-            [vModelSelect, _ctx.selectedFeedUrl]
-          ])
-        ]),
-        createBaseVNode("div", _hoisted_187, [
-          _ctx.isLoadingFeeds ? (openBlock(), createElementBlock("div", _hoisted_188, " \u6B63\u5728\u62C9\u53D6 RSS \u6570\u636E\u5E76\u5206\u8BCD\u9AD8\u4EAE\uFF0C\u8BF7\u7A0D\u5019... ")) : _ctx.selectedArticle ? (openBlock(), createElementBlock("div", _hoisted_189, [
-            createBaseVNode("div", _hoisted_190, [
-              createBaseVNode("button", {
-                onClick: _cache[74] || (_cache[74] = ($event) => _ctx.selectedArticle = null),
-                class: "lang-learner-btn",
-                style: { "padding": "4px 10px", "font-size": "0.8em", "display": "flex", "align-items": "center", "gap": "4px" }
-              }, " \u2B05\uFE0F \u8FD4\u56DE\u6587\u7AE0\u5217\u8868 "),
-              createBaseVNode("a", {
-                href: _ctx.selectedArticle.link,
-                target: "_blank",
-                class: "lang-learner-btn-icon",
-                title: "\u5728\u6D4F\u89C8\u5668\u4E2D\u6253\u5F00\u539F\u6587",
-                style: { "text-decoration": "none", "font-size": "1.1em" }
-              }, " \u{1F310} ", 8, _hoisted_191)
-            ]),
-            createBaseVNode(
-              "h3",
-              _hoisted_192,
-              toDisplayString(_ctx.selectedArticle.title),
-              1
-              /* TEXT */
-            ),
-            createBaseVNode(
-              "p",
-              _hoisted_193,
-              " \u53D1\u5E03\u65E5\u671F: " + toDisplayString(_ctx.selectedArticle.date),
-              1
-              /* TEXT */
-            ),
-            createBaseVNode("div", _hoisted_194, [
-              (openBlock(true), createElementBlock(
-                Fragment,
-                null,
-                renderList(_ctx.selectedArticleParagraphs, (p2, pIdx) => {
-                  return openBlock(), createElementBlock("p", {
-                    key: pIdx,
-                    style: { "margin": "0", "text-indent": "0", "text-align": "justify", "white-space": "pre-wrap" }
-                  }, [
-                    (openBlock(true), createElementBlock(
-                      Fragment,
-                      null,
-                      renderList(p2.segments, (token, index) => {
-                        return openBlock(), createElementBlock(
-                          Fragment,
-                          { key: index },
-                          [
-                            token.type === "text" ? (openBlock(), createElementBlock(
-                              "span",
-                              _hoisted_195,
-                              toDisplayString(token.text),
-                              1
-                              /* TEXT */
-                            )) : (openBlock(), createElementBlock("span", {
-                              key: 1,
-                              class: normalizeClass(["lang-learner-word", {
-                                "lang-learner-unknown": token.status === "UNKNOWN",
-                                "lang-learner-learning": token.status === "LEARNING",
-                                "lang-learner-known": token.status === "KNOWN",
-                                "lang-learner-phrase": token.isPhrase
-                              }]),
-                              "data-lemma": token.lemma,
-                              "data-trans": token.trans,
-                              "data-phonetic": token.phonetic ? "/" + token.phonetic + "/" : "",
-                              onClick: ($event) => _ctx.onSentenceWordClick(token.lemma),
-                              onDblclick: ($event) => _ctx.onSentenceWordDblClick(token)
-                            }, toDisplayString(token.text), 43, _hoisted_196))
-                          ],
-                          64
-                          /* STABLE_FRAGMENT */
-                        );
-                      }),
-                      128
-                      /* KEYED_FRAGMENT */
-                    ))
-                  ]);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ])
-          ])) : _ctx.feedItems.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_197, [
-            (openBlock(true), createElementBlock(
-              Fragment,
-              null,
-              renderList(_ctx.feedItems, (item, idx) => {
-                return openBlock(), createElementBlock("div", {
-                  key: idx,
-                  onClick: ($event) => _ctx.readArticle(item),
-                  class: "lang-learner-wordlist-item",
-                  style: { "display": "flex", "flex-direction": "column", "align-items": "flex-start", "gap": "4px", "padding": "10px", "cursor": "pointer", "transition": "background 0.2s" }
-                }, [
-                  createBaseVNode(
-                    "span",
-                    _hoisted_199,
-                    toDisplayString(item.title),
-                    1
-                    /* TEXT */
-                  ),
-                  createBaseVNode(
-                    "span",
-                    _hoisted_200,
-                    toDisplayString(item.date),
-                    1
-                    /* TEXT */
-                  )
-                ], 8, _hoisted_198);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : (openBlock(), createElementBlock("div", _hoisted_201, [..._cache[126] || (_cache[126] = [
-            createBaseVNode(
-              "div",
-              { style: { "font-size": "2.5em", "margin-bottom": "8px" } },
-              "\u{1F4F0}",
-              -1
-              /* CACHED */
-            ),
-            createBaseVNode(
-              "p",
-              { style: { "margin": "0", "font-size": "0.85em", "color": "var(--text-muted)", "padding": "0 16px" } },
-              " \u672A\u62C9\u53D6\u5230\u6587\u7AE0\u5217\u8868\u3002\u8BF7\u5728\u4E0A\u65B9\u9009\u62E9\u6216\u6DFB\u52A0 RSS \u8BA2\u9605\u6E90\u5E76\u8F7D\u5165\u3002 ",
-              -1
-              /* CACHED */
-            )
-          ])]))
-        ])
-      ],
-      512
-      /* NEED_PATCH */
-    ), [
+    withDirectives(createVNode(_component_ReaderTab, { onSelectWord: _ctx.onWordSelectedByString }, null, 8, ["onSelectWord"]), [
       [vShow, _ctx.mainTab === "reader"]
     ])
   ]);
 }
 
 // src/ui/Panel.vue
-Panel_default.render = render;
+Panel_default.render = render9;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-be7f13d4";
+Panel_default.__scopeId = "data-v-5fbf7b1e";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
 var VIEW_TYPE_LANG_LEARNER = "lang-learner-sidebar";
-var LangLearnerSidebarView = class extends import_obsidian4.ItemView {
+var LangLearnerSidebarView = class extends import_obsidian12.ItemView {
   constructor(leaf, vocabManager, plugin) {
     super(leaf);
     this.vueApp = null;
@@ -30918,8 +31283,8 @@ var LangLearnerSidebarView = class extends import_obsidian4.ItemView {
 };
 
 // src/ui/WordSuggest.ts
-var import_obsidian5 = require("obsidian");
-var WordSuggest = class extends import_obsidian5.EditorSuggest {
+var import_obsidian13 = require("obsidian");
+var WordSuggest = class extends import_obsidian13.EditorSuggest {
   constructor(app, plugin) {
     super(app);
     this.plugin = plugin;
@@ -31086,7 +31451,7 @@ var WordSuggest = class extends import_obsidian5.EditorSuggest {
 };
 
 // src/main.ts
-var EnglishLearnerPlugin = class extends import_obsidian6.Plugin {
+var EnglishLearnerPlugin = class extends import_obsidian14.Plugin {
   constructor() {
     super(...arguments);
     /** 影子词库管理器实例 */
@@ -31116,7 +31481,7 @@ var EnglishLearnerPlugin = class extends import_obsidian6.Plugin {
       id: "analyze-selection",
       name: "\u5206\u6790\u5F53\u524D\u9009\u4E2D\u7684\u53E5\u5B50/\u6587\u672C",
       callback: () => {
-        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
+        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian14.MarkdownView);
         const selection = activeView?.editor?.getSelection();
         if (selection && selection.trim()) {
           this.activateView();
@@ -31124,7 +31489,7 @@ var EnglishLearnerPlugin = class extends import_obsidian6.Plugin {
             eventBus.emit("lang-learner:analyze-sentence", selection.trim());
           }, 200);
         } else {
-          new import_obsidian6.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
+          new import_obsidian14.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
         }
       }
     });
@@ -31167,7 +31532,7 @@ var EnglishLearnerPlugin = class extends import_obsidian6.Plugin {
       })
     );
     this.registerDomEvent(document, "dblclick", (evt) => {
-      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
+      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian14.MarkdownView);
       if (activeView && activeView.editor) {
         const editor = activeView.editor;
         const selection = editor.getSelection().trim();

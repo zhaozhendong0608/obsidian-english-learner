@@ -124,6 +124,10 @@ describe('中文查词与多结果列表匹配逻辑测试', () => {
     });
 
     it('调用系统词典应唤起 dict:// 协议链接', () => {
+        const hasWindow = typeof global.window !== 'undefined';
+        if (!hasWindow) {
+            (global as any).window = {} as any;
+        }
         const originalOpen = global.window.open;
         const spy = vi.fn();
         global.window.open = spy;
@@ -137,6 +141,10 @@ describe('中文查词与多结果列表匹配逻辑测试', () => {
         lookup('高效');
         expect(spy).toHaveBeenCalledWith('dict://%E9%AB%98%E6%95%88');
 
-        global.window.open = originalOpen;
+        if (hasWindow) {
+            global.window.open = originalOpen;
+        } else {
+            delete (global as any).window;
+        }
     });
 });

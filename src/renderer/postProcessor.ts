@@ -113,6 +113,12 @@ export function wrapTextNode(textNode: Text, vocabManager: VocabularyManager): v
         const status = vocabManager.get(token.lemma);
         const info = vocabManager.getInfo(token.lemma);
 
+        if (status === 'KNOWN') {
+            fragment.appendChild(document.createTextNode(text.slice(token.start, token.end)));
+            lastIndex = token.end;
+            continue;
+        }
+
         // 创建高亮 span
         const span = document.createElement('span');
         span.className = 'lang-learner-word';
