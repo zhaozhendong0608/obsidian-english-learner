@@ -1,17 +1,17 @@
-# 项目全景图 (Landscape) - Obsidian Language Learner
+# 项目全景图 (Landscape) - Obsidian English Immersion Reader
 
 > 此文件是 AI 理解本插件项目的核心入口。请保持更新。
 
 ## 1. 项目元数据
-- **项目名称**: Obsidian Language Learner (Obsidian 语言学习助手)
+- **项目名称**: Obsidian English Immersion Reader (Obsidian 英语浸入式阅读器)
 - **核心目标**: 在 Obsidian 本地 Markdown 笔记中实现“阅读文本 -> 自动还原分词 -> 状态比对 -> 语境高亮 -> 内存I/O安全落盘 -> 生物记忆复习”的完整学习闭环。
 - **技术栈**: 
   - **语言**: TypeScript (100% 强类型)
-  - **核心框架**: Vue 3 (Composition API / `<script setup>`) 用于交互控制面板
+  - **核心框架**: Vue 3 (Composition API / `defineComponent` 标准架构) 用于交互控制面板
   - **构建打包**: esbuild + `esbuild-plugin-vue3` -> 编译输出单个 `main.js` 和 `styles.css`
   - **样式**: Vanilla CSS + scoped Vue 样式，零外部样式库依赖（无 TailwindCSS / Element UI）
   - **跨平台桥接**: Capacitor (基于 Obsidian 底座自带的 `this.app.vault.adapter`)
-- **架构模式**: 内存优先 (Memory-First) + 零 JS 功耗悬浮窗 (CSS Pseudo-element Hover) + 订阅发布解耦 (Event Bus)。
+  - **架构模式**: 内存优先 (Memory-First) + 零 JS 功耗悬浮窗 (CSS Pseudo-element Hover) + 订阅发布解耦 (Event Bus)。
 
 ---
 

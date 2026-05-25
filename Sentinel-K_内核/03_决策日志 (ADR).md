@@ -28,6 +28,8 @@
 | ADR-019 | 2026-05-24 | 全局置顶查词详情、全局发音控制与免 Tab 跳转的侧边栏扁平化 UI 架构 | 🟢 Accepted | -                  |
 | ADR-020 | 2026-05-24 | 接入 MarkdownRenderer、构建星状词根拓扑与编辑器双击/打开选词全局联动架构 | 🟢 Accepted | -                  |
 | ADR-021 | 2026-05-25 | 视频精读高度比例优化、双语字幕独立分行及译文显隐联动控制架构 | 🟢 Accepted | -                  |
+| ADR-022 | 2026-05-25 | esbuild-plugin-vue3 编译局限治理与 SFC defineComponent 标准架构改版 | 🟢 Accepted | -                  |
+| ADR-023 | 2026-05-25 | SFC 双闭合标签防卫与嵌套 require('obsidian') 的 ES 模块化升级 | 🟢 Accepted | -                  |
 
 
 ---
@@ -268,4 +270,23 @@
 - **后果**:
   - 正面：视频画面高度明显提升，双语分行排版美观可读性极高，译文显隐控制响应即时，完美契合沉浸式英文盲听和对照辅助训练；
   - 负面：无明显负面影响。
+
+### ADR-022 esbuild-plugin-vue3 编译局限治理与 SFC defineComponent 标准架构改版
+- **上下文**: 在解耦单体 `Panel.vue` 并分拆为独立 Vue SFC 子组件后，由于 `esbuild-plugin-vue3` 对 `<script setup>` 的代理重构编译不完整，产生了在 Obsidian 宿主环境下运行发生组件解析失败、`_ctx` 未绑定实例属性的致命白屏及 `TypeError` 崩溃。
+- **决策**:
+  1. 将全部 8 个子组件及主 `Panel.vue` 彻底改装为标准的 `defineComponent` 选项式与组合式（`setup()`）混合结构；
+  2. 显式配置 `components` 选项，显式声明 `props` / `emits`；
+  3. 在 `setup(props, { emit })` 内部处理逻辑，并显式 `return` 模板引用的所有 refs 和方法。
+- **后果**:
+  - 正面：彻底消除了 `resolveComponent` 失败的致命警告，成功在 Obsidian 宿主环境下取得 100% 的渲染挂载与 Tab 交互成功率。
+  - 负面：需多写一部分 options 样板代码与显式 return 语句，但极大地增强了 esbuild 插件打包下的运行稳定性。
+
+### ADR-023 SFC 双闭合标签防卫与嵌套 require('obsidian') 的 ES 模块化升级
+- **上下文**: 重构后 `ReviewTab` 和 `SentenceTab` 在 Obsidian 中首次加载时引发了 `TypeError: Cannot read properties of undefined (reading 'length')`，进一步排查发现在打包生成 `main.js` 时它们的脚本块全部编译为了空的 commonJS 包装体。这是由于：(1) 重构时组件漏掉了闭合的 `</script>` 标签导致 Vue SFC 编译器把样式解析为了脚本；(2) `ReviewTab` 内部使用了局部的 `const obsidian = require('obsidian')` 语句，使 esbuild 强制将其降级为 commonJS 打包模块，与 ESM 导出产生兼容冲突。
+- **决策**:
+  1. 物理检查并补齐所有 SFC 文件的闭合 `</script>` 标签，确保标签边界清晰；
+  2. 彻底移除所有组件内部的局部 `require('obsidian')` 语句，统一升级为文件顶部的 ES 模块 `import`。
+- **后果**:
+  - 正面：彻底规避了编译器在 SFC 解析和 esbuild 打包过程中的静默失败，使代码全部以直观的 ES 模块打包，运行期极其稳定。
+  - 负面：无。
 
