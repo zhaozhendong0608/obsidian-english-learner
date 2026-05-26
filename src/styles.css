@@ -858,4 +858,107 @@
     letter-spacing: 0.01em;
 }
 
+/* ---- V4.0 口语评测样式 ---- */
+
+/* 录音按钮 - 危险操作样式 */
+.lang-learner-btn-danger {
+    background-color: var(--text-error, #e74c3c);
+    color: var(--text-on-accent, #ffffff);
+}
+
+.lang-learner-btn-danger:hover {
+    background-color: var(--text-error, #c0392b);
+}
+
+/* 音素列表容器 */
+.lang-learner-phoneme-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+}
+
+/* 音素标签 - 正常状态 */
+.lang-learner-phoneme {
+    padding: 4px 8px;
+    background: var(--interactive-normal);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+    cursor: help;
+    transition: transform 0.2s ease;
+}
+
+.lang-learner-phoneme:hover {
+    transform: scale(1.05);
+}
+
+/* 音素标签 - 错误状态（标红高亮） */
+.lang-learner-phoneme-error {
+    background: var(--text-error, #e74c3c);
+    color: var(--text-on-accent, #ffffff);
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+}
+
+/* A/B 轨道播放器按钮激活状态 */
+.lang-learner-btn-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+}
+
+/* AI 诊断容器 */
+.lang-learner-ai-diagnosis {
+    padding: 12px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.lang-learner-ai-diagnosis::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lang-learner-ai-diagnosis::-webkit-scrollbar-thumb {
+    background-color: var(--background-modifier-border);
+    border-radius: 3px;
+}
+
+/* 录音指示器动画 */
+.lang-learner-recording-indicator {
+    color: var(--text-error);
+    font-weight: 600;
+    animation: langLearnerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes langLearnerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* 录音控制区布局 */
+.lang-learner-recording-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* A/B 播放器布局 */
+.lang-learner-ab-player {
+    display: flex;
+    gap: 12px;
+}
+
+/* 口语评测 Tab 容器 */
+.lang-learner-pronunciation-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 

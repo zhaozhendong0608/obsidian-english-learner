@@ -9,6 +9,7 @@ if you want to view the source, please visit the github repository of this plugi
 */`;
 
 import fs from "fs";
+import path from "path";
 
 const cssMergePlugin = {
     name: "css-merge",
@@ -21,6 +22,35 @@ const cssMergePlugin = {
                 console.log("⚡ [esbuild] styles.css merged successfully!");
             } catch (err) {
                 console.error("Error merging CSS files:", err);
+            }
+        });
+    }
+};
+
+const wasmCopyPlugin = {
+    name: "wasm-copy",
+    setup(build) {
+        build.onEnd(() => {
+            try {
+                // 创建 dist 目录（如果不存在）
+                const distDir = path.join(process.cwd(), "dist");
+                if (!fs.existsSync(distDir)) {
+                    fs.mkdirSync(distDir, { recursive: true });
+                }
+
+                // 拷贝 onnxruntime-web WASM 文件
+                const onnxSrcDir = path.join(process.cwd(), "node_modules", "onnxruntime-web", "dist");
+                if (fs.existsSync(onnxSrcDir)) {
+                    const wasmFiles = fs.readdirSync(onnxSrcDir).filter(f => f.endsWith(".wasm") || f.endsWith(".jsep.js"));
+                    wasmFiles.forEach(file => {
+                        const src = path.join(onnxSrcDir, file);
+                        const dest = path.join(distDir, file);
+                        fs.copyFileSync(src, dest);
+                    });
+                    console.log(`⚡ [esbuild] Copied ${wasmFiles.length} WASM files to dist/`);
+                }
+            } catch (err) {
+                console.error("Error copying WASM files:", err);
             }
         });
     }
@@ -50,7 +80,7 @@ const context = await esbuild.context({
         "@lezer/lr",
         ...builtins
     ],
-    plugins: [vue3Plugin(), cssMergePlugin],
+    plugins: [vue3Plugin(), cssMergePlugin, wasmCopyPlugin],
     format: "cjs",
     target: "es2020",
     logLevel: "info",

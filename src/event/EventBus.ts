@@ -18,6 +18,7 @@ interface EventMap {
     'lang-learner:word-selected': (word: string) => void;      // 主窗口点击单词后通知侧边栏同步选中
     'lang-learner:analyze-sentence': (sentence: string) => void; // 快捷分析句子事件
     'lang-learner:play-media': (urlOrPath: string, timestamp: number) => void; // 视频播放器跳转事件，包含视频链接或路径及跳转时间点
+    'lang-learner:accent-changed': (accent: 'US' | 'UK') => void; // 发音评测标准切换事件
 }
 
 type EventCallback = (...args: any[]) => void;

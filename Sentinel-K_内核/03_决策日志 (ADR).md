@@ -31,6 +31,7 @@
 | ADR-022 | 2026-05-25 | esbuild-plugin-vue3 编译局限治理与 SFC defineComponent 标准架构改版 | 🟢 Accepted | -                  |
 | ADR-023 | 2026-05-25 | SFC 双闭合标签防卫与嵌套 require('obsidian') 的 ES 模块化升级 | 🟢 Accepted | -                  |
 | ADR-024 | 2026-05-25 | 集成 @mozilla/readability 实现网页正文智能提取与编辑器插入 | 🟢 Accepted | Approval_Hash: `1` |
+| ADR-025 | 2026-05-25 | V4.0 端云协同口语评测引擎：WASM Worker + Whisper-Tiny-EN + DeepSeek 诊断 | 🟢 Accepted | Approval_Hash: `1` |
 
 
 ---
@@ -306,4 +307,56 @@
     - 仅支持静态 HTML 网页，对于 JavaScript 动态渲染的 SPA 应用（如 React/Vue 单页应用）无法提取内容；
     - 部分网站有反爬虫机制（User-Agent 检测、Cloudflare 防护等），可能导致抓取失败。
 - **证明**: 详见本次交付的 Evidence Block。
+
+### ADR-025 V4.0 端云协同口语评测引擎：WASM Worker + Whisper-Tiny-EN + DeepSeek 诊断
+- **上下文**: 
+  为了实现 V4.0 端云协同口语实验室功能，需要在 Obsidian 插件中集成本地语音识别与在线 AI 诊断能力。核心需求包括：
+  1. **本地音素强制对齐 (Phoneme Forced Alignment)**: 用户录制单词/句子发音后，本地引擎需要将录音与标准音素序列进行对齐，计算每个音素的发音准确度，并在 UI 中高亮标红错误音素；
+  2. **DeepSeek 肌肉纠偏诊断**: 将脱敏后的错误音标编码发送至 DeepSeek API，获取基于中式发音肌肉习惯的纠正建议（舌位、含水练习等）；
+  3. **A/B 轨道回放**: 支持用户在标准 TTS 示范音（A 轨）与自己的录音（B 轨）之间快速切换对比；
+  4. **主动催化伴写**: 在编辑器输入常用词时，自动推荐生词本中的临界复习生词作为替换建议，促进输出端主动消费。
+  
+  技术挑战：
+  - **WASM 模型加载阻塞**: Whisper-Tiny-EN 模型约 40MB，直接在主线程加载会导致 UI 冻结数秒；
+  - **移动端内存限制**: 移动端设备内存受限，录音 Blob 和 WASM 模型需要严格的生命周期管理；
+  - **跨域与 CORS**: DeepSeek API 需要通过 `requestUrl` 桥接，避免浏览器同源策略拦截；
+  - **音频采样率不一致**: 麦克风捕获的音频需要重采样为 Whisper 要求的 16kHz 单声道格式。
+
+- **决策**:
+  1. **引入 ONNX Runtime Web 依赖**: 在 `package.json` 中添加 `"onnxruntime-web": "^1.20.0"`，用于在浏览器环境中加载和运行 Whisper-Tiny-EN WASM 模型；
+  2. **Web Worker 异步加载架构**: 创建 `src/workers/whisper-worker.ts`，在独立线程中加载 WASM 模型并执行音素对齐计算，通过 `postMessage` 与主线程通信，避免阻塞 UI；
+  3. **esbuild 静态资源拷贝**: 修改 `esbuild.config.mjs`，配置 WASM 文件和 Worker 脚本的输出拷贝逻辑，确保打包后的 `dist/` 目录包含所有运行时依赖；
+  4. **AudioCaptureService 音频采集服务**: 创建 `src/services/AudioCaptureService.ts`，封装 Web Audio API 的麦克风捕获、16kHz 重采样、Blob 生成与内存释放逻辑；
+  5. **PronunciationTab 口语评测 UI**: 创建 `src/ui/components/PronunciationTab.vue`，提供录音按钮、音素列表高亮、A/B 轨道播放器、DeepSeek 诊断结果渲染等交互；
+  6. **aiService 扩展 DeepSeek 接口**: 扩展 `src/services/aiService.ts`，支持流式 SSE 请求 DeepSeek API，并将返回的 Markdown 文本通过 `MarkdownRenderer` 渲染；
+  7. **WordSuggest 扩展主动伴写**: 扩展 `src/ui/WordSuggest.ts`，在用户输入常用词时，从生词本中检索临界复习生词（SM-2 阶段靠前且到期），生成倒排映射表并显示替换建议；
+  8. **main.ts 注册口语评测视图**: 在 `src/main.ts` 中注册 `PronunciationEvalView`，并实现 `evaluationAccent` 全局状态同步（美音/英音切换）。
+
+- **后果**:
+  - 正面:
+    - 实现了完全本地化的音素对齐引擎，无需依赖在线 API，保护用户隐私；
+    - Web Worker 架构确保 UI 流畅度，WASM 模型加载不阻塞主线程；
+    - DeepSeek 诊断提供个性化的发音纠正建议，提升学习效果；
+    - A/B 轨道回放让用户直观对比自己的发音与标准音；
+    - 主动催化伴写打通了"输入 → 输出"的记忆闭环，提升生词复习频率。
+  - 负面:
+    - **打包体积增加**: ONNX Runtime Web + Whisper-Tiny-EN 模型约增加 40-50MB 打包体积；
+    - **移动端性能压力**: 在低端移动设备上，WASM 模型推理可能需要 2-5 秒，需要提供加载进度提示；
+    - **内存泄漏风险**: 录音 Blob 和 WASM 模型需要严格的生命周期管理，必须在组件卸载时调用 `URL.revokeObjectURL()` 和 Worker 销毁；
+    - **DeepSeek API 依赖**: 肌肉纠偏诊断功能依赖在线 API，断网时无法使用（但本地音素对齐仍可正常工作）；
+    - **音频采样率转换开销**: 16kHz 重采样需要额外的 CPU 计算，在长句录音时可能有轻微延迟。
+
+- **风险缓解措施**:
+  1. **CDN + Vault 双路加载**: WASM 模型优先从 CDN 加载，失败时回退到 Vault 本地缓存路径；
+  2. **内存监控与自动释放**: 在 Chrome DevTools 中验证录音关闭后内存 100% 回收，确保无泄漏；
+  3. **加载进度提示**: 在 WASM 模型加载时显示进度条，避免用户误以为插件卡死；
+  4. **降级方案**: 若 WASM 加载失败，提供友好提示并禁用口语评测功能，不影响其他模块正常使用。
+
+- **Solid 资产触碰**:
+  - 🚨 **Solid-Strict**: `package.json` (新增 `onnxruntime-web` 依赖), `esbuild.config.mjs` (配置 WASM/Worker 静态资源拷贝)
+  - ⚠️ **Solid-Regulated**: `src/main.ts` (注册 PronunciationEvalView), `src/ui/WordSuggest.ts` (扩展主动伴写逻辑)
+
+- **授权状态**: 🟢 **Accepted** - 指挥官授权标识 `Approval_Hash: 1`
+
+- **证明**: 详见 Phase 2 执行阶段的 Evidence Block。
 

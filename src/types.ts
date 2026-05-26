@@ -73,3 +73,49 @@ export interface LemmatizerResult {
     /** 是否通过编辑距离匹配出来的模糊匹配词 */
     isFuzzy?: boolean;
 }
+
+// ======= V4.0 口语评测与主动伴写扩展 =======
+
+/**
+ * 音素对齐结果（单个音素）
+ */
+export interface PhonemeAlignment {
+    /** 音素符号 (如 /æ/, /r/, /ð/) */
+    phoneme: string;
+    /** 置信度 0-1 */
+    confidence: number;
+    /** 是否为错误音素（置信度低于阈值） */
+    isError: boolean;
+    /** 开始时间（秒，可选） */
+    startTime?: number;
+    /** 结束时间（秒，可选） */
+    endTime?: number;
+}
+
+/**
+ * 完整的发音评测结果
+ */
+export interface PronunciationResult {
+    /** 音素对齐列表 */
+    alignments: PhonemeAlignment[];
+    /** 总体评分 0-100 */
+    overallScore: number;
+    /** 目标文本 */
+    targetText: string;
+    /** 识别出的文本（可选） */
+    detectedText?: string;
+}
+
+/**
+ * 主动伴写倒排映射条目
+ */
+export interface SuggestionMapping {
+    /** 常用词（用户输入的触发词） */
+    commonWord: string;
+    /** 目标生词（推荐替换的临界复习词） */
+    targetWord: string;
+    /** 优先级（基于 SM-2 复习紧迫度计算） */
+    priority: number;
+    /** 目标词的释义（用于补全提示） */
+    translation?: string;
+}

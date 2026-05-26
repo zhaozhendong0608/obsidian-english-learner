@@ -115,6 +115,13 @@
       >
         🌐 网页导入
       </button>
+      <button
+        class="lang-learner-main-tab-btn"
+        :class="{ 'lang-learner-active': mainTab === 'pronunciation' }"
+        @click="setTab('pronunciation')"
+      >
+        🎤 口语评测
+      </button>
     </div>
 
     <!-- Tab 视图 -->
@@ -125,6 +132,7 @@
     <MediaTab v-show="mainTab === 'media'" @select-word="onWordSelectedByString" />
     <ReaderTab v-show="mainTab === 'reader'" @select-word="onWordSelectedByString" />
     <WebImportTab v-show="mainTab === 'webimport'" />
+    <PronunciationTab v-show="mainTab === 'pronunciation'" :plugin="plugin" />
   </div>
 </template>
 
@@ -149,6 +157,7 @@ import ReviewTab from './components/ReviewTab.vue';
 import MediaTab from './components/MediaTab.vue';
 import ReaderTab from './components/ReaderTab.vue';
 import WebImportTab from './components/WebImportTab.vue';
+import PronunciationTab from './components/PronunciationTab.vue';
 
 export default defineComponent({
   name: 'Panel',
@@ -161,7 +170,8 @@ export default defineComponent({
     ReviewTab,
     MediaTab,
     ReaderTab,
-    WebImportTab
+    WebImportTab,
+    PronunciationTab
   },
   setup() {
     // 注入核心全局依赖
@@ -176,7 +186,7 @@ export default defineComponent({
     const audioService = new AudioService();
 
     // ========== 共享与状态变量 ==========
-    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader' | 'webimport'>('vocabulary');
+    const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader' | 'webimport' | 'pronunciation'>('vocabulary');
     const searchQuery = ref('');
     const selectedWord = ref<WordInfo | null>(null);
     const searchResultsList = ref<string[]>([]);
@@ -216,6 +226,7 @@ export default defineComponent({
     provide('getAiSettings', () => aiSettings.value);
     provide('getVoiceSettings', () => voiceSettings.value);
     provide('getAvailableVoices', () => availableVoices.value);
+    provide('audioService', audioService);
     provide('plugin', plugin);
 
     // ========== 自主查词与搜索逻辑 ==========

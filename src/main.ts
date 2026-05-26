@@ -14,6 +14,19 @@ export default class EnglishLearnerPlugin extends Plugin {
     /** 影子词库管理器实例 */
     public vocabManager!: VocabularyManager;
 
+    /** 发音评测标准（美音/英音） */
+    public evaluationAccent: 'US' | 'UK' = 'US';
+
+    /** AI 服务配置 */
+    public settings = {
+        aiApiKey: '',
+        aiBaseUrl: 'https://api.deepseek.com/v1',
+        aiModel: 'deepseek-chat'
+    };
+
+    /** 音频服务（用于 TTS 播放） */
+    public audioService: any = null;
+
     async onload() {
         console.log('🚀 Obsidian English Learner 插件加载中...');
 
@@ -61,6 +74,18 @@ export default class EnglishLearnerPlugin extends Plugin {
                 } else {
                     new Notice('请先在文档中选中一段英文文本');
                 }
+            }
+        });
+
+        // 注册全局快捷命令：切换发音评测标准（美音/英音）
+        this.addCommand({
+            id: 'toggle-pronunciation-accent',
+            name: '切换发音评测标准（美音/英音）',
+            callback: () => {
+                this.evaluationAccent = this.evaluationAccent === 'US' ? 'UK' : 'US';
+                const accentName = this.evaluationAccent === 'US' ? '美式发音' : '英式发音';
+                new Notice(`发音评测标准已切换为：${accentName}`);
+                eventBus.emit('lang-learner:accent-changed', this.evaluationAccent);
             }
         });
 

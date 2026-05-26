@@ -6344,7 +6344,7 @@ __export(main_exports, {
   refreshWordsInDOM: () => refreshWordsInDOM
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // src/data/static_data.ts
 var HIGH_FREQUENCY_WORDS = [
@@ -19906,7 +19906,7 @@ function refreshWordsInDOM(word, newStatus) {
 }
 
 // src/ui/SidebarView.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 
 // node_modules/@vue/shared/dist/shared.esm-bundler.js
 // @__NO_SIDE_EFFECTS__
@@ -23303,7 +23303,7 @@ function createAppContext() {
   };
 }
 var uid$1 = 0;
-function createAppAPI(render11, hydrate) {
+function createAppAPI(render12, hydrate) {
   return function createApp2(rootComponent, rootProps = null) {
     if (!isFunction(rootComponent)) {
       rootComponent = extend({}, rootComponent);
@@ -23409,13 +23409,13 @@ function createAppAPI(render11, hydrate) {
             context.reload = () => {
               const cloned = cloneVNode(vnode);
               cloned.el = null;
-              render11(cloned, rootContainer, namespace);
+              render12(cloned, rootContainer, namespace);
             };
           }
           if (isHydrate && hydrate) {
             hydrate(vnode, rootContainer);
           } else {
-            render11(vnode, rootContainer, namespace);
+            render12(vnode, rootContainer, namespace);
           }
           isMounted = true;
           app._container = rootContainer;
@@ -23447,7 +23447,7 @@ If you want to remount the same app, move your app creation logic into a factory
             app._instance,
             16
           );
-          render11(null, app._container);
+          render12(null, app._container);
           if (true) {
             app._instance = null;
             devtoolsUnmountApp(app);
@@ -23639,7 +23639,7 @@ function renderComponentRoot(instance) {
     slots,
     attrs,
     emit: emit2,
-    render: render11,
+    render: render12,
     renderCache,
     props,
     data,
@@ -23667,7 +23667,7 @@ function renderComponentRoot(instance) {
         }
       }) : proxyToUse;
       result = normalizeVNode(
-        render11.call(
+        render12.call(
           thisProxy,
           proxyToUse,
           renderCache,
@@ -25917,7 +25917,7 @@ function baseCreateRenderer(options, createHydrationFns) {
     return teleportEnd ? hostNextSibling(teleportEnd) : el;
   };
   let isFlushing = false;
-  const render11 = (vnode, container, namespace) => {
+  const render12 = (vnode, container, namespace) => {
     let instance;
     if (vnode == null) {
       if (container._vnode) {
@@ -25963,9 +25963,9 @@ function baseCreateRenderer(options, createHydrationFns) {
     );
   }
   return {
-    render: render11,
+    render: render12,
     hydrate,
-    createApp: createAppAPI(render11, hydrate)
+    createApp: createAppAPI(render12, hydrate)
   };
 }
 function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -27872,7 +27872,7 @@ if (true) {
 }
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
-var import_obsidian13 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/services/AudioService.ts
 var import_obsidian2 = require("obsidian");
@@ -28566,7 +28566,7 @@ function render(_ctx, _cache) {
 // src/ui/components/SettingsHeader.vue
 SettingsHeader_default.render = render;
 SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
-SettingsHeader_default.__scopeId = "data-v-af95c993";
+SettingsHeader_default.__scopeId = "data-v-6282726c";
 var SettingsHeader_default2 = SettingsHeader_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
@@ -28652,6 +28652,77 @@ async function fetchAITeacher(word, contextSentence, settings) {
   } catch (err) {
     console.error("fetchAITeacher failed:", err);
     throw new Error(`AI \u8BF7\u6C42\u5931\u8D25: ${err.message || String(err)}`);
+  }
+}
+async function requestPronunciationDiagnosis(request, settings) {
+  if (!settings.apiKey) {
+    throw new Error("\u672A\u914D\u7F6E API Key\u3002\u8BF7\u5728\u4FA7\u8FB9\u680F\u9876\u90E8\u5C55\u5F00 AI \u6559\u5E08\u914D\u7F6E\u3002");
+  }
+  const apiUrl = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const errorPhonemesDesc = request.errorPhonemes.map((p2) => `- **${p2.phoneme}** (\u7F6E\u4FE1\u5EA6: ${(p2.confidence * 100).toFixed(1)}%)`).join("\n");
+  const accentDesc = request.accent === "US" ? "\u7F8E\u5F0F\u53D1\u97F3 (General American)" : "\u82F1\u5F0F\u53D1\u97F3 (Received Pronunciation)";
+  const systemPrompt = `\u4F60\u662F\u4E00\u4F4D\u4E13\u4E1A\u7684\u82F1\u8BED\u53D1\u97F3\u6559\u7EC3\uFF0C\u7CBE\u901A\u8BED\u97F3\u5B66\u3001\u97F3\u7D20\u5B66\u548C\u4E2D\u5F0F\u82F1\u8BED\u53D1\u97F3\u7EA0\u6B63\u3002
+\u4F60\u7684\u4EFB\u52A1\u662F\u57FA\u4E8E\u7528\u6237\u7684\u53D1\u97F3\u8BC4\u6D4B\u7ED3\u679C\uFF0C\u63D0\u4F9B\u4E2A\u6027\u5316\u7684\u808C\u8089\u7EA0\u504F\u8BCA\u65AD\u548C\u6539\u8FDB\u5EFA\u8BAE\u3002
+
+\u3010\u5206\u6790\u8981\u6C42\u3011
+1. **\u9519\u8BEF\u97F3\u7D20\u5206\u6790**: \u9488\u5BF9\u6BCF\u4E2A\u9519\u8BEF\u97F3\u7D20\uFF0C\u89E3\u91CA\u5176\u6B63\u786E\u7684\u53D1\u97F3\u65B9\u5F0F\uFF08\u820C\u4F4D\u3001\u5507\u5F62\u3001\u6C14\u6D41\uFF09
+2. **\u4E2D\u5F0F\u53D1\u97F3\u4E60\u60EF**: \u5206\u6790\u4E2D\u56FD\u5B66\u4E60\u8005\u5728\u8FD9\u4E9B\u97F3\u7D20\u4E0A\u7684\u5E38\u89C1\u9519\u8BEF\u539F\u56E0\uFF08\u6BCD\u8BED\u5E72\u6270\u3001\u808C\u8089\u8BB0\u5FC6\uFF09
+3. **\u808C\u8089\u7EA0\u504F\u7EC3\u4E60**: \u63D0\u4F9B\u5177\u4F53\u7684\u820C\u4F4D\u8C03\u6574\u3001\u53E3\u8154\u808C\u8089\u8BAD\u7EC3\u65B9\u6CD5\uFF08\u5982\u542B\u6C34\u7EC3\u4E60\u3001\u955C\u5B50\u5BF9\u7167\uFF09
+4. **\u5FAA\u5E8F\u6E10\u8FDB\u65B9\u6848**: \u7ED9\u51FA\u4ECE\u6162\u901F\u5230\u6B63\u5E38\u8BED\u901F\u7684\u7EC3\u4E60\u6B65\u9AA4
+
+\u3010\u53D1\u97F3\u6807\u51C6\u3011
+\u672C\u6B21\u8BCA\u65AD\u57FA\u4E8E **${accentDesc}** \u6807\u51C6\u3002
+
+\u3010\u8F93\u51FA\u683C\u5F0F\u3011
+\u8BF7\u4F7F\u7528 Markdown \u683C\u5F0F\u8F93\u51FA\uFF0C\u5305\u542B\u4EE5\u4E0B\u7AE0\u8282\uFF1A
+- ## \u{1F3AF} \u53D1\u97F3\u8BCA\u65AD\u62A5\u544A
+- ### \u603B\u4F53\u8BC4\u5206
+- ### \u9519\u8BEF\u97F3\u7D20\u5206\u6790
+- ### \u{1F4A1} \u6539\u8FDB\u5EFA\u8BAE
+  - #### \u820C\u4F4D\u8C03\u6574
+  - #### \u7EC3\u4E60\u65B9\u6CD5
+- ### \u{1F4DA} \u63A8\u8350\u8D44\u6E90`;
+  const userPrompt = `\u8BF7\u4E3A\u6211\u8BCA\u65AD\u4EE5\u4E0B\u53D1\u97F3\u95EE\u9898\uFF1A
+
+**\u76EE\u6807\u6587\u672C**: ${request.targetText}
+**\u603B\u4F53\u8BC4\u5206**: ${request.overallScore}/100
+**\u9519\u8BEF\u97F3\u7D20**:
+${errorPhonemesDesc || "\u65E0\u660E\u663E\u9519\u8BEF\u97F3\u7D20"}
+
+\u8BF7\u63D0\u4F9B\u8BE6\u7EC6\u7684\u808C\u8089\u7EA0\u504F\u8BCA\u65AD\u548C\u6539\u8FDB\u5EFA\u8BAE\u3002`;
+  const payload = {
+    model: settings.model || "deepseek-chat",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
+    temperature: 0.7,
+    stream: false
+    // 暂不使用流式响应，简化实现
+  };
+  try {
+    const response = await (0, import_obsidian3.requestUrl)({
+      url: apiUrl,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${settings.apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+    if (response.status !== 200) {
+      throw new Error(`API \u54CD\u5E94\u9519\u8BEF: ${response.status} - ${response.text}`);
+    }
+    const data = typeof response.json === "object" ? response.json : JSON.parse(response.text);
+    const content = data.choices?.[0]?.message?.content || "";
+    if (!content) {
+      throw new Error("AI \u8FD4\u56DE\u5185\u5BB9\u4E3A\u7A7A");
+    }
+    console.log("[aiService] \u53D1\u97F3\u8BCA\u65AD\u8BF7\u6C42\u6210\u529F");
+    return content;
+  } catch (err) {
+    console.error("[aiService] requestPronunciationDiagnosis failed:", err);
+    throw new Error(`\u53D1\u97F3\u8BCA\u65AD\u8BF7\u6C42\u5931\u8D25: ${err.message || String(err)}`);
   }
 }
 
@@ -29248,7 +29319,7 @@ function render2(_ctx, _cache) {
 // src/ui/components/WordDetailCard.vue
 WordDetailCard_default.render = render2;
 WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
-WordDetailCard_default.__scopeId = "data-v-2a0fb44d";
+WordDetailCard_default.__scopeId = "data-v-5fd52550";
 var WordDetailCard_default2 = WordDetailCard_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
@@ -29559,7 +29630,7 @@ function render3(_ctx, _cache) {
 // src/ui/components/VocabularyTab.vue
 VocabularyTab_default.render = render3;
 VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
-VocabularyTab_default.__scopeId = "data-v-c94cba93";
+VocabularyTab_default.__scopeId = "data-v-689bdb3a";
 var VocabularyTab_default2 = VocabularyTab_default;
 
 // src/utils/algorithms.ts
@@ -29778,7 +29849,7 @@ function render4(_ctx, _cache) {
 // src/ui/components/EstimateTab.vue
 EstimateTab_default.render = render4;
 EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
-EstimateTab_default.__scopeId = "data-v-563d1755";
+EstimateTab_default.__scopeId = "data-v-f79427d6";
 var EstimateTab_default2 = EstimateTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
@@ -30298,7 +30369,7 @@ function render5(_ctx, _cache) {
 // src/ui/components/SentenceTab.vue
 SentenceTab_default.render = render5;
 SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
-SentenceTab_default.__scopeId = "data-v-54abb1ed";
+SentenceTab_default.__scopeId = "data-v-ef801b39";
 var SentenceTab_default2 = SentenceTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
@@ -30712,7 +30783,7 @@ function render6(_ctx, _cache) {
 // src/ui/components/ReviewTab.vue
 ReviewTab_default.render = render6;
 ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
-ReviewTab_default.__scopeId = "data-v-dd3a5578";
+ReviewTab_default.__scopeId = "data-v-bd860bcc";
 var ReviewTab_default2 = ReviewTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
@@ -31995,7 +32066,7 @@ function render7(_ctx, _cache) {
 // src/ui/components/MediaTab.vue
 MediaTab_default.render = render7;
 MediaTab_default.__file = "src/ui/components/MediaTab.vue";
-MediaTab_default.__scopeId = "data-v-ef2778a6";
+MediaTab_default.__scopeId = "data-v-7024ec81";
 var MediaTab_default2 = MediaTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
@@ -32659,7 +32730,7 @@ function render8(_ctx, _cache) {
 // src/ui/components/ReaderTab.vue
 ReaderTab_default.render = render8;
 ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
-ReaderTab_default.__scopeId = "data-v-fa4e68a9";
+ReaderTab_default.__scopeId = "data-v-4b9e21a5";
 var ReaderTab_default2 = ReaderTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WebImportTab.vue?type=script
@@ -33024,8 +33095,648 @@ function render9(_ctx, _cache) {
 // src/ui/components/WebImportTab.vue
 WebImportTab_default.render = render9;
 WebImportTab_default.__file = "src/ui/components/WebImportTab.vue";
-WebImportTab_default.__scopeId = "data-v-3830dc1b";
+WebImportTab_default.__scopeId = "data-v-7a100c9f";
 var WebImportTab_default2 = WebImportTab_default;
+
+// src/services/AudioCaptureService.ts
+var AudioCaptureService = class {
+  constructor() {
+    this.mediaStream = null;
+    this.mediaRecorder = null;
+    this.audioContext = null;
+    this.audioChunks = [];
+  }
+  /**
+   * 启动麦克风捕获
+   * @throws 如果用户拒绝麦克风权限或浏览器不支持
+   */
+  async startRecording() {
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          // 单声道
+          sampleRate: 48e3,
+          // 高采样率（后续重采样为 16kHz）
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(this.mediaStream, {
+        mimeType: "audio/webm;codecs=opus"
+      });
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+      this.mediaRecorder.start();
+      console.log("[AudioCaptureService] \u5F55\u97F3\u5DF2\u542F\u52A8");
+    } catch (error) {
+      console.error("[AudioCaptureService] \u542F\u52A8\u5F55\u97F3\u5931\u8D25:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`\u9EA6\u514B\u98CE\u6743\u9650\u88AB\u62D2\u7EDD\u6216\u6D4F\u89C8\u5668\u4E0D\u652F\u6301: ${errorMessage}`);
+    }
+  }
+  /**
+   * 停止录音并返回音频 Blob
+   * @returns 录音的 Blob 对象（audio/webm 格式）
+   */
+  async stopRecording() {
+    return new Promise((resolve2, reject) => {
+      if (!this.mediaRecorder) {
+        reject(new Error("MediaRecorder \u672A\u521D\u59CB\u5316"));
+        return;
+      }
+      this.mediaRecorder.onstop = () => {
+        const blob = new Blob(this.audioChunks, { type: "audio/webm" });
+        console.log("[AudioCaptureService] \u5F55\u97F3\u5DF2\u505C\u6B62\uFF0CBlob \u5927\u5C0F:", blob.size);
+        resolve2(blob);
+      };
+      this.mediaRecorder.onerror = (event) => {
+        reject(new Error(`\u5F55\u97F3\u9519\u8BEF: ${event}`));
+      };
+      this.mediaRecorder.stop();
+      if (this.mediaStream) {
+        this.mediaStream.getTracks().forEach((track2) => track2.stop());
+      }
+    });
+  }
+  /**
+   * 将音频重采样为 16kHz 单声道格式（Whisper 要求）
+   * @param audioBuffer 原始音频 Buffer
+   * @returns 16kHz 单声道的 Float32Array
+   */
+  async resampleTo16kHz(audioBuffer) {
+    const targetSampleRate = 16e3;
+    const sourceSampleRate = audioBuffer.sampleRate;
+    if (sourceSampleRate === targetSampleRate && audioBuffer.numberOfChannels === 1) {
+      return audioBuffer.getChannelData(0);
+    }
+    const offlineContext = new OfflineAudioContext(
+      1,
+      // 单声道
+      Math.ceil(audioBuffer.duration * targetSampleRate),
+      targetSampleRate
+    );
+    const source = offlineContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(offlineContext.destination);
+    source.start(0);
+    const resampledBuffer = await offlineContext.startRendering();
+    const resampledData = resampledBuffer.getChannelData(0);
+    console.log("[AudioCaptureService] \u91CD\u91C7\u6837\u5B8C\u6210:", {
+      \u539F\u59CB\u91C7\u6837\u7387: sourceSampleRate,
+      \u76EE\u6807\u91C7\u6837\u7387: targetSampleRate,
+      \u539F\u59CB\u957F\u5EA6: audioBuffer.length,
+      \u91CD\u91C7\u6837\u957F\u5EA6: resampledData.length
+    });
+    return resampledData;
+  }
+  /**
+   * 将 Blob 转换为 AudioBuffer
+   * @param blob 音频 Blob
+   * @returns AudioBuffer 对象
+   */
+  async blobToAudioBuffer(blob) {
+    if (!this.audioContext) {
+      this.audioContext = new AudioContext();
+    }
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+    console.log("[AudioCaptureService] Blob \u8F6C\u6362\u4E3A AudioBuffer:", {
+      \u91C7\u6837\u7387: audioBuffer.sampleRate,
+      \u58F0\u9053\u6570: audioBuffer.numberOfChannels,
+      \u65F6\u957F: audioBuffer.duration.toFixed(2) + "s"
+    });
+    return audioBuffer;
+  }
+  /**
+   * 释放所有资源（停止媒体流、关闭 AudioContext）
+   */
+  dispose() {
+    console.log("[AudioCaptureService] \u91CA\u653E\u8D44\u6E90");
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track2) => track2.stop());
+      this.mediaStream = null;
+    }
+    if (this.mediaRecorder) {
+      if (this.mediaRecorder.state !== "inactive") {
+        this.mediaRecorder.stop();
+      }
+      this.mediaRecorder = null;
+    }
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+    this.audioChunks = [];
+  }
+};
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=script
+var import_obsidian13 = require("obsidian");
+var PronunciationTab_default = defineComponent({
+  name: "PronunciationTab",
+  props: {
+    plugin: {
+      type: Object,
+      required: true
+    }
+  },
+  setup(props) {
+    const audioService = inject("audioService");
+    const getAiSettings = inject("getAiSettings");
+    const getVoiceSettings = inject("getVoiceSettings");
+    const getAvailableVoices = inject("getAvailableVoices");
+    const isRecording = ref(false);
+    const recordingBlob = ref(null);
+    const pronunciationResult = ref(null);
+    const aiDiagnosis = ref(null);
+    const currentTrack = ref(null);
+    const diagnosisContainer = ref(null);
+    const currentWord = ref("");
+    let initialAccent = "US";
+    try {
+      if (props.plugin && typeof props.plugin === "object" && "evaluationAccent" in props.plugin) {
+        const accent = props.plugin.evaluationAccent;
+        if (accent === "US" || accent === "UK") {
+          initialAccent = accent;
+        }
+      }
+    } catch (e) {
+      console.warn("[PronunciationTab] \u65E0\u6CD5\u8BFB\u53D6 evaluationAccent\uFF0C\u4F7F\u7528\u9ED8\u8BA4\u503C US");
+    }
+    const evaluationAccent = ref(initialAccent);
+    const isProcessing = ref(false);
+    let audioCaptureService = null;
+    let whisperWorker = null;
+    let workerReady = false;
+    const handleAccentChange = (accent) => {
+      evaluationAccent.value = accent;
+      console.log("[PronunciationTab] \u53D1\u97F3\u6807\u51C6\u5DF2\u5207\u6362\u4E3A:", accent);
+    };
+    onMounted(() => {
+      eventBus.on("lang-learner:accent-changed", handleAccentChange);
+      try {
+        console.warn("[PronunciationTab] Worker \u529F\u80FD\u6682\u65F6\u7981\u7528\uFF08\u5F00\u53D1\u4E2D\uFF09");
+        workerReady = false;
+      } catch (error) {
+        console.error("[PronunciationTab] Worker \u521B\u5EFA\u5931\u8D25:", error);
+        new import_obsidian13.Notice("\u53D1\u97F3\u8BC4\u6D4B\u529F\u80FD\u521D\u59CB\u5316\u5931\u8D25");
+      }
+      audioCaptureService = new AudioCaptureService();
+    });
+    onUnmounted(() => {
+      eventBus.off("lang-learner:accent-changed", handleAccentChange);
+      if (whisperWorker) {
+        whisperWorker.terminate();
+        whisperWorker = null;
+      }
+      if (audioCaptureService) {
+        audioCaptureService.dispose();
+        audioCaptureService = null;
+      }
+    });
+    function generateMockPhonemes(word) {
+      const phonemeMap = {
+        "hello": ["h", "\u025B", "l", "o\u028A"],
+        "apple": ["\xE6", "p", "\u0259l"],
+        "world": ["w", "\u025C\u02D0", "l", "d"],
+        "cat": ["k", "\xE6", "t"],
+        "dog": ["d", "\u0254", "g"],
+        "book": ["b", "\u028A", "k"],
+        "good": ["g", "\u028A", "d"],
+        "water": ["w", "\u0254\u02D0", "t", "\u0259"],
+        "thank": ["\u03B8", "\xE6", "\u014B", "k"],
+        "you": ["j", "u\u02D0"],
+        "yes": ["j", "\u025B", "s"],
+        "no": ["n", "o\u028A"],
+        "please": ["p", "l", "i\u02D0", "z"],
+        "sorry": ["s", "\u0252", "r", "i"],
+        "excuse": ["\u026A", "k", "s", "k", "j", "u\u02D0", "z"],
+        "me": ["m", "i\u02D0"]
+      };
+      if (phonemeMap[word]) {
+        return phonemeMap[word];
+      }
+      return word.split("").map((char) => {
+        const vowels = {
+          "a": "\xE6",
+          "e": "\u025B",
+          "i": "\u026A",
+          "o": "\u0252",
+          "u": "\u028C"
+        };
+        return vowels[char] || char;
+      });
+    }
+    const startRecording = async () => {
+      if (!audioCaptureService) {
+        new import_obsidian13.Notice("\u97F3\u9891\u91C7\u96C6\u670D\u52A1\u672A\u521D\u59CB\u5316");
+        return;
+      }
+      try {
+        console.log("[PronunciationTab] \u5F00\u59CB\u5F55\u97F3");
+        isRecording.value = true;
+        pronunciationResult.value = null;
+        aiDiagnosis.value = null;
+        recordingBlob.value = null;
+        currentTrack.value = null;
+        await audioCaptureService.startRecording();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        new import_obsidian13.Notice(`\u5F55\u97F3\u542F\u52A8\u5931\u8D25: ${errorMessage}`);
+        isRecording.value = false;
+        console.error("[PronunciationTab] \u5F55\u97F3\u542F\u52A8\u5931\u8D25:", error);
+      }
+    };
+    const stopRecording = async () => {
+      if (!audioCaptureService) {
+        new import_obsidian13.Notice("\u97F3\u9891\u91C7\u96C6\u670D\u52A1\u672A\u521D\u59CB\u5316");
+        return;
+      }
+      try {
+        console.log("[PronunciationTab] \u505C\u6B62\u5F55\u97F3");
+        isRecording.value = false;
+        isProcessing.value = true;
+        const blob = await audioCaptureService.stopRecording();
+        recordingBlob.value = blob;
+        console.log("[PronunciationTab] \u5F55\u97F3\u5B8C\u6210\uFF0CBlob \u5927\u5C0F:", blob.size);
+        console.log("[PronunciationTab] \u4F7F\u7528 Mock \u6570\u636E\u751F\u6210\u8BC4\u6D4B\u7ED3\u679C");
+        await new Promise((resolve2) => setTimeout(resolve2, 500));
+        const mockPhonemes = generateMockPhonemes(currentWord.value.toLowerCase());
+        const mockAlignments = mockPhonemes.map((phoneme, index) => {
+          const confidence = 0.6 + Math.random() * 0.3;
+          return {
+            phoneme: `/${phoneme}/`,
+            confidence: parseFloat(confidence.toFixed(3)),
+            isError: confidence < 0.7,
+            startTime: index / mockPhonemes.length * 2,
+            endTime: (index + 1) / mockPhonemes.length * 2
+          };
+        });
+        const avgConfidence = mockAlignments.reduce((sum, a) => sum + a.confidence, 0) / mockAlignments.length;
+        const overallScore = Math.round(avgConfidence * 100);
+        pronunciationResult.value = {
+          alignments: mockAlignments,
+          overallScore,
+          targetText: currentWord.value,
+          detectedText: currentWord.value.toLowerCase()
+        };
+        isProcessing.value = false;
+        console.log("[PronunciationTab] Mock \u8BC4\u6D4B\u7ED3\u679C:", pronunciationResult.value);
+        new import_obsidian13.Notice(`\u5F55\u97F3\u5B8C\u6210\uFF01\u8BC4\u5206: ${overallScore}/100`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        new import_obsidian13.Notice(`\u5F55\u97F3\u5904\u7406\u5931\u8D25: ${errorMessage}`);
+        isProcessing.value = false;
+        console.error("[PronunciationTab] \u5F55\u97F3\u5904\u7406\u5931\u8D25:", error);
+      }
+    };
+    const playStandardAudio = async () => {
+      console.log("[PronunciationTab] \u64AD\u653E\u6807\u51C6\u97F3");
+      currentTrack.value = "A";
+      if (audioService && typeof audioService.speak === "function") {
+        try {
+          const voiceSettings = getVoiceSettings ? getVoiceSettings() : { engine: "online", onlineAccent: 2, voiceName: "", rate: 0.9, pitch: 1 };
+          const availableVoices = getAvailableVoices ? getAvailableVoices() : [];
+          await audioService.speak(currentWord.value, voiceSettings, availableVoices);
+        } catch (error) {
+          console.error("[PronunciationTab] \u64AD\u653E\u6807\u51C6\u97F3\u5931\u8D25:", error);
+          new import_obsidian13.Notice("\u64AD\u653E\u5931\u8D25");
+        }
+      } else {
+        new import_obsidian13.Notice("\u97F3\u9891\u670D\u52A1\u672A\u521D\u59CB\u5316");
+        console.warn("[PronunciationTab] audioService \u672A\u627E\u5230");
+      }
+    };
+    const playUserAudio = () => {
+      console.log("[PronunciationTab] \u64AD\u653E\u7528\u6237\u5F55\u97F3");
+      currentTrack.value = "B";
+      if (recordingBlob.value) {
+        const blobUrl = URL.createObjectURL(recordingBlob.value);
+        const audio = new Audio(blobUrl);
+        audio.play();
+        audio.onended = () => {
+          URL.revokeObjectURL(blobUrl);
+        };
+      }
+    };
+    const requestDiagnosis = async () => {
+      if (!pronunciationResult.value)
+        return;
+      try {
+        console.log("[PronunciationTab] \u8BF7\u6C42 AI \u8BCA\u65AD");
+        isProcessing.value = true;
+        const errorPhonemes = pronunciationResult.value.alignments.filter((a) => a.isError);
+        let settings = {
+          apiKey: "",
+          baseUrl: "https://api.deepseek.com/v1",
+          model: "deepseek-chat"
+        };
+        if (getAiSettings && typeof getAiSettings === "function") {
+          const aiSettings = getAiSettings();
+          if (aiSettings) {
+            settings = {
+              apiKey: aiSettings.apiKey || "",
+              baseUrl: aiSettings.baseUrl || "https://api.deepseek.com/v1",
+              model: aiSettings.model || "deepseek-chat"
+            };
+          }
+        }
+        const diagnosisMarkdown = await requestPronunciationDiagnosis(
+          {
+            targetText: currentWord.value,
+            errorPhonemes,
+            overallScore: pronunciationResult.value.overallScore,
+            accent: evaluationAccent.value
+          },
+          settings
+        );
+        aiDiagnosis.value = diagnosisMarkdown;
+        isProcessing.value = false;
+        await nextTick();
+        if (diagnosisContainer.value) {
+          diagnosisContainer.value.innerHTML = "";
+          await import_obsidian13.MarkdownRenderer.renderMarkdown(
+            diagnosisMarkdown,
+            diagnosisContainer.value,
+            "",
+            props.plugin
+          );
+        }
+        console.log("[PronunciationTab] AI \u8BCA\u65AD\u5B8C\u6210");
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        new import_obsidian13.Notice(`AI \u8BCA\u65AD\u5931\u8D25: ${errorMessage}`);
+        isProcessing.value = false;
+        console.error("[PronunciationTab] AI \u8BCA\u65AD\u5931\u8D25:", error);
+      }
+    };
+    return {
+      isRecording,
+      recordingBlob,
+      pronunciationResult,
+      aiDiagnosis,
+      currentTrack,
+      diagnosisContainer,
+      currentWord,
+      evaluationAccent,
+      isProcessing,
+      startRecording,
+      stopRecording,
+      playStandardAudio,
+      playUserAudio,
+      requestDiagnosis
+    };
+  }
+});
+
+// sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=template
+var _hoisted_130 = { class: "lang-learner-pronunciation-tab" };
+var _hoisted_216 = { class: "lang-learner-panel-section" };
+var _hoisted_312 = { class: "lang-learner-word-input" };
+var _hoisted_410 = ["disabled"];
+var _hoisted_510 = { class: "lang-learner-recording-controls" };
+var _hoisted_610 = ["disabled"];
+var _hoisted_710 = {
+  key: 2,
+  class: "lang-learner-recording-indicator"
+};
+var _hoisted_810 = {
+  key: 3,
+  class: "lang-learner-processing-indicator"
+};
+var _hoisted_910 = { class: "lang-learner-accent-selector" };
+var _hoisted_1010 = {
+  key: 0,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_1113 = { class: "lang-learner-result-summary" };
+var _hoisted_1210 = { class: "lang-learner-result-item" };
+var _hoisted_139 = { class: "lang-learner-result-value" };
+var _hoisted_149 = { class: "lang-learner-result-item" };
+var _hoisted_158 = { class: "lang-learner-result-value lang-learner-score" };
+var _hoisted_168 = { class: "lang-learner-phoneme-list" };
+var _hoisted_178 = ["title"];
+var _hoisted_188 = {
+  key: 1,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_197 = { class: "lang-learner-ab-player" };
+var _hoisted_207 = {
+  key: 2,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_217 = ["disabled"];
+var _hoisted_227 = {
+  key: 1,
+  class: "lang-learner-ai-diagnosis",
+  ref: "diagnosisContainer"
+};
+function render10(_ctx, _cache) {
+  return openBlock(), createElementBlock("div", _hoisted_130, [
+    createBaseVNode("div", _hoisted_216, [
+      _cache[10] || (_cache[10] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F3A4} \u5F55\u97F3\u63A7\u5236",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_312, [
+        _cache[7] || (_cache[7] = createBaseVNode(
+          "label",
+          null,
+          "\u7EC3\u4E60\u5355\u8BCD/\u53E5\u5B50:",
+          -1
+          /* CACHED */
+        )),
+        withDirectives(createBaseVNode("input", {
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.currentWord = $event),
+          type: "text",
+          placeholder: "\u8F93\u5165\u8981\u7EC3\u4E60\u7684\u5355\u8BCD\u6216\u53E5\u5B50...",
+          class: "lang-learner-text-input",
+          disabled: _ctx.isRecording
+        }, null, 8, _hoisted_410), [
+          [vModelText, _ctx.currentWord]
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_510, [
+        !_ctx.isRecording ? (openBlock(), createElementBlock("button", {
+          key: 0,
+          onClick: _cache[1] || (_cache[1] = (...args) => _ctx.startRecording && _ctx.startRecording(...args)),
+          class: "lang-learner-btn lang-learner-btn-primary",
+          disabled: _ctx.isProcessing || !_ctx.currentWord.trim()
+        }, " \u{1F534} \u5F00\u59CB\u5F55\u97F3 ", 8, _hoisted_610)) : (openBlock(), createElementBlock("button", {
+          key: 1,
+          onClick: _cache[2] || (_cache[2] = (...args) => _ctx.stopRecording && _ctx.stopRecording(...args)),
+          class: "lang-learner-btn lang-learner-btn-danger"
+        }, " \u23F9\uFE0F \u505C\u6B62\u5F55\u97F3 ")),
+        _ctx.isRecording ? (openBlock(), createElementBlock("span", _hoisted_710, "\u5F55\u97F3\u4E2D...")) : createCommentVNode("v-if", true),
+        _ctx.isProcessing ? (openBlock(), createElementBlock("span", _hoisted_810, "\u5904\u7406\u4E2D...")) : createCommentVNode("v-if", true)
+      ]),
+      createBaseVNode("div", _hoisted_910, [
+        _cache[9] || (_cache[9] = createBaseVNode(
+          "label",
+          null,
+          "\u53D1\u97F3\u6807\u51C6:",
+          -1
+          /* CACHED */
+        )),
+        withDirectives(createBaseVNode(
+          "select",
+          {
+            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.evaluationAccent = $event),
+            class: "lang-learner-select"
+          },
+          [..._cache[8] || (_cache[8] = [
+            createBaseVNode(
+              "option",
+              { value: "US" },
+              "\u{1F1FA}\u{1F1F8} \u7F8E\u5F0F\u53D1\u97F3",
+              -1
+              /* CACHED */
+            ),
+            createBaseVNode(
+              "option",
+              { value: "UK" },
+              "\u{1F1EC}\u{1F1E7} \u82F1\u5F0F\u53D1\u97F3",
+              -1
+              /* CACHED */
+            )
+          ])],
+          512
+          /* NEED_PATCH */
+        ), [
+          [vModelSelect, _ctx.evaluationAccent]
+        ])
+      ])
+    ]),
+    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_1010, [
+      _cache[13] || (_cache[13] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        " \u{1F4CA} \u97F3\u7D20\u5BF9\u9F50\u7ED3\u679C ",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_1113, [
+        createBaseVNode("div", _hoisted_1210, [
+          _cache[11] || (_cache[11] = createBaseVNode(
+            "span",
+            { class: "lang-learner-result-label" },
+            "\u76EE\u6807\u6587\u672C:",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode(
+            "span",
+            _hoisted_139,
+            toDisplayString(_ctx.pronunciationResult.targetText),
+            1
+            /* TEXT */
+          )
+        ]),
+        createBaseVNode("div", _hoisted_149, [
+          _cache[12] || (_cache[12] = createBaseVNode(
+            "span",
+            { class: "lang-learner-result-label" },
+            "\u603B\u4F53\u8BC4\u5206:",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode(
+            "span",
+            _hoisted_158,
+            toDisplayString(_ctx.pronunciationResult.overallScore) + "/100",
+            1
+            /* TEXT */
+          )
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_168, [
+        (openBlock(true), createElementBlock(
+          Fragment,
+          null,
+          renderList(_ctx.pronunciationResult.alignments, (alignment, index) => {
+            return openBlock(), createElementBlock("span", {
+              key: index,
+              class: normalizeClass({
+                "lang-learner-phoneme": true,
+                "lang-learner-phoneme-error": alignment.isError
+              }),
+              title: `\u7F6E\u4FE1\u5EA6: ${(alignment.confidence * 100).toFixed(1)}%`
+            }, toDisplayString(alignment.phoneme), 11, _hoisted_178);
+          }),
+          128
+          /* KEYED_FRAGMENT */
+        ))
+      ])
+    ])) : createCommentVNode("v-if", true),
+    _ctx.recordingBlob ? (openBlock(), createElementBlock("div", _hoisted_188, [
+      _cache[14] || (_cache[14] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F50A} A/B \u8F68\u9053\u5BF9\u6BD4",
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("div", _hoisted_197, [
+        createBaseVNode(
+          "button",
+          {
+            onClick: _cache[4] || (_cache[4] = (...args) => _ctx.playStandardAudio && _ctx.playStandardAudio(...args)),
+            class: normalizeClass(["lang-learner-btn", { "lang-learner-btn-active": _ctx.currentTrack === "A" }])
+          },
+          " \u{1F170}\uFE0F \u6807\u51C6\u97F3 ",
+          2
+          /* CLASS */
+        ),
+        createBaseVNode(
+          "button",
+          {
+            onClick: _cache[5] || (_cache[5] = (...args) => _ctx.playUserAudio && _ctx.playUserAudio(...args)),
+            class: normalizeClass(["lang-learner-btn", { "lang-learner-btn-active": _ctx.currentTrack === "B" }])
+          },
+          " \u{1F171}\uFE0F \u6211\u7684\u5F55\u97F3 ",
+          2
+          /* CLASS */
+        )
+      ])
+    ])) : createCommentVNode("v-if", true),
+    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_207, [
+      _cache[15] || (_cache[15] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F916} AI \u808C\u8089\u7EA0\u504F\u8BCA\u65AD",
+        -1
+        /* CACHED */
+      )),
+      !_ctx.aiDiagnosis ? (openBlock(), createElementBlock("button", {
+        key: 0,
+        onClick: _cache[6] || (_cache[6] = (...args) => _ctx.requestDiagnosis && _ctx.requestDiagnosis(...args)),
+        class: "lang-learner-btn lang-learner-btn-primary",
+        disabled: _ctx.isProcessing
+      }, " \u{1F4A1} \u83B7\u53D6\u8BCA\u65AD\u5EFA\u8BAE ", 8, _hoisted_217)) : (openBlock(), createElementBlock(
+        "div",
+        _hoisted_227,
+        null,
+        512
+        /* NEED_PATCH */
+      ))
+    ])) : createCommentVNode("v-if", true)
+  ]);
+}
+
+// src/ui/components/PronunciationTab.vue
+PronunciationTab_default.render = render10;
+PronunciationTab_default.__file = "src/ui/components/PronunciationTab.vue";
+PronunciationTab_default.__scopeId = "data-v-23679b64";
+var PronunciationTab_default2 = PronunciationTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
 var Panel_default = defineComponent({
@@ -33039,7 +33750,8 @@ var Panel_default = defineComponent({
     ReviewTab: ReviewTab_default2,
     MediaTab: MediaTab_default2,
     ReaderTab: ReaderTab_default2,
-    WebImportTab: WebImportTab_default2
+    WebImportTab: WebImportTab_default2,
+    PronunciationTab: PronunciationTab_default2
   },
   setup() {
     const vocabManager = inject("vocabManager");
@@ -33075,6 +33787,7 @@ var Panel_default = defineComponent({
     provide("getAiSettings", () => aiSettings.value);
     provide("getVoiceSettings", () => voiceSettings.value);
     provide("getAvailableVoices", () => availableVoices.value);
+    provide("audioService", audioService);
     provide("plugin", plugin);
     function onVoiceSettingsChanged(settings) {
       voiceSettings.value = settings;
@@ -33121,7 +33834,7 @@ var Panel_default = defineComponent({
     async function fetchOnlineChineseSuggestions(query) {
       const url = `https://dict.youdao.com/suggest?q=${encodeURIComponent(query)}&num=20&doctype=json`;
       try {
-        const res = await (0, import_obsidian13.requestUrl)({ url });
+        const res = await (0, import_obsidian14.requestUrl)({ url });
         const data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "{}");
         if (data?.data?.entries) {
           return data.data.entries.filter((e) => e.entry && e.explain).map((e) => ({ word: e.entry, trans: e.explain }));
@@ -33161,7 +33874,7 @@ var Panel_default = defineComponent({
           }
         }
         if (matches.length === 0) {
-          new import_obsidian13.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
+          new import_obsidian14.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
           return;
         }
         if (matches.length === 1) {
@@ -33171,9 +33884,9 @@ var Panel_default = defineComponent({
           let totalMatches = matches.length;
           if (totalMatches > 100) {
             matches = matches.slice(0, 100);
-            new import_obsidian13.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
+            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
           } else {
-            new import_obsidian13.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
+            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
           }
           selectedWord.value = null;
           searchResultsList.value = matches;
@@ -33257,19 +33970,19 @@ var Panel_default = defineComponent({
 });
 
 // sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=template
-var _hoisted_130 = { class: "lang-learner-panel" };
-var _hoisted_216 = { class: "lang-learner-search-bar" };
-var _hoisted_312 = {
+var _hoisted_131 = { class: "lang-learner-panel" };
+var _hoisted_218 = { class: "lang-learner-search-bar" };
+var _hoisted_313 = {
   key: 0,
   class: "lang-learner-panel-section lang-learner-search-results"
 };
-var _hoisted_410 = { class: "lang-learner-section-title" };
-var _hoisted_510 = { class: "lang-learner-search-results-list" };
-var _hoisted_610 = ["onClick"];
-var _hoisted_710 = { class: "lang-learner-result-word-span" };
-var _hoisted_810 = ["title"];
-var _hoisted_910 = { class: "lang-learner-main-tabs" };
-function render10(_ctx, _cache) {
+var _hoisted_411 = { class: "lang-learner-section-title" };
+var _hoisted_511 = { class: "lang-learner-search-results-list" };
+var _hoisted_611 = ["onClick"];
+var _hoisted_711 = { class: "lang-learner-result-word-span" };
+var _hoisted_811 = ["title"];
+var _hoisted_911 = { class: "lang-learner-main-tabs" };
+function render11(_ctx, _cache) {
   const _component_SettingsHeader = resolveComponent("SettingsHeader");
   const _component_WordDetailCard = resolveComponent("WordDetailCard");
   const _component_VocabularyTab = resolveComponent("VocabularyTab");
@@ -33279,8 +33992,9 @@ function render10(_ctx, _cache) {
   const _component_MediaTab = resolveComponent("MediaTab");
   const _component_ReaderTab = resolveComponent("ReaderTab");
   const _component_WebImportTab = resolveComponent("WebImportTab");
-  return openBlock(), createElementBlock("div", _hoisted_130, [
-    createBaseVNode("div", _hoisted_216, [
+  const _component_PronunciationTab = resolveComponent("PronunciationTab");
+  return openBlock(), createElementBlock("div", _hoisted_131, [
+    createBaseVNode("div", _hoisted_218, [
       withDirectives(createBaseVNode(
         "input",
         {
@@ -33311,8 +34025,8 @@ function render10(_ctx, _cache) {
       onVoiceSettingsChanged: _ctx.onVoiceSettingsChanged,
       onAiSettingsChanged: _ctx.onAiSettingsChanged
     }, null, 8, ["available-voices", "onVoiceSettingsChanged", "onAiSettingsChanged"]),
-    _ctx.searchResultsList && _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_312, [
-      createBaseVNode("h4", _hoisted_410, [
+    _ctx.searchResultsList && _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_313, [
+      createBaseVNode("h4", _hoisted_411, [
         createBaseVNode(
           "span",
           null,
@@ -33326,7 +34040,7 @@ function render10(_ctx, _cache) {
           title: "\u5173\u95ED\u5217\u8868"
         }, " \u2715 ")
       ]),
-      createBaseVNode("div", _hoisted_510, [
+      createBaseVNode("div", _hoisted_511, [
         (openBlock(true), createElementBlock(
           Fragment,
           null,
@@ -33338,7 +34052,7 @@ function render10(_ctx, _cache) {
             }, [
               createBaseVNode(
                 "span",
-                _hoisted_710,
+                _hoisted_711,
                 toDisplayString(word),
                 1
                 /* TEXT */
@@ -33346,8 +34060,8 @@ function render10(_ctx, _cache) {
               createBaseVNode("span", {
                 class: "lang-learner-result-trans-span",
                 title: _ctx.getWordTranslation(word)
-              }, toDisplayString(_ctx.getWordTranslation(word)), 9, _hoisted_810)
-            ], 8, _hoisted_610);
+              }, toDisplayString(_ctx.getWordTranslation(word)), 9, _hoisted_811)
+            ], 8, _hoisted_611);
           }),
           128
           /* KEYED_FRAGMENT */
@@ -33360,7 +34074,7 @@ function render10(_ctx, _cache) {
       "has-search-results": _ctx.searchResultsList && _ctx.searchResultsList.length > 0,
       onBackToResults: _ctx.backToSearchResults
     }, null, 8, ["word-info", "has-search-results", "onBackToResults"])) : createCommentVNode("v-if", true),
-    createBaseVNode("div", _hoisted_910, [
+    createBaseVNode("div", _hoisted_911, [
       createBaseVNode(
         "button",
         {
@@ -33430,6 +34144,16 @@ function render10(_ctx, _cache) {
         " \u{1F310} \u7F51\u9875\u5BFC\u5165 ",
         2
         /* CLASS */
+      ),
+      createBaseVNode(
+        "button",
+        {
+          class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "pronunciation" }]),
+          onClick: _cache[12] || (_cache[12] = ($event) => _ctx.setTab("pronunciation"))
+        },
+        " \u{1F3A4} \u53E3\u8BED\u8BC4\u6D4B ",
+        2
+        /* CLASS */
       )
     ]),
     withDirectives(createVNode(_component_VocabularyTab, { onSelectWord: _ctx.onWordSelected }, null, 8, ["onSelectWord"]), [
@@ -33464,19 +34188,22 @@ function render10(_ctx, _cache) {
       /* NEED_PATCH */
     ), [
       [vShow, _ctx.mainTab === "webimport"]
+    ]),
+    withDirectives(createVNode(_component_PronunciationTab, { plugin: _ctx.plugin }, null, 8, ["plugin"]), [
+      [vShow, _ctx.mainTab === "pronunciation"]
     ])
   ]);
 }
 
 // src/ui/Panel.vue
-Panel_default.render = render10;
+Panel_default.render = render11;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-b51cf0f6";
+Panel_default.__scopeId = "data-v-685e513c";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
 var VIEW_TYPE_LANG_LEARNER = "lang-learner-sidebar";
-var LangLearnerSidebarView = class extends import_obsidian14.ItemView {
+var LangLearnerSidebarView = class extends import_obsidian15.ItemView {
   constructor(leaf, vocabManager, plugin) {
     super(leaf);
     this.vueApp = null;
@@ -33509,12 +34236,116 @@ var LangLearnerSidebarView = class extends import_obsidian14.ItemView {
 };
 
 // src/ui/WordSuggest.ts
-var import_obsidian15 = require("obsidian");
-var WordSuggest = class extends import_obsidian15.EditorSuggest {
+var import_obsidian16 = require("obsidian");
+
+// src/utils/suggestionMapping.ts
+function generateSuggestionMapping(vocabManager) {
+  const mappingTable = /* @__PURE__ */ new Map();
+  const criticalWords = extractCriticalWords(vocabManager);
+  if (criticalWords.length === 0) {
+    console.log("[SuggestionMapping] \u65E0\u4E34\u754C\u590D\u4E60\u751F\u8BCD\uFF0C\u8DF3\u8FC7\u6620\u5C04\u751F\u6210");
+    return mappingTable;
+  }
+  console.log(`[SuggestionMapping] \u63D0\u53D6\u5230 ${criticalWords.length} \u4E2A\u4E34\u754C\u590D\u4E60\u751F\u8BCD`);
+  for (const criticalWord of criticalWords) {
+    const commonSynonyms = findCommonSynonyms(criticalWord.word);
+    for (const synonym of commonSynonyms) {
+      if (!mappingTable.has(synonym)) {
+        mappingTable.set(synonym, []);
+      }
+      mappingTable.get(synonym).push({
+        commonWord: synonym,
+        targetWord: criticalWord.word,
+        priority: criticalWord.priority,
+        translation: criticalWord.translation
+      });
+    }
+  }
+  for (const [commonWord, suggestions] of mappingTable.entries()) {
+    suggestions.sort((a, b) => b.priority - a.priority);
+  }
+  console.log(`[SuggestionMapping] \u751F\u6210\u6620\u5C04\u8868\uFF0C\u8986\u76D6 ${mappingTable.size} \u4E2A\u5E38\u7528\u8BCD`);
+  return mappingTable;
+}
+function extractCriticalWords(vocabManager) {
+  const now = Date.now();
+  const criticalWords = [];
+  const allEntries = vocabManager.getAllEntries();
+  for (const [word, info] of allEntries) {
+    if (info.status !== "LEARNING")
+      continue;
+    if (!info.nextReview || !info.repetitions)
+      continue;
+    const daysUntilReview = (info.nextReview - now) / (1e3 * 60 * 60 * 24);
+    if (info.repetitions <= 3 && daysUntilReview <= 2) {
+      const priority = Math.max(0, 100 - daysUntilReview * 10);
+      criticalWords.push({
+        word,
+        priority,
+        translation: info.trans || "\u6682\u65E0\u91CA\u4E49"
+      });
+    }
+  }
+  criticalWords.sort((a, b) => b.priority - a.priority);
+  return criticalWords.slice(0, 50);
+}
+function findCommonSynonyms(targetWord) {
+  const synonymMap = {
+    // 常见替换示例（可扩展）
+    "reduce": ["mitigate", "diminish", "alleviate"],
+    "important": ["crucial", "vital", "paramount"],
+    "show": ["demonstrate", "illustrate", "manifest"],
+    "use": ["utilize", "employ", "leverage"],
+    "help": ["facilitate", "assist", "aid"],
+    "make": ["create", "generate", "produce"],
+    "get": ["obtain", "acquire", "procure"],
+    "big": ["substantial", "considerable", "significant"],
+    "small": ["minimal", "negligible", "trivial"],
+    "good": ["beneficial", "advantageous", "favorable"],
+    "bad": ["detrimental", "adverse", "unfavorable"],
+    "think": ["contemplate", "ponder", "deliberate"],
+    "say": ["articulate", "express", "convey"],
+    "see": ["perceive", "observe", "discern"],
+    "know": ["comprehend", "understand", "grasp"]
+  };
+  for (const [commonWord, synonyms] of Object.entries(synonymMap)) {
+    if (synonyms.includes(targetWord)) {
+      return [commonWord];
+    }
+  }
+  return [];
+}
+function querySuggestionMapping(mappingTable, commonWord) {
+  return mappingTable.get(commonWord.toLowerCase()) || [];
+}
+
+// src/ui/WordSuggest.ts
+var WordSuggest = class extends import_obsidian16.EditorSuggest {
+  // 5 分钟更新一次映射表
   constructor(app, plugin) {
     super(app);
+    this.suggestionMappingTable = /* @__PURE__ */ new Map();
+    this.lastMappingUpdateTime = 0;
+    this.MAPPING_UPDATE_INTERVAL = 5 * 60 * 1e3;
     this.plugin = plugin;
     this.limit = 8;
+    this.updateSuggestionMapping();
+  }
+  /**
+   * 更新临界复习生词倒排映射表
+   */
+  updateSuggestionMapping() {
+    const now = Date.now();
+    if (now - this.lastMappingUpdateTime < this.MAPPING_UPDATE_INTERVAL) {
+      return;
+    }
+    try {
+      this.suggestionMappingTable = generateSuggestionMapping(this.plugin.vocabManager);
+      this.lastMappingUpdateTime = now;
+      console.log("[WordSuggest] \u5012\u6392\u6620\u5C04\u8868\u5DF2\u66F4\u65B0");
+    } catch (error) {
+      console.error("[WordSuggest] \u6620\u5C04\u8868\u66F4\u65B0\u5931\u8D25:", error);
+    }
   }
   /**
    * 拦截编辑器输入并触发联想提示
@@ -33541,21 +34372,32 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
     };
   }
   /**
-   * 检索匹配的单词建议
+   * 检索匹配的单词建议（支持主动催化伴写）
    */
   getSuggestions(context) {
     const query = context.query.toLowerCase().trim();
     if (!query) {
       return [];
     }
+    this.updateSuggestionMapping();
     const vocabManager = this.plugin.vocabManager;
     const entries = vocabManager.getAllEntries();
+    const criticalMatches = [];
     const unknownMatches = [];
     const learningMatches = [];
     const otherMatches = [];
     const matchedSet = /* @__PURE__ */ new Set();
+    const criticalSuggestions = querySuggestionMapping(this.suggestionMappingTable, query);
+    if (criticalSuggestions.length > 0) {
+      criticalSuggestions.forEach((mapping) => {
+        if (!matchedSet.has(mapping.targetWord)) {
+          matchedSet.add(mapping.targetWord);
+          criticalMatches.push(mapping.targetWord);
+        }
+      });
+    }
     entries.forEach((info, wordKey) => {
-      if (wordKey.startsWith(query)) {
+      if (wordKey.startsWith(query) && !matchedSet.has(wordKey)) {
         matchedSet.add(wordKey);
         if (info.status === "UNKNOWN") {
           unknownMatches.push(wordKey);
@@ -33579,10 +34421,12 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
       }
       return a.localeCompare(b);
     };
+    criticalMatches.sort(sortFunc);
     unknownMatches.sort(sortFunc);
     learningMatches.sort(sortFunc);
     otherMatches.sort(sortFunc);
     const allSuggestions = [
+      ...criticalMatches,
       ...unknownMatches,
       ...learningMatches,
       ...otherMatches
@@ -33590,7 +34434,7 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
     return allSuggestions.slice(0, this.limit);
   }
   /**
-   * 渲染建议选项的 HTML
+   * 渲染建议选项的 HTML（支持临界生词高亮）
    */
   renderSuggestion(word, el) {
     el.addClass("lang-learner-suggest-item");
@@ -33610,6 +34454,7 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
         phonetic = dictEntry.phonetic || "";
       }
     }
+    const isCriticalWord = this.isCriticalReviewWord(word);
     if (trans && trans.length > 50) {
       trans = trans.substring(0, 48) + "...";
     }
@@ -33629,7 +34474,15 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
       phoneticSpan.style.fontSize = "0.85em";
       phoneticSpan.style.color = "var(--text-muted)";
     }
-    if (status === "UNKNOWN") {
+    if (isCriticalWord) {
+      const tag = topRow.createSpan({ cls: "lang-learner-suggest-tag suggest-tag-critical", text: "\u{1F525} \u4E34\u754C\u590D\u4E60" });
+      tag.style.fontSize = "0.75em";
+      tag.style.padding = "2px 4px";
+      tag.style.borderRadius = "3px";
+      tag.style.backgroundColor = "rgba(255, 87, 34, 0.15)";
+      tag.style.color = "var(--text-accent, #ff5722)";
+      tag.style.fontWeight = "600";
+    } else if (status === "UNKNOWN") {
       const tag = topRow.createSpan({ cls: "lang-learner-suggest-tag suggest-tag-unknown", text: "\u{1F4CC} \u751F\u8BCD" });
       tag.style.fontSize = "0.75em";
       tag.style.padding = "2px 4px";
@@ -33662,6 +34515,21 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
     }
   }
   /**
+   * 检查单词是否为临界复习生词
+   */
+  isCriticalReviewWord(word) {
+    const info = this.plugin.vocabManager.getInfo(word);
+    if (!info || info.status !== "LEARNING") {
+      return false;
+    }
+    if (!info.nextReview || !info.repetitions) {
+      return false;
+    }
+    const now = Date.now();
+    const daysUntilReview = (info.nextReview - now) / (1e3 * 60 * 60 * 24);
+    return info.repetitions <= 3 && daysUntilReview <= 2;
+  }
+  /**
    * 选择建议项后插入到编辑器
    */
   selectSuggestion(word, evt) {
@@ -33677,11 +34545,21 @@ var WordSuggest = class extends import_obsidian15.EditorSuggest {
 };
 
 // src/main.ts
-var EnglishLearnerPlugin = class extends import_obsidian16.Plugin {
+var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
   constructor() {
     super(...arguments);
     /** 影子词库管理器实例 */
     __publicField(this, "vocabManager");
+    /** 发音评测标准（美音/英音） */
+    __publicField(this, "evaluationAccent", "US");
+    /** AI 服务配置 */
+    __publicField(this, "settings", {
+      aiApiKey: "",
+      aiBaseUrl: "https://api.deepseek.com/v1",
+      aiModel: "deepseek-chat"
+    });
+    /** 音频服务（用于 TTS 播放） */
+    __publicField(this, "audioService", null);
   }
   async onload() {
     console.log("\u{1F680} Obsidian English Learner \u63D2\u4EF6\u52A0\u8F7D\u4E2D...");
@@ -33707,7 +34585,7 @@ var EnglishLearnerPlugin = class extends import_obsidian16.Plugin {
       id: "analyze-selection",
       name: "\u5206\u6790\u5F53\u524D\u9009\u4E2D\u7684\u53E5\u5B50/\u6587\u672C",
       callback: () => {
-        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian16.MarkdownView);
+        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian17.MarkdownView);
         const selection = activeView?.editor?.getSelection();
         if (selection && selection.trim()) {
           this.activateView();
@@ -33715,8 +34593,18 @@ var EnglishLearnerPlugin = class extends import_obsidian16.Plugin {
             eventBus.emit("lang-learner:analyze-sentence", selection.trim());
           }, 200);
         } else {
-          new import_obsidian16.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
+          new import_obsidian17.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
         }
+      }
+    });
+    this.addCommand({
+      id: "toggle-pronunciation-accent",
+      name: "\u5207\u6362\u53D1\u97F3\u8BC4\u6D4B\u6807\u51C6\uFF08\u7F8E\u97F3/\u82F1\u97F3\uFF09",
+      callback: () => {
+        this.evaluationAccent = this.evaluationAccent === "US" ? "UK" : "US";
+        const accentName = this.evaluationAccent === "US" ? "\u7F8E\u5F0F\u53D1\u97F3" : "\u82F1\u5F0F\u53D1\u97F3";
+        new import_obsidian17.Notice(`\u53D1\u97F3\u8BC4\u6D4B\u6807\u51C6\u5DF2\u5207\u6362\u4E3A\uFF1A${accentName}`);
+        eventBus.emit("lang-learner:accent-changed", this.evaluationAccent);
       }
     });
     this.registerMarkdownPostProcessor(
@@ -33758,7 +34646,7 @@ var EnglishLearnerPlugin = class extends import_obsidian16.Plugin {
       })
     );
     this.registerDomEvent(document, "dblclick", (evt) => {
-      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian16.MarkdownView);
+      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian17.MarkdownView);
       if (activeView && activeView.editor) {
         const editor = activeView.editor;
         const selection = editor.getSelection().trim();
