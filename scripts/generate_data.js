@@ -299,7 +299,31 @@ const offlineDict = {
     "write": { phonetic: "raɪt", trans: "v. 写，书写，写作" }
 };
 
-// 7. 生成输出文件
+// 7. 构建反向索引 (中文 → 英文 Lemma[])
+console.log('🔄 开始构建中译英反向索引...');
+const reverseIndex = {};
+
+// 从 offlineDict 中提取中文释义并建立反向映射
+for (const [lemma, entry] of Object.entries(offlineDict)) {
+    const trans = entry.trans;
+    // 提取中文词汇：匹配中文字符序列（排除标点和英文）
+    const chineseMatches = trans.match(/[一-龥]+/g);
+    if (chineseMatches) {
+        for (const chineseWord of chineseMatches) {
+            if (!reverseIndex[chineseWord]) {
+                reverseIndex[chineseWord] = [];
+            }
+            // 避免重复添加
+            if (!reverseIndex[chineseWord].includes(lemma)) {
+                reverseIndex[chineseWord].push(lemma);
+            }
+        }
+    }
+}
+
+console.log(`✅ 反向索引构建完成，共收录中文词汇: ${Object.keys(reverseIndex).length} 个`);
+
+// 8. 生成输出文件
 const outputDir = path.dirname(targetFile);
 if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -325,6 +349,9 @@ export interface DictEntry {
     trans: string;
 }
 export const OFFLINE_DICT: Record<string, DictEntry> = ${JSON.stringify(offlineDict, null, 4)};
+
+// 5. 中译英反向索引 (中文词汇 → 英文 Lemma[])
+export const REVERSE_INDEX: Record<string, string[]> = ${JSON.stringify(reverseIndex, null, 4)};
 `;
 
 fs.writeFileSync(targetFile, fileContent, 'utf-8');

@@ -119,3 +119,19 @@ export interface SuggestionMapping {
     /** 目标词的释义（用于补全提示） */
     translation?: string;
 }
+
+/**
+ * 中译英反向检索候选词结果
+ */
+export interface ReverseSearchCandidate {
+    /** 英文单词原型 (Lemma) */
+    lemma: string;
+    /** 中文释义 */
+    translation: string;
+    /** 音标 */
+    phonetic?: string;
+    /** 熟悉度状态 */
+    status: WordStatus;
+    /** 是否在高频词表中 */
+    isHighFrequency: boolean;
+}

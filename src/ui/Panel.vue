@@ -148,6 +148,7 @@ import type { WordInfo } from '../types';
 // 服务与子组件引入
 import { AudioService, type VoiceSettings } from '../services/AudioService';
 import type { AISettings } from '../services/aiService';
+import { ReverseIndexService } from '../services/ReverseIndexService';
 import SettingsHeader from './components/SettingsHeader.vue';
 import WordDetailCard from './components/WordDetailCard.vue';
 import VocabularyTab from './components/VocabularyTab.vue';
@@ -184,6 +185,7 @@ export default defineComponent({
 
     // 实例化专职服务层
     const audioService = new AudioService();
+    const reverseIndexService = new ReverseIndexService(vocabManager);
 
     // ========== 共享与状态变量 ==========
     const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader' | 'webimport' | 'pronunciation'>('vocabulary');
@@ -303,33 +305,37 @@ export default defineComponent({
       const query = searchQuery.value.trim();
       if (!query) return;
 
-      const hasChinese = /[\u4e00-\u9fa5]/.test(query);
+      const hasChinese = reverseIndexService.containsChinese(query);
 
       if (hasChinese) {
-        const queryLower = query.toLowerCase();
-        let matches: string[] = [];
+        // \u4f7f\u7528\u53cd\u5411\u7d22\u5f15\u68c0\u7d22
+        const candidates = reverseIndexService.search(query);
 
-        // 1. 扫描内存影子词库
-        const customEntries = vocabManager.getAllEntries();
-        for (const entry of customEntries.values()) {
-          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
-            matches.push(entry.word);
+        if (candidates.length > 0) {
+          // \u4f7f\u7528\u53cd\u5411\u7d22\u5f15\u7ed3\u679c
+          const lemmas = candidates.map(c => c.lemma);
+
+          if (lemmas.length === 1) {
+            searchResultsList.value = [];
+            handleWordSelected(lemmas[0]);
+          } else {
+            new Notice(`\u627e\u5230 ${lemmas.length} \u4e2a\u5339\u914d\u7684\u82f1\u6587\u5355\u8bcd`);
+            selectedWord.value = null;
+            searchResultsList.value = lemmas;
           }
+          searchQuery.value = '';
+          return;
         }
 
-        // 2. 扫描本地字典
-        for (const [word, entry] of Object.entries(OFFLINE_DICT)) {
-          if (entry.trans && entry.trans.toLowerCase().includes(queryLower)) {
-            if (!matches.includes(word)) matches.push(word);
-          }
-        }
+        // \u964d\u7ea7\uff1a\u53cd\u5411\u7d22\u5f15\u672a\u627e\u5230\uff0c\u5c1d\u8bd5\u5728\u7ebf\u63a8\u8350
 
         // 3. 在线推荐
+        let matches: string[] = [];
         const onlineResults = await fetchOnlineChineseSuggestions(query);
         for (const item of onlineResults) {
           const wordLower = item.word.toLowerCase();
           const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
-          if (isEnglishWord && !matches.includes(wordLower)) {
+          if (isEnglishWord) {
             matches.push(wordLower);
             onlineTransCache.set(wordLower, item.trans);
           }
