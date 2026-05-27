@@ -25,7 +25,16 @@
 
     <!-- 生词本列表区 -->
     <div class="lang-learner-panel-section lang-learner-wordlist-area">
-      <h4 class="lang-learner-section-title">📋 生词本</h4>
+      <h4 class="lang-learner-section-title">
+        <span>📋 生词本</span>
+        <button
+          class="lang-learner-btn-refresh"
+          @click="refreshData"
+          title="刷新生词本"
+        >
+          🔄
+        </button>
+      </h4>
       <div class="lang-learner-tab-bar">
         <button
           class="lang-learner-tab-btn"
@@ -212,21 +221,35 @@ export default defineComponent({
       currentTabList,
       speak,
       quickAdvance,
-      learnArticle
+      learnArticle,
+      refreshData
     };
   }
 });
 </script>
 
 <style scoped>
+.lang-learner-btn-refresh {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  padding: 2px 6px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.lang-learner-btn-refresh:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+}
 .lang-learner-wordlist-actions {
-  display: flex; 
-  align-items: center; 
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 .lang-learner-btn-voice-mini {
-  background: transparent; 
-  border: none; 
+  background: transparent;
+  border: none;
   cursor: pointer; 
   font-size: 0.9em; 
   padding: 2px 4px; 

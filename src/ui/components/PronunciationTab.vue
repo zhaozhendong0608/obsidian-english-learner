@@ -125,14 +125,9 @@ import { eventBus } from '../../event/EventBus';
 
 export default defineComponent({
   name: 'PronunciationTab',
-  props: {
-    plugin: {
-      type: Object,
-      required: true
-    }
-  },
-  setup(props) {
+  setup() {
     // 注入依赖
+    const plugin = inject<any>('plugin');
     const audioService = inject<any>('audioService');
     const getAiSettings = inject<() => any>('getAiSettings');
     const getVoiceSettings = inject<() => any>('getVoiceSettings');
@@ -150,8 +145,8 @@ export default defineComponent({
     // 安全获取发音标准，添加多层防护
     let initialAccent: 'US' | 'UK' = 'US';
     try {
-      if (props.plugin && typeof props.plugin === 'object' && 'evaluationAccent' in props.plugin) {
-        const accent = props.plugin.evaluationAccent;
+      if (plugin && typeof plugin === 'object' && 'evaluationAccent' in plugin) {
+        const accent = plugin.evaluationAccent;
         if (accent === 'US' || accent === 'UK') {
           initialAccent = accent;
         }
@@ -421,7 +416,7 @@ export default defineComponent({
             diagnosisMarkdown,
             diagnosisContainer.value,
             '',
-            props.plugin
+            plugin
           );
         }
 

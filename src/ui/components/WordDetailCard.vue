@@ -2,9 +2,9 @@
   <div class="lang-learner-panel-section lang-learner-word-detail">
     <h4 class="lang-learner-section-title">
       <span class="lang-learner-detail-title-box">
-        <button 
-          v-if="hasSearchResults" 
-          @click="$emit('back-to-results')" 
+        <button
+          v-if="hasSearchResults"
+          @click="$emit('back-to-results')"
           class="lang-learner-btn-back"
           title="返回搜索列表"
         >
@@ -12,11 +12,34 @@
         </button>
         <span>📝 单词详情</span>
       </span>
-      <button
-        class="lang-learner-btn-icon"
-        title="复制卡片内容"
-        @click="copyCardContent"
-      >📋</button>
+      <div class="lang-learner-detail-actions">
+        <button
+          class="lang-learner-btn-voice-word"
+          title="朗读单词"
+          @click="speak(localWordInfo.word)"
+        >
+          🔊
+        </button>
+        <button
+          class="lang-learner-btn-voice-word"
+          title="在系统词典中查看"
+          @click="lookupInSystemDict(localWordInfo.word)"
+        >
+          📖
+        </button>
+        <button
+          class="lang-learner-btn-add-word"
+          :title="localWordInfo.status === 'LEARNING' ? '已在生词本，点击移出' : '添加到生词本'"
+          @click="toggleAddWord(localWordInfo.word)"
+        >
+          {{ localWordInfo.status === 'LEARNING' ? '📌' : '➕' }}
+        </button>
+        <button
+          class="lang-learner-btn-icon"
+          title="复制卡片内容"
+          @click="copyCardContent"
+        >📋</button>
+      </div>
     </h4>
 
     <div class="lang-learner-word-info-card">
@@ -24,29 +47,6 @@
         <div class="lang-learner-word-detail-word-box" title="点击切换音节划分" @click="toggleSyllableSplit">
           <span class="lang-learner-word-lemma">{{ displayWord }}</span>
           <span v-if="localWordInfo.phonetic" class="lang-learner-word-phonetic-inline">/{{ localWordInfo.phonetic }}/</span>
-        </div>
-        <div class="lang-learner-detail-actions">
-          <button 
-            class="lang-learner-btn-voice-word" 
-            title="朗读单词" 
-            @click="speak(localWordInfo.word)"
-          >
-            🔊
-          </button>
-          <button 
-            class="lang-learner-btn-voice-word" 
-            title="在系统词典中查看" 
-            @click="lookupInSystemDict(localWordInfo.word)"
-          >
-            📖
-          </button>
-          <button 
-            class="lang-learner-btn-add-word" 
-            :title="localWordInfo.status === 'LEARNING' ? '已在生词本，点击移出' : '添加到生词本'" 
-            @click="toggleAddWord(localWordInfo.word)"
-          >
-            {{ localWordInfo.status === 'LEARNING' ? '📌' : '➕' }}
-          </button>
         </div>
       </div>
 
@@ -345,7 +345,18 @@ export default defineComponent({
         sentences = [...sentences, ...onlineSentences];
 
         const finalSentences = Array.from(new Set(sentences.map(s => s.trim())))
-          .filter(s => s.toLowerCase().includes(cleanWord) || s.length > 5)
+          .filter(s => {
+            // 过滤掉 URL 编码的字符串
+            if (s.includes('%2F') || s.includes('%3F') || s.includes('%3D')) {
+              return false;
+            }
+            // 过滤掉纯 URL
+            if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('www.')) {
+              return false;
+            }
+            // 必须包含目标单词且长度合理
+            return (s.toLowerCase().includes(cleanWord) || s.length > 5) && s.length < 200;
+          })
           .slice(0, 3);
 
         if (currentVersion === exampleRequestVersion) {
