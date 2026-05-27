@@ -28566,7 +28566,7 @@ function render(_ctx, _cache) {
 // src/ui/components/SettingsHeader.vue
 SettingsHeader_default.render = render;
 SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
-SettingsHeader_default.__scopeId = "data-v-6282726c";
+SettingsHeader_default.__scopeId = "data-v-ae2f23e3";
 var SettingsHeader_default2 = SettingsHeader_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
@@ -29319,7 +29319,7 @@ function render2(_ctx, _cache) {
 // src/ui/components/WordDetailCard.vue
 WordDetailCard_default.render = render2;
 WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
-WordDetailCard_default.__scopeId = "data-v-5fd52550";
+WordDetailCard_default.__scopeId = "data-v-78b7ae9e";
 var WordDetailCard_default2 = WordDetailCard_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
@@ -29630,7 +29630,7 @@ function render3(_ctx, _cache) {
 // src/ui/components/VocabularyTab.vue
 VocabularyTab_default.render = render3;
 VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
-VocabularyTab_default.__scopeId = "data-v-689bdb3a";
+VocabularyTab_default.__scopeId = "data-v-7642b530";
 var VocabularyTab_default2 = VocabularyTab_default;
 
 // src/utils/algorithms.ts
@@ -29849,7 +29849,7 @@ function render4(_ctx, _cache) {
 // src/ui/components/EstimateTab.vue
 EstimateTab_default.render = render4;
 EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
-EstimateTab_default.__scopeId = "data-v-f79427d6";
+EstimateTab_default.__scopeId = "data-v-f7f9fe97";
 var EstimateTab_default2 = EstimateTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
@@ -30369,7 +30369,7 @@ function render5(_ctx, _cache) {
 // src/ui/components/SentenceTab.vue
 SentenceTab_default.render = render5;
 SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
-SentenceTab_default.__scopeId = "data-v-ef801b39";
+SentenceTab_default.__scopeId = "data-v-92c312ac";
 var SentenceTab_default2 = SentenceTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
@@ -30783,7 +30783,7 @@ function render6(_ctx, _cache) {
 // src/ui/components/ReviewTab.vue
 ReviewTab_default.render = render6;
 ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
-ReviewTab_default.__scopeId = "data-v-bd860bcc";
+ReviewTab_default.__scopeId = "data-v-6578e80b";
 var ReviewTab_default2 = ReviewTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
@@ -32066,7 +32066,7 @@ function render7(_ctx, _cache) {
 // src/ui/components/MediaTab.vue
 MediaTab_default.render = render7;
 MediaTab_default.__file = "src/ui/components/MediaTab.vue";
-MediaTab_default.__scopeId = "data-v-7024ec81";
+MediaTab_default.__scopeId = "data-v-32c3de79";
 var MediaTab_default2 = MediaTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
@@ -32730,7 +32730,7 @@ function render8(_ctx, _cache) {
 // src/ui/components/ReaderTab.vue
 ReaderTab_default.render = render8;
 ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
-ReaderTab_default.__scopeId = "data-v-4b9e21a5";
+ReaderTab_default.__scopeId = "data-v-c07d227a";
 var ReaderTab_default2 = ReaderTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WebImportTab.vue?type=script
@@ -33095,7 +33095,7 @@ function render9(_ctx, _cache) {
 // src/ui/components/WebImportTab.vue
 WebImportTab_default.render = render9;
 WebImportTab_default.__file = "src/ui/components/WebImportTab.vue";
-WebImportTab_default.__scopeId = "data-v-7a100c9f";
+WebImportTab_default.__scopeId = "data-v-309658b1";
 var WebImportTab_default2 = WebImportTab_default;
 
 // src/services/AudioCaptureService.ts
@@ -33735,7 +33735,7 @@ function render10(_ctx, _cache) {
 // src/ui/components/PronunciationTab.vue
 PronunciationTab_default.render = render10;
 PronunciationTab_default.__file = "src/ui/components/PronunciationTab.vue";
-PronunciationTab_default.__scopeId = "data-v-23679b64";
+PronunciationTab_default.__scopeId = "data-v-53ab52f4";
 var PronunciationTab_default2 = PronunciationTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
@@ -34198,7 +34198,7 @@ function render11(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render11;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-685e513c";
+Panel_default.__scopeId = "data-v-f63e997c";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
