@@ -30,27 +30,44 @@
     <div v-if="searchResultsList && searchResultsList.length > 0 && !selectedWord" class="lang-learner-panel-section lang-learner-search-results">
       <h4 class="lang-learner-section-title">
         <span>🔍 搜索结果 ({{ searchResultsList ? searchResultsList.length : 0 }} 个)</span>
-        <button 
-          @click="clearSearchResults" 
-          class="lang-learner-btn-close-results"
-          title="关闭列表"
-        >
-          ✕
-        </button>
+        <div class="lang-learner-results-actions">
+          <button
+            @click="batchAddToVocabulary"
+            class="lang-learner-btn lang-learner-btn-primary"
+            title="批量添加未掌握的词到生词本"
+          >
+            ➕ 批量收藏
+          </button>
+          <button
+            @click="clearSearchResults"
+            class="lang-learner-btn-close-results"
+            title="关闭列表"
+          >
+            ✕
+          </button>
+        </div>
       </h4>
       <div class="lang-learner-search-results-list">
-        <div 
-          v-for="word in (searchResultsList || [])" 
-          :key="word" 
-          class="lang-learner-search-result-item" 
-          @click="selectResultWord(word)"
+        <div
+          v-for="candidate in (searchResultsList || [])"
+          :key="candidate.lemma"
+          class="lang-learner-search-result-item"
+          @click="selectResultWord(candidate.lemma)"
         >
-          <span class="lang-learner-result-word-span">{{ word }}</span>
-          <span 
+          <span class="lang-learner-result-word-span">
+            {{ candidate.lemma }}
+            <span
+              class="lang-learner-status-badge"
+              :class="`lang-learner-status-${candidate.status.toLowerCase()}`"
+            >
+              {{ getStatusLabel(candidate.status) }}
+            </span>
+          </span>
+          <span
             class="lang-learner-result-trans-span"
-            :title="getWordTranslation(word)"
+            :title="candidate.translation"
           >
-            {{ getWordTranslation(word) }}
+            {{ candidate.translation }}
           </span>
         </div>
       </div>
@@ -143,7 +160,7 @@ import { eventBus } from '../event/EventBus';
 import { lemmatize } from '../tokenizer/lemmatizer';
 import { OFFLINE_DICT } from '../data/static_data';
 import type { VocabularyManager } from '../db/vocabulary';
-import type { WordInfo } from '../types';
+import type { WordInfo, ReverseSearchCandidate } from '../types';
 
 // 服务与子组件引入
 import { AudioService, type VoiceSettings } from '../services/AudioService';
@@ -191,7 +208,7 @@ export default defineComponent({
     const mainTab = ref<'vocabulary' | 'estimate' | 'sentence' | 'review' | 'media' | 'reader' | 'webimport' | 'pronunciation'>('vocabulary');
     const searchQuery = ref('');
     const selectedWord = ref<WordInfo | null>(null);
-    const searchResultsList = ref<string[]>([]);
+    const searchResultsList = ref<ReverseSearchCandidate[]>([]);
     const availableVoices = ref<SpeechSynthesisVoice[]>([]);
 
     // 发音与 AI 设置（由 SettingsHeader 同步更新）
@@ -313,54 +330,56 @@ export default defineComponent({
 
         if (candidates.length > 0) {
           // \u4f7f\u7528\u53cd\u5411\u7d22\u5f15\u7ed3\u679c
-          const lemmas = candidates.map(c => c.lemma);
-
-          if (lemmas.length === 1) {
+          if (candidates.length === 1) {
             searchResultsList.value = [];
-            handleWordSelected(lemmas[0]);
+            handleWordSelected(candidates[0].lemma);
           } else {
-            new Notice(`\u627e\u5230 ${lemmas.length} \u4e2a\u5339\u914d\u7684\u82f1\u6587\u5355\u8bcd`);
+            new Notice(`\u627e\u5230 ${candidates.length} \u4e2a\u5339\u914d\u7684\u82f1\u6587\u5355\u8bcd`);
             selectedWord.value = null;
-            searchResultsList.value = lemmas;
+            searchResultsList.value = candidates;
           }
           searchQuery.value = '';
           return;
         }
 
-        // \u964d\u7ea7\uff1a\u53cd\u5411\u7d22\u5f15\u672a\u627e\u5230\uff0c\u5c1d\u8bd5\u5728\u7ebf\u63a8\u8350
-
-        // 3. 在线推荐
-        let matches: string[] = [];
+      } else {
+        // 降级：反向索引未找到，尝试在线推荐
         const onlineResults = await fetchOnlineChineseSuggestions(query);
+        const onlineCandidates: ReverseSearchCandidate[] = [];
         for (const item of onlineResults) {
           const wordLower = item.word.toLowerCase();
           const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
           if (isEnglishWord) {
-            matches.push(wordLower);
+            const status = vocabManager.get(wordLower);
+            onlineCandidates.push({
+              lemma: wordLower,
+              translation: item.trans,
+              status,
+              isHighFrequency: false
+            });
             onlineTransCache.set(wordLower, item.trans);
           }
         }
 
-        if (matches.length === 0) {
+        if (onlineCandidates.length === 0) {
           new Notice(`未找到包含 "${query}" 释义的英文单词`);
           return;
         }
 
-        if (matches.length === 1) {
+        if (onlineCandidates.length === 1) {
           searchResultsList.value = [];
-          handleWordSelected(matches[0]);
+          handleWordSelected(onlineCandidates[0].lemma);
         } else {
-          let totalMatches = matches.length;
+          let totalMatches = onlineCandidates.length;
           if (totalMatches > 100) {
-            matches = matches.slice(0, 100);
-            new Notice(`找到 ${totalMatches} 个结果，仅展示前 100 个`);
+            onlineCandidates.splice(100);
+            new Notice(`找到 ${totalMatches} 个在线结果，仅展示前 100 个`);
           } else {
-            new Notice(`找到 ${totalMatches} 个匹配的英文单词`);
+            new Notice(`找到 ${totalMatches} 个在线匹配结果`);
           }
           selectedWord.value = null;
-          searchResultsList.value = matches;
+          searchResultsList.value = onlineCandidates;
         }
-      } else {
         searchResultsList.value = [];
         const result = lemmatize(query.toLowerCase());
         handleWordSelected(result.lemma);
@@ -404,6 +423,39 @@ export default defineComponent({
       availableVoices.value = allVoices.filter(v => v.lang.toLowerCase().startsWith('en'));
     }
 
+    // 获取状态标签
+    function getStatusLabel(status: string): string {
+      const labels: Record<string, string> = {
+        'KNOWN': '已掌握',
+        'LEARNING': '学习中',
+        'UNKNOWN': '生词'
+      };
+      return labels[status] || status;
+    }
+
+    // 批量添加未掌握的词到生词本
+    function batchAddToVocabulary() {
+      const unknownWords = searchResultsList.value.filter(c => c.status === 'UNKNOWN');
+      if (unknownWords.length === 0) {
+        new Notice('没有需要添加的生词');
+        return;
+      }
+
+      let addedCount = 0;
+      for (const candidate of unknownWords) {
+        vocabManager.set(candidate.lemma, 'LEARNING');
+        addedCount++;
+      }
+
+      new Notice(`已添加 ${addedCount} 个生词到词汇本`);
+
+      // 刷新搜索结果状态
+      searchResultsList.value = searchResultsList.value.map(c => ({
+        ...c,
+        status: vocabManager.get(c.lemma)
+      }));
+    }
+
     // ========== 生命周期 ==========
     onMounted(() => {
       eventBus.on('lang-learner:word-selected', (word: string) => {
@@ -443,50 +495,82 @@ export default defineComponent({
       clearSearchResults,
       lookupInSystemDict,
       getWordTranslation,
-      performSearch
+      performSearch,
+      getStatusLabel,
+      batchAddToVocabulary
     };
   }
 });
 </script>
 
 <style scoped>
+.lang-learner-results-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 .lang-learner-btn-close-results {
-  background: transparent; 
-  border: none; 
-  cursor: pointer; 
-  font-size: 1.1em; 
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
   color: var(--text-muted);
 }
 .lang-learner-search-results-list {
-  max-height: 250px; 
-  overflow-y: auto; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 6px; 
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding: 2px;
 }
 .lang-learner-search-result-item {
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 8px 12px; 
-  border-radius: 6px; 
-  background-color: var(--background-secondary); 
-  cursor: pointer; 
-  border: 1px solid var(--border-color); 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--background-secondary);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
+.lang-learner-search-result-item:hover {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--text-accent);
+}
 .lang-learner-result-word-span {
-  font-weight: 600; 
+  font-weight: 600;
   color: var(--text-accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lang-learner-status-badge {
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.lang-learner-status-known {
+  background-color: var(--color-green);
+  color: white;
+}
+.lang-learner-status-learning {
+  background-color: var(--color-yellow);
+  color: var(--text-normal);
+}
+.lang-learner-status-unknown {
+  background-color: var(--color-red);
+  color: white;
 }
 .lang-learner-result-trans-span {
-  font-size: 0.85em; 
-  color: var(--text-muted); 
-  text-align: right; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  white-space: nowrap; 
+  font-size: 0.85em;
+  color: var(--text-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   max-width: 60%;
 }
 </style>

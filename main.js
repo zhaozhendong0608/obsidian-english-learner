@@ -17965,7 +17965,7 @@ function render(_ctx, _cache) {
 // src/ui/components/SettingsHeader.vue
 SettingsHeader_default.render = render;
 SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
-SettingsHeader_default.__scopeId = "data-v-9c6c77a9";
+SettingsHeader_default.__scopeId = "data-v-c762865d";
 var SettingsHeader_default2 = SettingsHeader_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
@@ -18718,7 +18718,7 @@ function render2(_ctx, _cache) {
 // src/ui/components/WordDetailCard.vue
 WordDetailCard_default.render = render2;
 WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
-WordDetailCard_default.__scopeId = "data-v-cc63b49a";
+WordDetailCard_default.__scopeId = "data-v-ca444318";
 var WordDetailCard_default2 = WordDetailCard_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
@@ -19029,7 +19029,7 @@ function render3(_ctx, _cache) {
 // src/ui/components/VocabularyTab.vue
 VocabularyTab_default.render = render3;
 VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
-VocabularyTab_default.__scopeId = "data-v-05627c1b";
+VocabularyTab_default.__scopeId = "data-v-86405619";
 var VocabularyTab_default2 = VocabularyTab_default;
 
 // src/utils/algorithms.ts
@@ -19248,7 +19248,7 @@ function render4(_ctx, _cache) {
 // src/ui/components/EstimateTab.vue
 EstimateTab_default.render = render4;
 EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
-EstimateTab_default.__scopeId = "data-v-8880e786";
+EstimateTab_default.__scopeId = "data-v-1da65645";
 var EstimateTab_default2 = EstimateTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
@@ -19768,7 +19768,7 @@ function render5(_ctx, _cache) {
 // src/ui/components/SentenceTab.vue
 SentenceTab_default.render = render5;
 SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
-SentenceTab_default.__scopeId = "data-v-efa09a0b";
+SentenceTab_default.__scopeId = "data-v-fb610282";
 var SentenceTab_default2 = SentenceTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
@@ -20182,7 +20182,7 @@ function render6(_ctx, _cache) {
 // src/ui/components/ReviewTab.vue
 ReviewTab_default.render = render6;
 ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
-ReviewTab_default.__scopeId = "data-v-740e3c1f";
+ReviewTab_default.__scopeId = "data-v-3c617cfd";
 var ReviewTab_default2 = ReviewTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
@@ -21465,7 +21465,7 @@ function render7(_ctx, _cache) {
 // src/ui/components/MediaTab.vue
 MediaTab_default.render = render7;
 MediaTab_default.__file = "src/ui/components/MediaTab.vue";
-MediaTab_default.__scopeId = "data-v-fc033e20";
+MediaTab_default.__scopeId = "data-v-a1b7c829";
 var MediaTab_default2 = MediaTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
@@ -22129,7 +22129,7 @@ function render8(_ctx, _cache) {
 // src/ui/components/ReaderTab.vue
 ReaderTab_default.render = render8;
 ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
-ReaderTab_default.__scopeId = "data-v-521fa253";
+ReaderTab_default.__scopeId = "data-v-4b5b3a93";
 var ReaderTab_default2 = ReaderTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WebImportTab.vue?type=script
@@ -22494,7 +22494,7 @@ function render9(_ctx, _cache) {
 // src/ui/components/WebImportTab.vue
 WebImportTab_default.render = render9;
 WebImportTab_default.__file = "src/ui/components/WebImportTab.vue";
-WebImportTab_default.__scopeId = "data-v-f56cb0ef";
+WebImportTab_default.__scopeId = "data-v-e4c5fdbb";
 var WebImportTab_default2 = WebImportTab_default;
 
 // src/services/AudioCaptureService.ts
@@ -23134,7 +23134,7 @@ function render10(_ctx, _cache) {
 // src/ui/components/PronunciationTab.vue
 PronunciationTab_default.render = render10;
 PronunciationTab_default.__file = "src/ui/components/PronunciationTab.vue";
-PronunciationTab_default.__scopeId = "data-v-33caae35";
+PronunciationTab_default.__scopeId = "data-v-489b3203";
 var PronunciationTab_default2 = PronunciationTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
@@ -23252,47 +23252,52 @@ var Panel_default = defineComponent({
       if (hasChinese) {
         const candidates = reverseIndexService.search(query);
         if (candidates.length > 0) {
-          const lemmas = candidates.map((c) => c.lemma);
-          if (lemmas.length === 1) {
+          if (candidates.length === 1) {
             searchResultsList.value = [];
-            handleWordSelected(lemmas[0]);
+            handleWordSelected(candidates[0].lemma);
           } else {
-            new import_obsidian14.Notice(`\u627E\u5230 ${lemmas.length} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
+            new import_obsidian14.Notice(`\u627E\u5230 ${candidates.length} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
             selectedWord.value = null;
-            searchResultsList.value = lemmas;
+            searchResultsList.value = candidates;
           }
           searchQuery.value = "";
           return;
         }
-        let matches = [];
+      } else {
         const onlineResults = await fetchOnlineChineseSuggestions(query);
+        const onlineCandidates = [];
         for (const item of onlineResults) {
           const wordLower = item.word.toLowerCase();
           const isEnglishWord = /^[a-zA-Z\s\-'\.]+$/.test(wordLower);
           if (isEnglishWord) {
-            matches.push(wordLower);
+            const status = vocabManager.get(wordLower);
+            onlineCandidates.push({
+              lemma: wordLower,
+              translation: item.trans,
+              status,
+              isHighFrequency: false
+            });
             onlineTransCache.set(wordLower, item.trans);
           }
         }
-        if (matches.length === 0) {
+        if (onlineCandidates.length === 0) {
           new import_obsidian14.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
           return;
         }
-        if (matches.length === 1) {
+        if (onlineCandidates.length === 1) {
           searchResultsList.value = [];
-          handleWordSelected(matches[0]);
+          handleWordSelected(onlineCandidates[0].lemma);
         } else {
-          let totalMatches = matches.length;
+          let totalMatches = onlineCandidates.length;
           if (totalMatches > 100) {
-            matches = matches.slice(0, 100);
-            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
+            onlineCandidates.splice(100);
+            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
           } else {
-            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
+            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u5339\u914D\u7ED3\u679C`);
           }
           selectedWord.value = null;
-          searchResultsList.value = matches;
+          searchResultsList.value = onlineCandidates;
         }
-      } else {
         searchResultsList.value = [];
         const result = lemmatize(query.toLowerCase());
         handleWordSelected(result.lemma);
@@ -23330,6 +23335,31 @@ var Panel_default = defineComponent({
       const allVoices = window.speechSynthesis.getVoices();
       availableVoices.value = allVoices.filter((v) => v.lang.toLowerCase().startsWith("en"));
     }
+    function getStatusLabel(status) {
+      const labels = {
+        "KNOWN": "\u5DF2\u638C\u63E1",
+        "LEARNING": "\u5B66\u4E60\u4E2D",
+        "UNKNOWN": "\u751F\u8BCD"
+      };
+      return labels[status] || status;
+    }
+    function batchAddToVocabulary() {
+      const unknownWords = searchResultsList.value.filter((c) => c.status === "UNKNOWN");
+      if (unknownWords.length === 0) {
+        new import_obsidian14.Notice("\u6CA1\u6709\u9700\u8981\u6DFB\u52A0\u7684\u751F\u8BCD");
+        return;
+      }
+      let addedCount = 0;
+      for (const candidate of unknownWords) {
+        vocabManager.set(candidate.lemma, "LEARNING");
+        addedCount++;
+      }
+      new import_obsidian14.Notice(`\u5DF2\u6DFB\u52A0 ${addedCount} \u4E2A\u751F\u8BCD\u5230\u8BCD\u6C47\u672C`);
+      searchResultsList.value = searchResultsList.value.map((c) => ({
+        ...c,
+        status: vocabManager.get(c.lemma)
+      }));
+    }
     onMounted(() => {
       eventBus.on("lang-learner:word-selected", (word) => {
         handleWordSelected(word);
@@ -23365,7 +23395,9 @@ var Panel_default = defineComponent({
       clearSearchResults,
       lookupInSystemDict,
       getWordTranslation,
-      performSearch
+      performSearch,
+      getStatusLabel,
+      batchAddToVocabulary
     };
   }
 });
@@ -23378,11 +23410,12 @@ var _hoisted_313 = {
   class: "lang-learner-panel-section lang-learner-search-results"
 };
 var _hoisted_411 = { class: "lang-learner-section-title" };
-var _hoisted_511 = { class: "lang-learner-search-results-list" };
-var _hoisted_611 = ["onClick"];
-var _hoisted_711 = { class: "lang-learner-result-word-span" };
-var _hoisted_811 = ["title"];
-var _hoisted_911 = { class: "lang-learner-main-tabs" };
+var _hoisted_511 = { class: "lang-learner-results-actions" };
+var _hoisted_611 = { class: "lang-learner-search-results-list" };
+var _hoisted_711 = ["onClick"];
+var _hoisted_811 = { class: "lang-learner-result-word-span" };
+var _hoisted_911 = ["title"];
+var _hoisted_1011 = { class: "lang-learner-main-tabs" };
 function render11(_ctx, _cache) {
   const _component_SettingsHeader = resolveComponent("SettingsHeader");
   const _component_WordDetailCard = resolveComponent("WordDetailCard");
@@ -23435,34 +23468,50 @@ function render11(_ctx, _cache) {
           1
           /* TEXT */
         ),
-        createBaseVNode("button", {
-          onClick: _cache[4] || (_cache[4] = (...args) => _ctx.clearSearchResults && _ctx.clearSearchResults(...args)),
-          class: "lang-learner-btn-close-results",
-          title: "\u5173\u95ED\u5217\u8868"
-        }, " \u2715 ")
+        createBaseVNode("div", _hoisted_511, [
+          createBaseVNode("button", {
+            onClick: _cache[4] || (_cache[4] = (...args) => _ctx.batchAddToVocabulary && _ctx.batchAddToVocabulary(...args)),
+            class: "lang-learner-btn lang-learner-btn-primary",
+            title: "\u6279\u91CF\u6DFB\u52A0\u672A\u638C\u63E1\u7684\u8BCD\u5230\u751F\u8BCD\u672C"
+          }, " \u2795 \u6279\u91CF\u6536\u85CF "),
+          createBaseVNode("button", {
+            onClick: _cache[5] || (_cache[5] = (...args) => _ctx.clearSearchResults && _ctx.clearSearchResults(...args)),
+            class: "lang-learner-btn-close-results",
+            title: "\u5173\u95ED\u5217\u8868"
+          }, " \u2715 ")
+        ])
       ]),
-      createBaseVNode("div", _hoisted_511, [
+      createBaseVNode("div", _hoisted_611, [
         (openBlock(true), createElementBlock(
           Fragment,
           null,
-          renderList(_ctx.searchResultsList || [], (word) => {
+          renderList(_ctx.searchResultsList || [], (candidate) => {
             return openBlock(), createElementBlock("div", {
-              key: word,
+              key: candidate.lemma,
               class: "lang-learner-search-result-item",
-              onClick: ($event) => _ctx.selectResultWord(word)
+              onClick: ($event) => _ctx.selectResultWord(candidate.lemma)
             }, [
-              createBaseVNode(
-                "span",
-                _hoisted_711,
-                toDisplayString(word),
-                1
-                /* TEXT */
-              ),
+              createBaseVNode("span", _hoisted_811, [
+                createTextVNode(
+                  toDisplayString(candidate.lemma) + " ",
+                  1
+                  /* TEXT */
+                ),
+                createBaseVNode(
+                  "span",
+                  {
+                    class: normalizeClass(["lang-learner-status-badge", `lang-learner-status-${candidate.status.toLowerCase()}`])
+                  },
+                  toDisplayString(_ctx.getStatusLabel(candidate.status)),
+                  3
+                  /* TEXT, CLASS */
+                )
+              ]),
               createBaseVNode("span", {
                 class: "lang-learner-result-trans-span",
-                title: _ctx.getWordTranslation(word)
-              }, toDisplayString(_ctx.getWordTranslation(word)), 9, _hoisted_811)
-            ], 8, _hoisted_611);
+                title: candidate.translation
+              }, toDisplayString(candidate.translation), 9, _hoisted_911)
+            ], 8, _hoisted_711);
           }),
           128
           /* KEYED_FRAGMENT */
@@ -23475,12 +23524,12 @@ function render11(_ctx, _cache) {
       "has-search-results": _ctx.searchResultsList && _ctx.searchResultsList.length > 0,
       onBackToResults: _ctx.backToSearchResults
     }, null, 8, ["word-info", "has-search-results", "onBackToResults"])) : createCommentVNode("v-if", true),
-    createBaseVNode("div", _hoisted_911, [
+    createBaseVNode("div", _hoisted_1011, [
       createBaseVNode(
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "vocabulary" }]),
-          onClick: _cache[5] || (_cache[5] = ($event) => _ctx.setTab("vocabulary"))
+          onClick: _cache[6] || (_cache[6] = ($event) => _ctx.setTab("vocabulary"))
         },
         " \u{1F4CB} \u8BCD\u6C47\u672C ",
         2
@@ -23490,7 +23539,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "estimate" }]),
-          onClick: _cache[6] || (_cache[6] = ($event) => _ctx.setTab("estimate"))
+          onClick: _cache[7] || (_cache[7] = ($event) => _ctx.setTab("estimate"))
         },
         " \u{1F3AF} \u8BCD\u6C47\u91CF\u6D4B\u8BD5 ",
         2
@@ -23500,7 +23549,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "sentence" }]),
-          onClick: _cache[7] || (_cache[7] = ($event) => _ctx.setTab("sentence"))
+          onClick: _cache[8] || (_cache[8] = ($event) => _ctx.setTab("sentence"))
         },
         " \u{1F50D} \u6574\u53E5\u5206\u6790 ",
         2
@@ -23510,7 +23559,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "review" }]),
-          onClick: _cache[8] || (_cache[8] = ($event) => _ctx.setTab("review"))
+          onClick: _cache[9] || (_cache[9] = ($event) => _ctx.setTab("review"))
         },
         " \u{1F4C5} \u95F4\u9694\u590D\u4E60 ",
         2
@@ -23520,7 +23569,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "media" }]),
-          onClick: _cache[9] || (_cache[9] = ($event) => _ctx.setTab("media"))
+          onClick: _cache[10] || (_cache[10] = ($event) => _ctx.setTab("media"))
         },
         " \u{1F3AC} \u89C6\u9891\u7B14\u8BB0 ",
         2
@@ -23530,7 +23579,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "reader" }]),
-          onClick: _cache[10] || (_cache[10] = ($event) => _ctx.setTab("reader"))
+          onClick: _cache[11] || (_cache[11] = ($event) => _ctx.setTab("reader"))
         },
         " \u{1F4F0} RSS \u9605\u8BFB ",
         2
@@ -23540,7 +23589,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "webimport" }]),
-          onClick: _cache[11] || (_cache[11] = ($event) => _ctx.setTab("webimport"))
+          onClick: _cache[12] || (_cache[12] = ($event) => _ctx.setTab("webimport"))
         },
         " \u{1F310} \u7F51\u9875\u5BFC\u5165 ",
         2
@@ -23550,7 +23599,7 @@ function render11(_ctx, _cache) {
         "button",
         {
           class: normalizeClass(["lang-learner-main-tab-btn", { "lang-learner-active": _ctx.mainTab === "pronunciation" }]),
-          onClick: _cache[12] || (_cache[12] = ($event) => _ctx.setTab("pronunciation"))
+          onClick: _cache[13] || (_cache[13] = ($event) => _ctx.setTab("pronunciation"))
         },
         " \u{1F3A4} \u53E3\u8BED\u8BC4\u6D4B ",
         2
@@ -23599,7 +23648,7 @@ function render11(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render11;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-8779090b";
+Panel_default.__scopeId = "data-v-64004298";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
