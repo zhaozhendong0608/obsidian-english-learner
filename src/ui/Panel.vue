@@ -32,11 +32,19 @@
         <span>🔍 搜索结果 ({{ searchResultsList ? searchResultsList.length : 0 }} 个)</span>
         <div class="lang-learner-results-actions">
           <button
-            @click="batchAddToVocabulary"
-            class="lang-learner-btn lang-learner-btn-primary"
-            title="批量添加未掌握的词到生词本"
+            @click="toggleSelectAll"
+            class="lang-learner-btn lang-learner-btn-sm"
+            title="全选/取消全选"
           >
-            ➕ 批量收藏
+            {{ selectedCandidates.size === searchResultsList.length ? '取消全选' : '全选' }}
+          </button>
+          <button
+            @click="batchAddToVocabulary"
+            class="lang-learner-btn lang-learner-btn-primary lang-learner-btn-sm"
+            :disabled="selectedCandidates.size === 0"
+            :title="selectedCandidates.size === 0 ? '请先勾选要收藏的单词' : `批量收藏 ${selectedCandidates.size} 个单词`"
+          >
+            ➕ 批量收藏 ({{ selectedCandidates.size }})
           </button>
           <button
             @click="clearSearchResults"
@@ -52,23 +60,31 @@
           v-for="candidate in (searchResultsList || [])"
           :key="candidate.lemma"
           class="lang-learner-search-result-item"
-          @click="selectResultWord(candidate.lemma)"
         >
-          <span class="lang-learner-result-word-span">
-            {{ candidate.lemma }}
-            <span
-              class="lang-learner-status-badge"
-              :class="`lang-learner-status-${candidate.status.toLowerCase()}`"
-            >
-              {{ getStatusLabel(candidate.status) }}
+          <input
+            type="checkbox"
+            :checked="selectedCandidates.has(candidate.lemma)"
+            @change="toggleCandidate(candidate.lemma)"
+            @click.stop
+            class="lang-learner-candidate-checkbox"
+          />
+          <div class="lang-learner-result-content" @click="selectResultWord(candidate.lemma)">
+            <span class="lang-learner-result-word-span">
+              {{ candidate.lemma }}
+              <span
+                class="lang-learner-status-badge"
+                :class="`lang-learner-status-${candidate.status.toLowerCase()}`"
+              >
+                {{ getStatusLabel(candidate.status) }}
+              </span>
             </span>
-          </span>
-          <span
-            class="lang-learner-result-trans-span"
-            :title="candidate.translation"
-          >
-            {{ candidate.translation }}
-          </span>
+            <span
+              class="lang-learner-result-trans-span"
+              :title="candidate.translation"
+            >
+              {{ candidate.translation }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -149,7 +165,7 @@
     <MediaTab v-show="mainTab === 'media'" @select-word="onWordSelectedByString" />
     <ReaderTab v-show="mainTab === 'reader'" @select-word="onWordSelectedByString" />
     <WebImportTab v-show="mainTab === 'webimport'" />
-    <PronunciationTab v-show="mainTab === 'pronunciation'" :plugin="plugin" />
+    <PronunciationTab v-show="mainTab === 'pronunciation'" />
   </div>
 </template>
 
@@ -209,6 +225,7 @@ export default defineComponent({
     const searchQuery = ref('');
     const selectedWord = ref<WordInfo | null>(null);
     const searchResultsList = ref<ReverseSearchCandidate[]>([]);
+    const selectedCandidates = ref<Set<string>>(new Set()); // 多选候选词状态
     const availableVoices = ref<SpeechSynthesisVoice[]>([]);
 
     // 发音与 AI 设置（由 SettingsHeader 同步更新）
@@ -280,6 +297,28 @@ export default defineComponent({
 
     function clearSearchResults() {
       searchResultsList.value = [];
+      selectedCandidates.value.clear();
+    }
+
+    // 切换单个候选词的选中状态
+    function toggleCandidate(lemma: string) {
+      if (selectedCandidates.value.has(lemma)) {
+        selectedCandidates.value.delete(lemma);
+      } else {
+        selectedCandidates.value.add(lemma);
+      }
+    }
+
+    // 全选/取消全选
+    function toggleSelectAll() {
+      if (selectedCandidates.value.size === searchResultsList.value.length) {
+        // 当前全选，执行取消全选
+        selectedCandidates.value.clear();
+      } else {
+        // 执行全选
+        selectedCandidates.value.clear();
+        searchResultsList.value.forEach(c => selectedCandidates.value.add(c.lemma));
+      }
     }
 
     function lookupInSystemDict(query: string) {
@@ -380,10 +419,14 @@ export default defineComponent({
           selectedWord.value = null;
           searchResultsList.value = onlineCandidates;
         }
-        searchResultsList.value = [];
-        const result = lemmatize(query.toLowerCase());
-        handleWordSelected(result.lemma);
+        searchQuery.value = '';
+        return;
       }
+
+      // 英文单词直接查询
+      searchResultsList.value = [];
+      const result = lemmatize(query.toLowerCase());
+      handleWordSelected(result.lemma);
       searchQuery.value = '';
     }
 
@@ -435,25 +478,37 @@ export default defineComponent({
 
     // 批量添加未掌握的词到生词本
     function batchAddToVocabulary() {
-      const unknownWords = searchResultsList.value.filter(c => c.status === 'UNKNOWN');
-      if (unknownWords.length === 0) {
-        new Notice('没有需要添加的生词');
+      if (selectedCandidates.value.size === 0) {
+        new Notice('请先勾选要收藏的单词');
         return;
       }
 
+      // 仅收藏勾选的候选词
       let addedCount = 0;
-      for (const candidate of unknownWords) {
-        vocabManager.set(candidate.lemma, 'LEARNING');
-        addedCount++;
+      for (const lemma of selectedCandidates.value) {
+        const candidate = searchResultsList.value.find(c => c.lemma === lemma);
+        if (candidate && candidate.status === 'UNKNOWN') {
+          vocabManager.set(lemma, 'LEARNING');
+          addedCount++;
+        }
       }
 
-      new Notice(`已添加 ${addedCount} 个生词到词汇本`);
+      if (addedCount === 0) {
+        new Notice('勾选的单词都已在词汇本中');
+      } else {
+        new Notice(`已添加 ${addedCount} 个生词到词汇本`);
+        // 触发词汇变更事件，通知生词本刷新
+        eventBus.emit('lang-learner:word-changed');
+      }
 
       // 刷新搜索结果状态
       searchResultsList.value = searchResultsList.value.map(c => ({
         ...c,
         status: vocabManager.get(c.lemma)
       }));
+
+      // 清空选中状态
+      selectedCandidates.value.clear();
     }
 
     // ========== 生命周期 ==========
@@ -481,6 +536,7 @@ export default defineComponent({
       searchQuery,
       selectedWord,
       searchResultsList,
+      selectedCandidates,
       availableVoices,
       voiceSettings,
       aiSettings,
@@ -493,6 +549,8 @@ export default defineComponent({
       backToSearchResults,
       setTab,
       clearSearchResults,
+      toggleCandidate,
+      toggleSelectAll,
       lookupInSystemDict,
       getWordTranslation,
       performSearch,
@@ -506,8 +564,12 @@ export default defineComponent({
 <style scoped>
 .lang-learner-results-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+}
+.lang-learner-btn-sm {
+  font-size: 0.85em;
+  padding: 4px 8px;
 }
 .lang-learner-btn-close-results {
   background: transparent;
@@ -515,6 +577,7 @@ export default defineComponent({
   cursor: pointer;
   font-size: 1.1em;
   color: var(--text-muted);
+  padding: 2px 6px;
 }
 .lang-learner-search-results-list {
   max-height: 250px;
@@ -526,12 +589,11 @@ export default defineComponent({
 }
 .lang-learner-search-result-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   padding: 8px 12px;
   border-radius: 6px;
   background-color: var(--background-secondary);
-  cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
 }
@@ -539,12 +601,44 @@ export default defineComponent({
   background-color: var(--background-modifier-hover);
   border-color: var(--text-accent);
 }
+
+/* Checkbox 样式 */
+.lang-learner-candidate-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* 候选词内容区（可点击查看详情） */
+.lang-learner-result-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  min-width: 0;
+}
+
 .lang-learner-result-word-span {
   font-weight: 600;
   color: var(--text-accent);
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+}
+
+.lang-learner-result-trans-span {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: 12px;
+  flex: 1;
+  text-align: right;
 }
 .lang-learner-status-badge {
   font-size: 0.7em;
