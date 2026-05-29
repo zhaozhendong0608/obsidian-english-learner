@@ -261,3 +261,135 @@ ${errorPhonemesDesc || '无明显错误音素'}
         throw new Error(`发音诊断请求失败: ${err.message || String(err)}`);
     }
 }
+
+/**
+ * 流式请求 DeepSeek 发音肌肉纠偏诊断
+ * 优先使用标准 fetch 实现 SSE，失败后自动退避至 requestUrl
+ */
+export async function requestPronunciationDiagnosisStream(
+    request: PronunciationDiagnosisRequest,
+    settings: AISettings,
+    onChunk: (chunk: string) => void
+): Promise<string> {
+    if (!settings.apiKey) {
+        throw new Error('未配置 API Key。请在侧边栏顶部展开 AI 教师配置。');
+    }
+
+    const apiUrl = `${settings.baseUrl.replace(/\/$/, '')}/chat/completions`;
+
+    // 构建错误音素描述
+    const errorPhonemesDesc = request.errorPhonemes
+        .map(p => `- **${p.phoneme}** (置信度: ${(p.confidence * 100).toFixed(1)}%)`)
+        .join('\n');
+
+    // 根据发音标准构建 System Prompt
+    const accentDesc = request.accent === 'US'
+        ? '美式发音 (General American)'
+        : '英式发音 (Received Pronunciation)';
+
+    const systemPrompt = `你是一位专业的英语发音教练，精通语音学、音素学和中式英语发音纠正。
+你的任务是基于用户的发音评测结果，提供个性化的肌肉纠偏诊断和改进建议。
+
+【分析要求】
+1. **错误音素分析**: 针对每个错误音素，解释其正确的发音方式（舌位、唇形、气流）
+2. **中式发音习惯**: 分析中国学习者在这些音素上的常见错误原因（母语干扰、肌肉记忆）
+3. **肌肉纠偏练习**: 提供具体的舌位调整、口腔肌肉训练方法（如含水练习、镜子对照）
+4. **循序渐进方案**: 给出从慢速到正常语速的练习步骤
+
+【发音标准】
+本次诊断基于 **${accentDesc}** 标准。
+
+【输出格式】
+请使用 Markdown 格式输出，包含以下章节：
+- ## 🎯 发音诊断报告
+- ### 总体评分
+- ### 错误音素分析
+- ### 💡 改进建议
+  - #### 舌位调整
+  - #### 练习方法
+- ### 📚 推荐资源`;
+
+    const userPrompt = `请为我诊断以下发音问题：
+
+**目标文本**: ${request.targetText}
+**总体评分**: ${request.overallScore}/100
+**错误音素**:
+${errorPhonemesDesc || '无明显错误音素'}
+
+请提供详细的肌肉纠偏诊断和改进建议。`;
+
+    console.log('[aiService] 尝试启动 SSE 流式诊断请求...');
+
+    try {
+        // 首选：使用标准 fetch 实现 SSE
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+            },
+            body: JSON.stringify({
+                model: settings.model || 'deepseek-chat',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.7,
+                stream: true
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`SSE 状态错误: ${response.status} ${response.statusText}`);
+        }
+
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder('utf-8');
+        if (!reader) {
+            throw new Error('无法创建流式读取器');
+        }
+
+        let fullContent = '';
+        let partialLine = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = (partialLine + chunk).split('\n');
+            partialLine = lines.pop() || '';
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                if (trimmed === 'data: [DONE]') continue;
+
+                if (trimmed.startsWith('data: ')) {
+                    try {
+                        const jsonStr = trimmed.slice(6);
+                        const parsed = JSON.parse(jsonStr);
+                        const content = parsed.choices?.[0]?.delta?.content || '';
+                        if (content) {
+                            fullContent += content;
+                            onChunk(content);
+                        }
+                    } catch (e) {
+                        // 忽略半包或解析错误行
+                    }
+                }
+            }
+        }
+        
+        console.log('[aiService] SSE 流式请求已顺利完成');
+        return fullContent;
+
+    } catch (sseError) {
+        console.warn('[aiService] SSE 流式下载失败，退避为 requestUrl 兜底:', sseError);
+        
+        // 兜底：使用 requestUrl 全量拉取
+        const fullContent = await requestPronunciationDiagnosis(request, settings);
+        onChunk(fullContent);
+        return fullContent;
+    }
+}

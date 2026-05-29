@@ -21,6 +21,10 @@ export interface WhisperWorkerRequest {
   audioData?: Float32Array; // 16kHz 单声道音频数据
   targetText?: string;      // 目标文本（用于强制对齐）
   modelPath?: string;       // WASM 模型路径（仅 init 时需要）
+  wasmPaths?: string | Record<string, string>;
+  encoderBuffer?: ArrayBuffer;
+  decoderBuffer?: ArrayBuffer;
+  wasmBinary?: ArrayBuffer; // WASM 二进制（用于避开移动端跨域限制）
 }
 
 /**

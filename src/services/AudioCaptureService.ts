@@ -43,11 +43,25 @@ export class AudioCaptureService {
 
             this.mediaRecorder.start();
             console.log('[AudioCaptureService] 录音已启动');
-        } catch (error) {
+        } catch (error: any) {
             console.error('[AudioCaptureService] 启动录音失败:', error);
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`麦克风权限被拒绝或浏览器不支持: ${errorMessage}`);
+            let userFriendlyMsg = '无法启动录音。';
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                userFriendlyMsg = '麦克风权限被拒绝。请在系统设置和 Obsidian 中开启麦克风使用权限，然后重试。';
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                userFriendlyMsg = '未检测到麦克风设备，请检查是否正确插入麦克风。';
+            } else {
+                userFriendlyMsg = `麦克风获取失败 (${error.name || '未知类型'}): ${error.message || String(error)}`;
+            }
+            throw new Error(userFriendlyMsg);
         }
+    }
+
+    /**
+     * 获取当前录制媒体流
+     */
+    getStream(): MediaStream | null {
+        return this.mediaStream;
     }
 
     /**
