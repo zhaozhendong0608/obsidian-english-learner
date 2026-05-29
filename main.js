@@ -17495,6 +17495,50 @@ var ReverseIndexService = class {
       return [];
     }
     const lemmaSet = /* @__PURE__ */ new Set();
+    const derivedTranslations = /* @__PURE__ */ new Map();
+    const derivedStatus = /* @__PURE__ */ new Map();
+    const userEntries = this.vocabularyManager.getAllEntries();
+    userEntries.forEach((info, word) => {
+      if (info.trans) {
+        for (const chineseWord of chineseWords) {
+          if (info.trans.includes(chineseWord)) {
+            if (!/[一-龥]/.test(word)) {
+              lemmaSet.add(word);
+            }
+            break;
+          }
+        }
+      }
+      if (/[一-龥]/.test(word)) {
+        for (const chineseWord of chineseWords) {
+          if (word.includes(chineseWord)) {
+            const bestTrans = word;
+            if (info.trans) {
+              const englishMatches = info.trans.match(/[a-zA-Z]+(-[a-zA-Z]+)*(\s+[a-zA-Z]+)*/g) || [];
+              englishMatches.forEach((eng) => {
+                const cleanEng = eng.trim().toLowerCase();
+                if (cleanEng && cleanEng.length >= 2) {
+                  lemmaSet.add(cleanEng);
+                  derivedTranslations.set(cleanEng, bestTrans);
+                  derivedStatus.set(cleanEng, info.status);
+                }
+              });
+            }
+            if (info.phrases) {
+              info.phrases.forEach((phrase) => {
+                const cleanPhrase = phrase.trim().toLowerCase();
+                if (cleanPhrase && cleanPhrase.length >= 2) {
+                  lemmaSet.add(cleanPhrase);
+                  derivedTranslations.set(cleanPhrase, bestTrans);
+                  derivedStatus.set(cleanPhrase, info.status);
+                }
+              });
+            }
+            break;
+          }
+        }
+      }
+    });
     for (const chineseWord of chineseWords) {
       const lemmas = REVERSE_INDEX[chineseWord];
       if (lemmas) {
@@ -17503,14 +17547,27 @@ var ReverseIndexService = class {
     }
     const candidates = [];
     for (const lemma of lemmaSet) {
-      const dictEntry = OFFLINE_DICT[lemma];
-      if (!dictEntry)
+      const vocabInfo = this.vocabularyManager.getInfo(lemma);
+      const status = vocabInfo ? vocabInfo.status : derivedStatus.get(lemma) || "UNKNOWN";
+      let translation = vocabInfo?.trans || "";
+      let phonetic = vocabInfo?.phonetic || "";
+      if (!translation) {
+        const dictEntry = OFFLINE_DICT[lemma];
+        if (dictEntry) {
+          translation = dictEntry.trans;
+          phonetic = dictEntry.phonetic || "";
+        }
+      }
+      if (!translation) {
+        translation = derivedTranslations.get(lemma) || "";
+      }
+      if (!translation) {
         continue;
-      const status = this.vocabularyManager.get(lemma);
+      }
       candidates.push({
         lemma,
-        translation: dictEntry.trans,
-        phonetic: dictEntry.phonetic,
+        translation,
+        phonetic,
         status,
         isHighFrequency: this.highFreqSet.has(lemma)
       });
@@ -17965,7 +18022,7 @@ function render(_ctx, _cache) {
 // src/ui/components/SettingsHeader.vue
 SettingsHeader_default.render = render;
 SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
-SettingsHeader_default.__scopeId = "data-v-6fe5f127";
+SettingsHeader_default.__scopeId = "data-v-a0645cae";
 var SettingsHeader_default2 = SettingsHeader_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
@@ -17975,7 +18032,7 @@ var import_en_us = __toESM(require_en_us());
 
 // src/services/aiService.ts
 var import_obsidian3 = require("obsidian");
-async function fetchAITeacher(word, contextSentence, settings) {
+async function fetchAITeacher(word, contextSentence, settings, isChinese = false) {
   if (!settings.apiKey) {
     throw new Error("\u672A\u914D\u7F6E API Key\u3002\u8BF7\u5728\u4FA7\u8FB9\u680F\u9876\u90E8\u5C55\u5F00 AI \u6559\u5E08\u914D\u7F6E\u3002");
   }
@@ -17984,7 +18041,38 @@ async function fetchAITeacher(word, contextSentence, settings) {
   if (contextSentence && contextSentence.trim()) {
     contextStr = `\\n\u6B64\u5355\u8BCD\u51FA\u73B0\u7684\u4E0A\u4E0B\u6587\u8BED\u5883\u662F\uFF1A"${contextSentence}"\\n\u8BF7\u7ED3\u5408\u6B64\u8BED\u5883\u8FDB\u884C\u89E3\u91CA\u548C\u4E3E\u4E00\u53CD\u4E09\u3002`;
   }
-  const systemPrompt = `\u4F60\u662F\u4E00\u4F4D\u7CBE\u901A\u82F1\u8BED\u8BCD\u6E90\u5B66\u3001\u8BED\u8A00\u5B66\u4E14\u6781\u5177\u542F\u53D1\u6027\u7684\u82F1\u8BED\u5BFC\u5E08\u3002
+  let systemPrompt;
+  let userPrompt;
+  if (isChinese) {
+    systemPrompt = `\u4F60\u662F\u4E00\u4F4D\u7CBE\u901A\u4E2D\u82F1\u7FFB\u8BD1\u3001\u8BED\u5883\u8FA8\u6790\u4E14\u6781\u5177\u542F\u53D1\u6027\u7684\u82F1\u8BED\u5199\u4F5C\u5BFC\u5E08\u3002
+\u4F60\u7684\u4EFB\u52A1\u662F\u4E3A\u7528\u6237\u63D0\u4F9B\u4E2D\u6587\u8BCD\u6C47\u5BF9\u5E94\u7684\u82F1\u6587\u8868\u8FBE\u7684\u7CBE\u7EC6\u8FA8\u6790\u548C\u573A\u666F\u9020\u53E5\u3002
+
+\u5206\u6790\u8981\u6C42\uFF1A
+1. \u5217\u51FA\u8BE5\u4E2D\u6587\u8BCD\u6C47\u5BF9\u5E94\u7684 3-5 \u4E2A\u5E38\u7528\u82F1\u6587\u8868\u8FBE\uFF08\u6309\u4F7F\u7528\u9891\u7387\u6392\u5E8F\uFF09
+2. \u5BF9\u6BCF\u4E2A\u82F1\u6587\u8868\u8FBE\u8FDB\u884C\u7CBE\u7EC6\u7684\u8BED\u5883\u8FA8\u6790\uFF1A
+   - \u9002\u7528\u573A\u666F\uFF08\u6B63\u5F0F/\u975E\u6B63\u5F0F\u3001\u53E3\u8BED/\u4E66\u9762\u3001\u5B66\u672F/\u65E5\u5E38\uFF09
+   - \u8BED\u4E49\u4FA7\u91CD\u70B9\uFF08\u5F3A\u8C03\u4EC0\u4E48\u65B9\u9762\uFF09
+   - \u642D\u914D\u4E60\u60EF\uFF08\u5E38\u89C1\u7684\u524D\u540E\u642D\u914D\u8BCD\uFF09
+3. \u4E3A\u6BCF\u4E2A\u82F1\u6587\u8868\u8FBE\u63D0\u4F9B 1-2 \u4E2A\u771F\u5B9E\u573A\u666F\u4E0B\u7684\u5730\u9053\u9020\u53E5
+4. \u7ED9\u51FA\u9009\u8BCD\u5EFA\u8BAE\uFF1A\u5728\u4EC0\u4E48\u60C5\u51B5\u4E0B\u4F18\u5148\u4F7F\u7528\u54EA\u4E2A\u8868\u8FBE
+
+\u3010\u5F3A\u5236\u683C\u5F0F\u8981\u6C42\u3011
+\u4F60\u7684\u56DE\u7B54\u5FC5\u987B\u5206\u4E3A\u4E24\u90E8\u5206\uFF1A
+\u7B2C\u4E00\u90E8\u5206\uFF1A\u4E00\u4E2A\u7EAF JSON \u5757\uFF0C\u7528\u4E8E\u7A0B\u5E8F\u63D0\u53D6\u6570\u636E\u3002
+\u7B2C\u4E8C\u90E8\u5206\uFF1A\u4E00\u6BB5\u8BE6\u7EC6\u7684 Markdown \u8BB2\u89E3\u3002
+
+\u683C\u5F0F\u5982\u4E0B\uFF1A
+\`\`\`json
+{
+  "root": "",
+  "rootMeaning": "",
+  "phrases": ["\u82F1\u6587\u8868\u8FBE1", "\u82F1\u6587\u8868\u8FBE2", "\u82F1\u6587\u8868\u8FBE3"]
+}
+\`\`\`
+\u63A5\u4E0B\u6765\u662F\u4F60\u4EFB\u610F\u53D1\u6325\u7684\u8BE6\u7EC6 Markdown \u8BB2\u89E3\uFF08\u5305\u542B\u8BED\u5883\u8FA8\u6790\u3001\u9020\u53E5\u793A\u4F8B\u3001\u9009\u8BCD\u5EFA\u8BAE\u7B49\uFF09\u3002`;
+    userPrompt = `\u8BF7\u4E3A\u6211\u8BE6\u7EC6\u8FA8\u6790\u4E2D\u6587\u8BCD\u6C47"${word}"\u5BF9\u5E94\u7684\u82F1\u6587\u8868\u8FBE\uFF0C\u5E76\u63D0\u4F9B\u573A\u666F\u9020\u53E5\u548C\u9009\u8BCD\u5EFA\u8BAE\u3002${contextStr}`;
+  } else {
+    systemPrompt = `\u4F60\u662F\u4E00\u4F4D\u7CBE\u901A\u82F1\u8BED\u8BCD\u6E90\u5B66\u3001\u8BED\u8A00\u5B66\u4E14\u6781\u5177\u542F\u53D1\u6027\u7684\u82F1\u8BED\u5BFC\u5E08\u3002
 \u4F60\u7684\u4EFB\u52A1\u662F\u4E3A\u7528\u6237\u63D0\u4F9B\u6781\u5EA6\u6DF1\u5EA6\u7684\u5355\u8BCD\u89E3\u6790\u3002
 \u5206\u6790\u8981\u6C42\uFF1A
 1. \u8BF7\u7ED9\u51FA\u8BE5\u8BCD\u7684\u6838\u5FC3\u8BCD\u6839\uFF08Root\uFF09\u548C\u8BCD\u7F00\u62C6\u89E3\uFF0C\u5E76\u6307\u51FA\u8BCD\u6839\u7684\u57FA\u672C\u542B\u4E49\u3002
@@ -18006,7 +18094,8 @@ async function fetchAITeacher(word, contextSentence, settings) {
 }
 \`\`\`
 \u63A5\u4E0B\u6765\u662F\u4F60\u4EFB\u610F\u53D1\u6325\u7684\u8BE6\u7EC6 Markdown \u8BB2\u89E3\uFF08\u53EF\u4EE5\u5305\u542B\u7C97\u4F53\u3001\u4EE3\u7801\u5757\u3001\u5F15\u7528\u7B49\u683C\u5F0F\uFF09\u3002`;
-  const userPrompt = `\u8BF7\u4E3A\u6211\u8BE6\u7EC6\u8BB2\u89E3\u5355\u8BCD\uFF1A${word}${contextStr}`;
+    userPrompt = `\u8BF7\u4E3A\u6211\u8BE6\u7EC6\u8BB2\u89E3\u5355\u8BCD\uFF1A${word}${contextStr}`;
+  }
   const payload = {
     model: settings.model || "deepseek-chat",
     messages: [
@@ -18446,11 +18535,12 @@ var WordDetailCard_default = defineComponent({
       const word = localWordInfo.value.word;
       const info = vocabManager.getInfo(word);
       const contextSentence = info?.sentence;
+      const isChinese = /[一-龥]/.test(word);
       isAiLoading.value = true;
       aiResponse.value = null;
       try {
         const settings = getAiSettings();
-        const result = await fetchAITeacher(word, contextSentence, settings);
+        const result = await fetchAITeacher(word, contextSentence, settings, isChinese);
         aiResponse.value = result;
       } catch (e) {
         new import_obsidian4.Notice(`AI \u6559\u5E08\u8BF7\u6C42\u5931\u8D25: ${e.message}`);
@@ -18726,7 +18816,7 @@ function render2(_ctx, _cache) {
 // src/ui/components/WordDetailCard.vue
 WordDetailCard_default.render = render2;
 WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
-WordDetailCard_default.__scopeId = "data-v-3e7b7991";
+WordDetailCard_default.__scopeId = "data-v-fd18d118";
 var WordDetailCard_default2 = WordDetailCard_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
@@ -19046,7 +19136,7 @@ function render3(_ctx, _cache) {
 // src/ui/components/VocabularyTab.vue
 VocabularyTab_default.render = render3;
 VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
-VocabularyTab_default.__scopeId = "data-v-4436b186";
+VocabularyTab_default.__scopeId = "data-v-3df16c57";
 var VocabularyTab_default2 = VocabularyTab_default;
 
 // src/utils/algorithms.ts
@@ -19265,7 +19355,7 @@ function render4(_ctx, _cache) {
 // src/ui/components/EstimateTab.vue
 EstimateTab_default.render = render4;
 EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
-EstimateTab_default.__scopeId = "data-v-93376e75";
+EstimateTab_default.__scopeId = "data-v-0072fbe0";
 var EstimateTab_default2 = EstimateTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
@@ -19785,7 +19875,7 @@ function render5(_ctx, _cache) {
 // src/ui/components/SentenceTab.vue
 SentenceTab_default.render = render5;
 SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
-SentenceTab_default.__scopeId = "data-v-dd8351ea";
+SentenceTab_default.__scopeId = "data-v-41d53b18";
 var SentenceTab_default2 = SentenceTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
@@ -20199,7 +20289,7 @@ function render6(_ctx, _cache) {
 // src/ui/components/ReviewTab.vue
 ReviewTab_default.render = render6;
 ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
-ReviewTab_default.__scopeId = "data-v-e9c1294f";
+ReviewTab_default.__scopeId = "data-v-cd6f40fc";
 var ReviewTab_default2 = ReviewTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
@@ -21482,7 +21572,7 @@ function render7(_ctx, _cache) {
 // src/ui/components/MediaTab.vue
 MediaTab_default.render = render7;
 MediaTab_default.__file = "src/ui/components/MediaTab.vue";
-MediaTab_default.__scopeId = "data-v-12e06bf2";
+MediaTab_default.__scopeId = "data-v-2dc73d3b";
 var MediaTab_default2 = MediaTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
@@ -22146,7 +22236,7 @@ function render8(_ctx, _cache) {
 // src/ui/components/ReaderTab.vue
 ReaderTab_default.render = render8;
 ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
-ReaderTab_default.__scopeId = "data-v-cdcdb5bd";
+ReaderTab_default.__scopeId = "data-v-665719b6";
 var ReaderTab_default2 = ReaderTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WebImportTab.vue?type=script
@@ -22511,7 +22601,7 @@ function render9(_ctx, _cache) {
 // src/ui/components/WebImportTab.vue
 WebImportTab_default.render = render9;
 WebImportTab_default.__file = "src/ui/components/WebImportTab.vue";
-WebImportTab_default.__scopeId = "data-v-d3af11d8";
+WebImportTab_default.__scopeId = "data-v-2bb91554";
 var WebImportTab_default2 = WebImportTab_default;
 
 // src/services/AudioCaptureService.ts
@@ -23146,7 +23236,7 @@ function render10(_ctx, _cache) {
 // src/ui/components/PronunciationTab.vue
 PronunciationTab_default.render = render10;
 PronunciationTab_default.__file = "src/ui/components/PronunciationTab.vue";
-PronunciationTab_default.__scopeId = "data-v-8813dc8e";
+PronunciationTab_default.__scopeId = "data-v-a375346d";
 var PronunciationTab_default2 = PronunciationTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
@@ -23722,7 +23812,7 @@ function render11(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render11;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-965d30b3";
+Panel_default.__scopeId = "data-v-433561da";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
@@ -23845,15 +23935,17 @@ function querySuggestionMapping(mappingTable, commonWord) {
 
 // src/ui/WordSuggest.ts
 var WordSuggest = class extends import_obsidian16.EditorSuggest {
-  // 5 分钟更新一次映射表
   constructor(app, plugin) {
     super(app);
     this.suggestionMappingTable = /* @__PURE__ */ new Map();
     this.lastMappingUpdateTime = 0;
     this.MAPPING_UPDATE_INTERVAL = 5 * 60 * 1e3;
+    // 5 分钟更新一次映射表
+    this.CHINESE_PREFIX = "::";
     this.plugin = plugin;
     this.limit = 8;
     this.updateSuggestionMapping();
+    this.reverseIndexService = new ReverseIndexService(this.plugin.vocabManager);
   }
   /**
    * 更新临界复习生词倒排映射表
@@ -23877,18 +23969,47 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
   onTrigger(cursor, editor, file) {
     const line = editor.getLine(cursor.line);
     const textBefore = line.substring(0, cursor.ch);
-    const match = textBefore.match(/[a-zA-Z]{2,}$/);
-    if (!match) {
+    console.log("[WordSuggest] onTrigger called - textBefore:", JSON.stringify(textBefore), "length:", textBefore.length);
+    if (textBefore.length <= 10) {
+      for (let i = 0; i < textBefore.length; i++) {
+        console.log(`  Char ${i}: "${textBefore[i]}" Code: 0x${textBefore.charCodeAt(i).toString(16)}`);
+      }
+    }
+    const chineseMatch = textBefore.match(/(::|:n|~n)([\p{Unified_Ideograph}]*)$/u);
+    console.log("[WordSuggest] chineseMatch:", chineseMatch);
+    if (chineseMatch) {
+      const chineseQuery = chineseMatch[2];
+      const prefixStartCh = cursor.ch - chineseMatch[0].length;
+      console.log("[WordSuggest] \u2705 \u4E2D\u8BD1\u82F1\u6A21\u5F0F\u89E6\u53D1 - chineseQuery:", chineseQuery);
+      return {
+        start: { line: cursor.line, ch: prefixStartCh },
+        end: cursor,
+        query: `${this.CHINESE_PREFIX}${chineseQuery}`
+        // 保留前缀标记
+      };
+    }
+    const englishMatch = textBefore.match(/[a-zA-Z]{2,}$/);
+    if (!englishMatch) {
+      console.log("[WordSuggest] \u274C \u672A\u5339\u914D\u4EFB\u4F55\u6A21\u5F0F");
       return null;
     }
-    const query = match[0];
+    const query = englishMatch[0];
     const wordStartCh = cursor.ch - query.length;
-    if (wordStartCh > 0) {
-      const charBefore = textBefore.charAt(wordStartCh - 1);
-      if (charBefore === "#" || charBefore === "[" || charBefore === "@" || charBefore === "^" || charBefore === "/") {
+    if (wordStartCh >= 2) {
+      const preStr = textBefore.substring(0, wordStartCh);
+      if (preStr.endsWith("::") || preStr.endsWith(":n") || preStr.endsWith("~n")) {
+        console.log("[WordSuggest] \u274C \u68C0\u6D4B\u5230\u4E2D\u8BD1\u82F1\u524D\u7F00\uFF0C\u5FFD\u7565\u62FC\u97F3\u8FC7\u7A0B\u7684\u82F1\u6587\u8054\u60F3");
         return null;
       }
     }
+    if (wordStartCh > 0) {
+      const charBefore = textBefore.charAt(wordStartCh - 1);
+      if (charBefore === "#" || charBefore === "[" || charBefore === "@" || charBefore === "^" || charBefore === "/") {
+        console.log("[WordSuggest] \u274C \u88AB Markdown \u8BED\u6CD5\u62E6\u622A");
+        return null;
+      }
+    }
+    console.log("[WordSuggest] \u2705 \u82F1\u6587\u6A21\u5F0F\u89E6\u53D1 - query:", query);
     return {
       start: { line: cursor.line, ch: wordStartCh },
       end: cursor,
@@ -23896,13 +24017,64 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
     };
   }
   /**
-   * 检索匹配的单词建议（支持主动催化伴写）
+   * 检索匹配的单词建议（支持主动催化伴写 + 中译英写作联想）
    */
   getSuggestions(context) {
-    const query = context.query.toLowerCase().trim();
+    const query = context.query.trim();
     if (!query) {
       return [];
     }
+    if (query.startsWith(this.CHINESE_PREFIX)) {
+      const chineseQuery = query.substring(this.CHINESE_PREFIX.length);
+      return this.getChineseToEnglishSuggestions(chineseQuery);
+    }
+    return this.getEnglishWordSuggestions(query.toLowerCase());
+  }
+  /**
+   * 当中译英前缀输入为空时，智能推荐当前亟需复习的生词
+   */
+  getEmptyQuerySuggestions() {
+    const vocabManager = this.plugin.vocabManager;
+    const entries = vocabManager.getAllEntries();
+    const learningWords = [];
+    const now = Date.now();
+    entries.forEach((info, word) => {
+      if (info.status === "LEARNING") {
+        let score = 0;
+        if (info.nextReview) {
+          if (info.nextReview <= now) {
+            score = 1e3 + (now - info.nextReview) / (1e3 * 60);
+          } else {
+            score = 500 - (info.nextReview - now) / (1e3 * 60);
+          }
+        } else {
+          score = 100;
+        }
+        learningWords.push({ word, priority: score });
+      }
+    });
+    learningWords.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority;
+      }
+      return a.word.localeCompare(b.word);
+    });
+    return learningWords.slice(0, this.limit).map((item) => item.word);
+  }
+  /**
+   * 中译英写作联想：复用 ReverseIndexService 进行高效排序过滤
+   */
+  getChineseToEnglishSuggestions(chineseQuery) {
+    if (!chineseQuery) {
+      return this.getEmptyQuerySuggestions();
+    }
+    const candidates = this.reverseIndexService.search(chineseQuery);
+    return candidates.slice(0, this.limit).map((c) => c.lemma);
+  }
+  /**
+   * 英文单词联想：原有逻辑
+   */
+  getEnglishWordSuggestions(query) {
     this.updateSuggestionMapping();
     const vocabManager = this.plugin.vocabManager;
     const entries = vocabManager.getAllEntries();
@@ -23958,7 +24130,7 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
     return allSuggestions.slice(0, this.limit);
   }
   /**
-   * 渲染建议选项的 HTML（支持临界生词高亮）
+   * 渲染建议选项的 HTML（支持临界生词高亮 + 中译英标记）
    */
   renderSuggestion(word, el) {
     el.addClass("lang-learner-suggest-item");
@@ -23978,6 +24150,7 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
         phonetic = dictEntry.phonetic || "";
       }
     }
+    const isChineseMode = this.context?.query?.startsWith(this.CHINESE_PREFIX) || false;
     const isCriticalWord = this.isCriticalReviewWord(word);
     if (trans && trans.length > 50) {
       trans = trans.substring(0, 48) + "...";
@@ -23998,7 +24171,25 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
       phoneticSpan.style.fontSize = "0.85em";
       phoneticSpan.style.color = "var(--text-muted)";
     }
-    if (isCriticalWord) {
+    if (isChineseMode) {
+      if (isCriticalWord) {
+        const tag = topRow.createSpan({ cls: "lang-learner-suggest-tag suggest-tag-critical", text: "\u{1F525} \u4E34\u754C\u590D\u4E60" });
+        tag.style.fontSize = "0.75em";
+        tag.style.padding = "2px 4px";
+        tag.style.borderRadius = "3px";
+        tag.style.backgroundColor = "rgba(255, 87, 34, 0.15)";
+        tag.style.color = "var(--text-accent, #ff5722)";
+        tag.style.fontWeight = "600";
+      } else {
+        const tag = topRow.createSpan({ cls: "lang-learner-suggest-tag suggest-tag-chinese", text: "\u{1F310} \u4E2D\u8BD1\u82F1" });
+        tag.style.fontSize = "0.75em";
+        tag.style.padding = "2px 4px";
+        tag.style.borderRadius = "3px";
+        tag.style.backgroundColor = "rgba(52, 152, 219, 0.15)";
+        tag.style.color = "var(--text-accent, #3498db)";
+        tag.style.fontWeight = "600";
+      }
+    } else if (isCriticalWord) {
       const tag = topRow.createSpan({ cls: "lang-learner-suggest-tag suggest-tag-critical", text: "\u{1F525} \u4E34\u754C\u590D\u4E60" });
       tag.style.fontSize = "0.75em";
       tag.style.padding = "2px 4px";

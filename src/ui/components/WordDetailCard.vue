@@ -450,12 +450,15 @@ export default defineComponent({
       const word = localWordInfo.value.word;
       const info = vocabManager.getInfo(word);
       const contextSentence = info?.sentence;
-      
+
+      // 检测是否为中文查询（触发同义词辨析模式）
+      const isChinese = /[一-龥]/.test(word);
+
       isAiLoading.value = true;
       aiResponse.value = null;
       try {
         const settings = getAiSettings();
-        const result = await fetchAITeacher(word, contextSentence, settings);
+        const result = await fetchAITeacher(word, contextSentence, settings, isChinese);
         aiResponse.value = result;
       } catch (e: any) {
         new Notice(`AI 教师请求失败: ${e.message}`);
