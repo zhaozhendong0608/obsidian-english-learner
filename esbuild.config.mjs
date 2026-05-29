@@ -38,16 +38,28 @@ const wasmCopyPlugin = {
                     fs.mkdirSync(distDir, { recursive: true });
                 }
 
-                // 拷贝 onnxruntime-web WASM 文件
+                // 拷贝 onnxruntime-web WASM/MJS/JS 文件
                 const onnxSrcDir = path.join(process.cwd(), "node_modules", "onnxruntime-web", "dist");
                 if (fs.existsSync(onnxSrcDir)) {
-                    const wasmFiles = fs.readdirSync(onnxSrcDir).filter(f => f.endsWith(".wasm") || f.endsWith(".jsep.js"));
-                    wasmFiles.forEach(file => {
+                    const files = fs.readdirSync(onnxSrcDir).filter(f => f.endsWith(".wasm") || f.endsWith(".mjs") || f.endsWith(".js"));
+                    files.forEach(file => {
                         const src = path.join(onnxSrcDir, file);
                         const dest = path.join(distDir, file);
-                        fs.copyFileSync(src, dest);
+                        
+                        if (file.endsWith(".mjs") || file.endsWith(".js")) {
+                            // 读取内容并替换以解决浏览器/Obsidian沙盒不支持 Node.js 模块的问题，并强制运行在纯浏览器模式下
+                            let content = fs.readFileSync(src, "utf8");
+                            content = content.replace(/globalThis\.process\?\.versions\?\.node/g, "false");
+                            content = content.replace(/require\(['"]worker_threads['"]\)/g, "({ Worker: typeof Worker !== 'undefined' ? Worker : null, workerData: null })");
+                            content = content.replace(/import\(['"]worker_threads['"]\)/g, "Promise.resolve({ Worker: typeof Worker !== 'undefined' ? Worker : null, workerData: null })");
+                            content = content.replace(/import\(['"]module['"]\)/g, "Promise.resolve({ createRequire: () => () => ({}) })");
+                            content = content.replace(/import\s*\{\s*createRequire\s*\}\s*from\s*['"]module['"]/g, "const createRequire = () => () => ({});");
+                            fs.writeFileSync(dest, content, "utf8");
+                        } else {
+                            fs.copyFileSync(src, dest);
+                        }
                     });
-                    console.log(`⚡ [esbuild] Copied ${wasmFiles.length} WASM files to dist/`);
+                    console.log(`⚡ [esbuild] Copied and patched ${files.length} ONNX runtime files to dist/`);
                 }
             } catch (err) {
                 console.error("Error copying WASM files:", err);
@@ -89,9 +101,23 @@ const context = await esbuild.context({
     outfile: "main.js",
 });
 
+const workerContext = await esbuild.context({
+    entryPoints: ["src/workers/whisper-worker.ts"],
+    bundle: true,
+    platform: "browser",
+    format: "iife",
+    target: "es2020",
+    logLevel: "info",
+    sourcemap: prod ? false : "inline",
+    treeShaking: true,
+    outfile: "whisper-worker.js",
+});
+
 if (prod) {
     await context.rebuild();
+    await workerContext.rebuild();
     process.exit(0);
 } else {
     await context.watch();
+    await workerContext.watch();
 }

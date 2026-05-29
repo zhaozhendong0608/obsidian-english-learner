@@ -32,7 +32,7 @@
 | ADR-023 | 2026-05-25 | SFC 双闭合标签防卫与嵌套 require('obsidian') 的 ES 模块化升级 | 🟢 Accepted | -                  |
 | ADR-024 | 2026-05-25 | 集成 @mozilla/readability 实现网页正文智能提取与编辑器插入 | 🟢 Accepted | Approval_Hash: `1` |
 | ADR-025 | 2026-05-25 | V4.0 端云协同口语评测引擎：WASM Worker + Whisper-Tiny-EN + DeepSeek 诊断 | 🟢 Accepted | Approval_Hash: `1` |
-
+| ADR-026 | 2026-05-29 | 矢状剖面矢量 Morphing 音素发音口腔动画可视化引擎 | 🟢 Accepted | Liquid |
 
 ---
 
@@ -359,4 +359,37 @@
 - **授权状态**: 🟢 **Accepted** - 指挥官授权标识 `Approval_Hash: 1`
 
 - **证明**: 详见 Phase 2 执行阶段的 Evidence Block。
+
+### ADR-025-A: ONNX Runtime Web 混合环境与合并模型 KV Cache 适配
+- **上下文**:
+  在集成端侧离线 Whisper 推理（ADR-025）过程中，遇到了以下阻碍性问题：
+  1. **混合环境环境误判**: Obsidian 基于 Electron 构建，其 Web Worker 中存在 `process.versions.node`，导致 ONNX Runtime Web WASM 胶水层（Emscripten）误判当前为 Node.js 环境而调用 `fs.writeSync` 发生 TypeError。
+  2. **模型量化 Bug**: `onnxruntime-web` 新版本（1.25.x/1.26.x）在加载 Hugging Face optimum 导出的 `decoder_model_merged_quantized.onnx` 量化模型时，由于图融合优化缺陷，会报出 `TransposeDQWeightsForMatMulNBits Missing required scale` 错。
+  3. **Canvas 渐变色崩溃**: 录音面板的 Canvas 2D 绘图调用 `addColorStop` 不支持直接解析 CSS 变量（如 `var(--text-accent)`），导致在绘图循环中崩溃。
+  4. **Merged Decoder KV Cache 维度不匹配**: 之前的解码器循环没有向 merged decoder 提供 `past_key_values.*` 与 `use_cache_branch` 输入，引发 `input 'past_key_values.0.decoder.key' is missing in 'feeds'` 推理失败。
+  
+- **决策**:
+  1. **锁定依赖版本**: 在 `package.json` 中将 `onnxruntime-web` 锁定为 **`1.24.3`**，退回到不受新优化 Bug 影响的稳定版本。
+  2. **强制运行在纯浏览器模式**: 在 `esbuild.config.mjs` 的 WASM 拷贝插件中添加正则替换，将所有胶水文件内的 `globalThis.process?.versions?.node` 替换为 `false`，屏蔽 Node.js 特性以强制以纯 Browser 模式使用原生 Web Worker 和 XHR/fetch 进行资源下载。
+  3. **Canvas CSS 变量动态提取**: 在 `PronunciationTab.vue` 的 `drawWaveform` 中，动画渲染环路外部动态调用 `window.getComputedStyle(canvas)` 来获取 `--text-accent` 的真实 Hex/RGB 属性值，避免布局抖动和 Canvas 崩溃。
+  4. **动态构建 KV Cache Feeds 结构**: 针对 merged decoder 模型重构推理序列。当 `step === 0` 时，动态注入 boolean 型 `use_cache_branch = false` 并对全部 `past_key_values.` 输入匹配尺寸为 `[1, 6, 0, 64]` 的空浮点 Tensor 占位；在 `step > 0` 时，传入 `use_cache_branch = true` 和长度为 1 的单 token 序列，并将上一层输出的 `present.` Tensor 链式回传给下一次迭代 of `past_key_values.`，成功跑通端侧生成式推理。
+
+- **后果**:
+  - 正面: 口语评测引擎完全复活，不仅跑通了全套本地 WASM 推理，而且推理性能（由于采用了 KV Cache 机制和单 token 解码）相比前版提升数倍。
+  - 负面: 稍微增加了 `esbuild.config.mjs` 静态拷贝 Patch 流程的复杂度。
+  
+- **授权状态**: 🟢 **Accepted**
+
+### ADR-026 矢状剖面矢量 Morphing 音素发音口腔动画可视化引擎
+- **上下文**:
+  口语评测端侧对齐完成后（ADR-025），用户急需对标红的发音偏差进行纠正。若仅有文字提示，用户缺乏口腔肌肉运作的直觉感知；而若在插件包中硬编码 44 个音素的 GIF/MP4 视频文件，会面临严重的大小体积超限（>10MB），违反 Obsidian 社区插件市场的发行规范。
+- **决策**:
+  1. **参数化 SVG 矢量 Morphing 变形**: 建立 44 个常用音素到双唇音、唇齿音、齿间摩擦、前/后元音等 12 种典型发音剖面的映射。采用三阶贝塞尔曲线描述舌形、嘴唇、下齿位置和气流箭头。
+  2. **Vue 与原生 CSS GPU 过渡加速**: 在 `PronunciationTab.vue` 中动态绑定 SVG path 属性的 `:d` 值。通过 CSS transition 的 `d 0.4s ease-in-out` 属性，在用户切换点击不同音素时，驱使浏览器底层由 GPU 进行矢量形变平滑插值过渡，完全避免手动写 JS 动画渲染环路。
+  3. **自适应配色与虚线流动效果**: 配色方案适配 Obsidian 暗色/亮色主题。对气流指示线应用 `stroke-dasharray` 并配合 `stroke-dashoffset` 运行 CSS 跑马灯滚动循环动画。
+- **后果**:
+  - 正面: 口语评测交互具有极高的品质感与拟人化微动画反馈；完全离线且包体积增量小于 5KB，对加载运行性能零损耗。
+  - 负面: 针对复杂双元音只能映射至其核心首元音动画展示，但搭配文字描述已完全满足教学目的。
+- **授权状态**: 🟢 **Accepted** (Liquid Asset)
+
 

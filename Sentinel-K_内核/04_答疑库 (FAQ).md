@@ -149,3 +149,12 @@
   2. **中英字幕正则分离**：在 VTT/SRT 解析中保留原始换行符（不以空格直接连接），并通过正则过滤掉包含中文的行存入 `translation` 字段，英文原文作为 `text` 执行英文分词与 Lemma 词干还原，避免中文干扰分词流程。
   3. **双语模式明文双行呈现**：将 `.lang-learner-sub-line` 样式设为 `flex-direction: column` 以实现分行布局。移除对英文原文的高斯模糊 class 绑定与 CSS 规则。使用 `showTranslation` 状态进行译文的条件渲染：在双语对照模式下，直接以明文分别展示英文原文和中文译文；在隐藏译文（原文模式）时，只隐藏译文部分。
   4. **导出列表包含译文**：更新 `exportSubtitlesToNote()` 逻辑，在导出时间戳列表时，若字幕有译文，自动换行以 `* 译：...` 的格式一并导出，为复习提供完整语境。
+
+## 17. ONNX Runtime Web 端侧 Whisper 推理在 Electron 中的环境冲突与量化 Regression
+- **问题**: 在集成本地端侧 Whisper 语音识别与音素对齐功能时，遇到 WASM 胶水层初始化报错（如 `fs.writeSync is not a function`）、模型加载 Session 创建失败（`Missing required scale`）以及推理 feeds 缺失（`past_key_values.0.decoder.key is missing`）。
+- **对策**:
+  1. **屏蔽 Node.js 环境检测**: Obsidian 在 Electron 下的 Web Worker 中带有 `process.versions.node`，导致 Emscripten 将其当成纯 Node 环境去加载 `fs` 进行日志输出。我们必须在打包拷贝时（`esbuild.config.mjs`），正则将胶水文件中的 `globalThis.process?.versions?.node` 强制替换为 `false`，强行以纯浏览器（Browser）模式运行，切换到标准 Web API（`fetch`、`Worker` 和 `console.log`）。
+  2. **锁定稳定的 ORT 版本**: ONNX Runtime v1.25+ 在处理 optimum 量化模型（MatMulNBits 与 DequantizeLinear 的 Graph pass 优化）时有严重 bug。需锁定 `package.json` 中的 `onnxruntime-web` 为 **`1.24.3`** 稳定版以绕开此融合缺陷。
+  3. **Canvas 不支持 CSS 变量**: 绘制录音实时波形时，Canvas 的 `addColorStop` 无法解析 `'var(--text-accent)'`。需先在渲染循环外使用 `window.getComputedStyle(canvas)` 取出具体主题颜色的 Hex/RGB 码值，然后再喂入 Canvas。
+  4. **Merged Decoder KV Cache 补齐**: 针对合并了 Cache 分支的 ONNX 解码器模型，必须在 step = 0 时传入 `use_cache_branch = false` 和尺寸为 `[1, 6, 0, 64]` 的空 `past_key_values` 占位，并在 step > 0 时传入 `use_cache_branch = true` 和长度为 1 的单 token 序列，将上步的 `present.` outputs 回喂回 `past_key_values.` 缓存输入。
+

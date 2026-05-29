@@ -948,17 +948,639 @@
     gap: 12px;
 }
 
-/* A/B 播放器布局 */
-.lang-learner-ab-player {
-    display: flex;
-    gap: 12px;
-}
-
 /* 口语评测 Tab 容器 */
 .lang-learner-pronunciation-tab {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
+
+/* 活跃/选中的音素高亮状态 */
+.lang-learner-phoneme {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.lang-learner-phoneme:hover {
+    background: var(--interactive-accent-hover, #2563eb);
+    color: var(--text-on-accent, #ffffff);
+    transform: translateY(-1px);
+}
+
+.lang-learner-phoneme-active {
+    background: var(--text-accent, #3b82f6) !important;
+    color: var(--text-on-accent, #ffffff) !important;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    transform: scale(1.08);
+}
+
+/* 动态发音口腔可视化面板 */
+.lang-learner-phoneme-visual-panel {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    padding: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    animation: langLearnerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes langLearnerSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lang-learner-visual-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--background-modifier-border-focus, #e5e7eb);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.lang-learner-visual-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-normal);
+}
+
+.lang-learner-visual-phoneme-text {
+    font-family: monospace;
+    font-size: 15px;
+    color: var(--text-accent);
+    background: var(--background-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: bold;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.lang-learner-visual-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.lang-learner-visual-close-btn:hover {
+    background: var(--background-modifier-border-focus);
+    color: var(--text-normal);
+}
+
+.lang-learner-visual-body {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+@media (max-width: 400px) {
+    .lang-learner-visual-body {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* 矢状剖面 SVG 容器 */
+.lang-learner-sagittal-svg-container {
+    width: 130px;
+    height: 130px;
+    flex-shrink: 0;
+    background: var(--background-primary);
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    padding: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lang-learner-sagittal-svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* SVG 发音器官绘制样式 */
+.lang-learner-svg-static-wall {
+    stroke: var(--text-muted, #777777);
+    stroke-width: 4px; /* 加粗后喉壁与气管线条 */
+    fill: none;
+}
+
+.lang-learner-svg-upper-teeth {
+    fill: #ffffff;
+    stroke: var(--text-normal, #111111); /* 牙齿外框使用高对比度深色 */
+    stroke-width: 2px; /* 加粗牙齿外框 */
+}
+
+.lang-learner-svg-lower-teeth {
+    fill: #ffffff;
+    stroke: var(--text-normal, #111111);
+    stroke-width: 2px;
+}
+
+.lang-learner-svg-jaw-group {
+    transition: transform 0.4s ease-in-out;
+}
+
+.lang-learner-svg-lip-upper {
+    fill: rgba(236, 72, 153, 0.35); /* 半透明玫瑰粉 */
+    stroke: #ec4899;
+    stroke-width: 2px;
+    transition: d 0.4s ease-in-out;
+}
+
+.lang-learner-svg-lip-lower {
+    fill: rgba(236, 72, 153, 0.35);
+    stroke: #ec4899;
+    stroke-width: 2px;
+    transition: d 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+
+.lang-learner-svg-tongue {
+    fill: rgba(244, 63, 94, 0.35); /* 半透明玫瑰红 */
+    stroke: #f43f5e;
+    stroke-width: 2.5px;
+    transition: d 0.4s ease-in-out;
+}
+
+.lang-learner-svg-airflow {
+    stroke: var(--text-accent, #3b82f6);
+    animation: langLearnerAirflowRun 1.2s linear infinite;
+}
+
+@keyframes langLearnerAirflowRun {
+    from {
+        stroke-dashoffset: 24;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* 文字细节说明区 */
+.lang-learner-visual-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lang-learner-visual-subtitle {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-normal);
+}
+
+.lang-learner-visual-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.lang-learner-visual-tips {
+    margin: 6px 0 0 16px !important;
+    padding: 0;
+    font-size: 11.5px;
+    color: var(--text-normal);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.lang-learner-visual-tips li {
+    list-style-type: disc;
+}
+
+/* SVG 发音图示文字标注与指示线 */
+.lang-learner-svg-label {
+    font-size: 10px;
+    fill: var(--text-muted, #888888);
+    font-weight: bold;
+    user-select: none;
+}
+
+.lang-learner-svg-label-line {
+    stroke: var(--text-faint, #bbbbbb);
+    stroke-width: 1.2px;
+    stroke-dasharray: 2,2; /* 虚线指示线 */
+}
+
+.lang-learner-svg-label-dot {
+    fill: var(--text-accent, #3b82f6); /* 蓝色/紫色高亮锚点 */
+    stroke: var(--background-primary, #ffffff);
+    stroke-width: 1px;
+}
+
+/* 口腔发音大图 Modal 弹窗及播放、放大控制按钮的 CSS 样式 */
+
+/* 控制按钮区排版 */
+.lang-learner-visual-graphic-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.lang-learner-visual-action-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    max-width: 130px;
+}
+
+.lang-learner-visual-action-btn {
+    flex: 1;
+    cursor: pointer;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    transition: all 0.15s ease-in-out;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lang-learner-visual-action-btn:hover {
+    background: var(--background-primary-alt);
+    border-color: var(--interactive-accent);
+    color: var(--text-accent);
+    transform: translateY(-1px);
+}
+
+.lang-learner-visual-action-btn:active {
+    transform: translateY(0);
+}
+
+/* 放大遮罩层 */
+.lang-learner-visual-zoom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: langLearnerFadeInOverlay 0.25s ease-out forwards;
+}
+
+@keyframes langLearnerFadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 放大弹窗主体 */
+.lang-learner-visual-zoom-modal {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 540px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: langLearnerZoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes langLearnerZoomIn {
+    from { transform: scale(0.92) translateY(12px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* 弹窗头部 */
+.lang-learner-zoom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+}
+
+.lang-learner-zoom-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+}
+
+.lang-learner-zoom-phoneme-text {
+    font-family: monospace;
+    font-size: 15px;
+    color: var(--text-accent);
+    background: var(--background-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: bold;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.lang-learner-zoom-close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.lang-learner-zoom-close-btn:hover {
+    background: var(--background-modifier-border-focus);
+    color: var(--text-normal);
+}
+
+/* 弹窗主体内容区 */
+.lang-learner-zoom-body {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+@media (max-width: 500px) {
+    .lang-learner-zoom-body {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* 放大版 SVG 容器 */
+.lang-learner-sagittal-svg-container-zoomed {
+    width: 180px;
+    height: 180px;
+    flex-shrink: 0;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lang-learner-sagittal-svg-zoomed {
+    width: 100%;
+    height: 100%;
+}
+
+/* 确保放大版 SVG 发音器官样式及动画继承普通 SVG 的样式 */
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-static-wall {
+    stroke: var(--text-muted, #777777);
+    stroke-width: 4px;
+    fill: none;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-upper-teeth {
+    fill: #ffffff;
+    stroke: var(--text-normal, #111111);
+    stroke-width: 2px;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-lower-teeth {
+    fill: #ffffff;
+    stroke: var(--text-normal, #111111);
+    stroke-width: 2px;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-jaw-group {
+    transition: transform 0.4s ease-in-out;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-lip-upper {
+    fill: rgba(236, 72, 153, 0.35);
+    stroke: #ec4899;
+    stroke-width: 2px;
+    transition: d 0.4s ease-in-out;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-lip-lower {
+    fill: rgba(236, 72, 153, 0.35);
+    stroke: #ec4899;
+    stroke-width: 2px;
+    transition: d 0.4s ease-in-out, transform 0.4s ease-in-out;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-tongue {
+    fill: rgba(244, 63, 94, 0.35);
+    stroke: #f43f5e;
+    stroke-width: 2.5px;
+    transition: d 0.4s ease-in-out;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-airflow {
+    stroke: var(--text-accent, #3b82f6);
+    animation: langLearnerAirflowRun 1.2s linear infinite;
+}
+
+/* 标注指示线 */
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-label {
+    font-size: 10px;
+    fill: var(--text-muted, #888888);
+    font-weight: bold;
+    user-select: none;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-label-line {
+    stroke: var(--text-faint, #bbbbbb);
+    stroke-width: 1.2px;
+    stroke-dasharray: 2,2;
+}
+
+.lang-learner-sagittal-svg-zoomed .lang-learner-svg-label-dot {
+    fill: var(--text-accent, #3b82f6);
+    stroke: var(--background-primary, #ffffff);
+    stroke-width: 1px;
+}
+
+/* 弹窗侧边说明区 */
+.lang-learner-zoom-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.lang-learner-zoom-play-btn {
+    width: 100%;
+    margin-bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.lang-learner-zoom-subtitle {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--text-normal);
+}
+
+.lang-learner-zoom-desc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.lang-learner-zoom-tips {
+    margin: 4px 0 0 16px !important;
+    padding: 0;
+    font-size: 11.5px;
+    color: var(--text-normal);
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lang-learner-zoom-tips li {
+    list-style-type: disc;
+}
+
+/* 音节拼读连读助手样式 */
+.lang-learner-syllable-section {
+    margin: 12px 0;
+    padding: 10px 12px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    animation: langLearnerFadeIn 0.25s ease-out;
+}
+
+.lang-learner-syllable-section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lang-learner-syllable-help {
+    font-size: 10.5px;
+    cursor: help;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    color: var(--text-accent);
+}
+
+.lang-learner-syllable-words-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 4px;
+    line-height: 2.2;
+}
+
+.lang-learner-syllable-space {
+    width: 6px;
+    display: inline-block;
+}
+
+.lang-learner-syllable-word-box {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    background: var(--background-secondary);
+    padding: 2px 6px;
+    height: 24px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+}
+
+.lang-learner-syllable-word-box-english {
+    border-color: var(--background-modifier-border);
+    background: var(--background-secondary-alt);
+}
+
+.lang-learner-syllable-word-speaker {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 4px;
+    margin-right: 4px;
+    border-radius: 3px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.lang-learner-syllable-word-speaker:hover {
+    background: var(--background-modifier-border-focus);
+}
+
+.lang-learner-syllable-list {
+    display: inline-flex;
+    align-items: center;
+}
+
+.lang-learner-syllable-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-accent);
+    padding: 0 3px;
+    border-radius: 3px;
+    transition: all 0.12s ease-in-out;
+}
+
+.lang-learner-syllable-btn:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.lang-learner-syllable-static {
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    color: var(--text-normal);
+    padding: 0 3px;
+}
+
+.lang-learner-syllable-dot {
+    color: var(--text-faint);
+    font-weight: bold;
+    font-size: 9px;
+    margin: 0 1px;
+}
+
+
+
 
 

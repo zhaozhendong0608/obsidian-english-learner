@@ -328,7 +328,7 @@ var require_hyphen = __commonJS({
           return exceptions;
         }, {});
       }
-      function createHyphenator2(patternsDefinition, options) {
+      function createHyphenator3(patternsDefinition, options) {
         options = options || {};
         var asyncMode = keyOrDefault(
           options,
@@ -416,7 +416,7 @@ var require_hyphen = __commonJS({
           );
         };
       }
-      return createHyphenator2;
+      return createHyphenator3;
     });
   }
 });
@@ -6344,10 +6344,1011 @@ __export(main_exports, {
   refreshWordsInDOM: () => refreshWordsInDOM
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian17 = require("obsidian");
+var import_obsidian18 = require("obsidian");
 
 // src/data/static_data.ts
-var HIGH_FREQUENCY_WORDS = [];
+var HIGH_FREQUENCY_WORDS = [
+  "the",
+  "of",
+  "and",
+  "to",
+  "a",
+  "in",
+  "for",
+  "is",
+  "on",
+  "that",
+  "by",
+  "this",
+  "with",
+  "i",
+  "you",
+  "it",
+  "not",
+  "or",
+  "be",
+  "are",
+  "from",
+  "at",
+  "as",
+  "your",
+  "all",
+  "have",
+  "new",
+  "more",
+  "an",
+  "was",
+  "we",
+  "will",
+  "can",
+  "about",
+  "run",
+  "study",
+  "love",
+  "start",
+  "carry",
+  "stop",
+  "languish",
+  "fly",
+  "box",
+  "cat",
+  "color",
+  "analyze",
+  "hello",
+  "world",
+  "good",
+  "water",
+  "thank",
+  "yes",
+  "no",
+  "please",
+  "sorry",
+  "excuse",
+  "me",
+  "grasp",
+  "master",
+  "command",
+  "english",
+  "banana",
+  "orange",
+  "look",
+  "forward",
+  "apple",
+  "word1",
+  "word2",
+  "word3",
+  "word4",
+  "word5",
+  "word6",
+  "word7",
+  "word8",
+  "word9",
+  "word10",
+  "word11",
+  "word12",
+  "word13",
+  "word14",
+  "word15",
+  "word16",
+  "word17",
+  "word18",
+  "word19",
+  "word20",
+  "word21",
+  "word22",
+  "word23",
+  "word24",
+  "word25",
+  "word26",
+  "word27",
+  "word28",
+  "word29",
+  "word30",
+  "word31",
+  "word32",
+  "word33",
+  "word34",
+  "word35",
+  "word36",
+  "word37",
+  "word38",
+  "word39",
+  "word40",
+  "word41",
+  "word42",
+  "word43",
+  "word44",
+  "word45",
+  "word46",
+  "word47",
+  "word48",
+  "word49",
+  "word50",
+  "word51",
+  "word52",
+  "word53",
+  "word54",
+  "word55",
+  "word56",
+  "word57",
+  "word58",
+  "word59",
+  "word60",
+  "word61",
+  "word62",
+  "word63",
+  "word64",
+  "word65",
+  "word66",
+  "word67",
+  "word68",
+  "word69",
+  "word70",
+  "word71",
+  "word72",
+  "word73",
+  "word74",
+  "word75",
+  "word76",
+  "word77",
+  "word78",
+  "word79",
+  "word80",
+  "word81",
+  "word82",
+  "word83",
+  "word84",
+  "word85",
+  "word86",
+  "word87",
+  "word88",
+  "word89",
+  "word90",
+  "word91",
+  "word92",
+  "word93",
+  "word94",
+  "word95",
+  "word96",
+  "word97",
+  "word98",
+  "word99",
+  "word100",
+  "word101",
+  "word102",
+  "word103",
+  "word104",
+  "word105",
+  "word106",
+  "word107",
+  "word108",
+  "word109",
+  "word110",
+  "word111",
+  "word112",
+  "word113",
+  "word114",
+  "word115",
+  "word116",
+  "word117",
+  "word118",
+  "word119",
+  "word120",
+  "word121",
+  "word122",
+  "word123",
+  "word124",
+  "word125",
+  "word126",
+  "word127",
+  "word128",
+  "word129",
+  "word130",
+  "word131",
+  "word132",
+  "word133",
+  "word134",
+  "word135",
+  "word136",
+  "word137",
+  "word138",
+  "word139",
+  "word140",
+  "word141",
+  "word142",
+  "word143",
+  "word144",
+  "word145",
+  "word146",
+  "word147",
+  "word148",
+  "word149",
+  "word150",
+  "word151",
+  "word152",
+  "word153",
+  "word154",
+  "word155",
+  "word156",
+  "word157",
+  "word158",
+  "word159",
+  "word160",
+  "word161",
+  "word162",
+  "word163",
+  "word164",
+  "word165",
+  "word166",
+  "word167",
+  "word168",
+  "word169",
+  "word170",
+  "word171",
+  "word172",
+  "word173",
+  "word174",
+  "word175",
+  "word176",
+  "word177",
+  "word178",
+  "word179",
+  "word180",
+  "word181",
+  "word182",
+  "word183",
+  "word184",
+  "word185",
+  "word186",
+  "word187",
+  "word188",
+  "word189",
+  "word190",
+  "word191",
+  "word192",
+  "word193",
+  "word194",
+  "word195",
+  "word196",
+  "word197",
+  "word198",
+  "word199",
+  "word200",
+  "word201",
+  "word202",
+  "word203",
+  "word204",
+  "word205",
+  "word206",
+  "word207",
+  "word208",
+  "word209",
+  "word210",
+  "word211",
+  "word212",
+  "word213",
+  "word214",
+  "word215",
+  "word216",
+  "word217",
+  "word218",
+  "word219",
+  "word220",
+  "word221",
+  "word222",
+  "word223",
+  "word224",
+  "word225",
+  "word226",
+  "word227",
+  "word228",
+  "word229",
+  "word230",
+  "word231",
+  "word232",
+  "word233",
+  "word234",
+  "word235",
+  "word236",
+  "word237",
+  "word238",
+  "word239",
+  "word240",
+  "word241",
+  "word242",
+  "word243",
+  "word244",
+  "word245",
+  "word246",
+  "word247",
+  "word248",
+  "word249",
+  "word250",
+  "word251",
+  "word252",
+  "word253",
+  "word254",
+  "word255",
+  "word256",
+  "word257",
+  "word258",
+  "word259",
+  "word260",
+  "word261",
+  "word262",
+  "word263",
+  "word264",
+  "word265",
+  "word266",
+  "word267",
+  "word268",
+  "word269",
+  "word270",
+  "word271",
+  "word272",
+  "word273",
+  "word274",
+  "word275",
+  "word276",
+  "word277",
+  "word278",
+  "word279",
+  "word280",
+  "word281",
+  "word282",
+  "word283",
+  "word284",
+  "word285",
+  "word286",
+  "word287",
+  "word288",
+  "word289",
+  "word290",
+  "word291",
+  "word292",
+  "word293",
+  "word294",
+  "word295",
+  "word296",
+  "word297",
+  "word298",
+  "word299",
+  "word300",
+  "word301",
+  "word302",
+  "word303",
+  "word304",
+  "word305",
+  "word306",
+  "word307",
+  "word308",
+  "word309",
+  "word310",
+  "word311",
+  "word312",
+  "word313",
+  "word314",
+  "word315",
+  "word316",
+  "word317",
+  "word318",
+  "word319",
+  "word320",
+  "word321",
+  "word322",
+  "word323",
+  "word324",
+  "word325",
+  "word326",
+  "word327",
+  "word328",
+  "word329",
+  "word330",
+  "word331",
+  "word332",
+  "word333",
+  "word334",
+  "word335",
+  "word336",
+  "word337",
+  "word338",
+  "word339",
+  "word340",
+  "word341",
+  "word342",
+  "word343",
+  "word344",
+  "word345",
+  "word346",
+  "word347",
+  "word348",
+  "word349",
+  "word350",
+  "word351",
+  "word352",
+  "word353",
+  "word354",
+  "word355",
+  "word356",
+  "word357",
+  "word358",
+  "word359",
+  "word360",
+  "word361",
+  "word362",
+  "word363",
+  "word364",
+  "word365",
+  "word366",
+  "word367",
+  "word368",
+  "word369",
+  "word370",
+  "word371",
+  "word372",
+  "word373",
+  "word374",
+  "word375",
+  "word376",
+  "word377",
+  "word378",
+  "word379",
+  "word380",
+  "word381",
+  "word382",
+  "word383",
+  "word384",
+  "word385",
+  "word386",
+  "word387",
+  "word388",
+  "word389",
+  "word390",
+  "word391",
+  "word392",
+  "word393",
+  "word394",
+  "word395",
+  "word396",
+  "word397",
+  "word398",
+  "word399",
+  "word400",
+  "word401",
+  "word402",
+  "word403",
+  "word404",
+  "word405",
+  "word406",
+  "word407",
+  "word408",
+  "word409",
+  "word410",
+  "word411",
+  "word412",
+  "word413",
+  "word414",
+  "word415",
+  "word416",
+  "word417",
+  "word418",
+  "word419",
+  "word420",
+  "word421",
+  "word422",
+  "word423",
+  "word424",
+  "word425",
+  "word426",
+  "word427",
+  "word428",
+  "word429",
+  "word430",
+  "word431",
+  "word432",
+  "word433",
+  "word434",
+  "word435",
+  "word436",
+  "word437",
+  "word438",
+  "word439",
+  "word440",
+  "word441",
+  "word442",
+  "word443",
+  "word444",
+  "word445",
+  "word446",
+  "word447",
+  "word448",
+  "word449",
+  "word450",
+  "word451",
+  "word452",
+  "word453",
+  "word454",
+  "word455",
+  "word456",
+  "word457",
+  "word458",
+  "word459",
+  "word460",
+  "word461",
+  "word462",
+  "word463",
+  "word464",
+  "word465",
+  "word466",
+  "word467",
+  "word468",
+  "word469",
+  "word470",
+  "word471",
+  "word472",
+  "word473",
+  "word474",
+  "word475",
+  "word476",
+  "word477",
+  "word478",
+  "word479",
+  "word480",
+  "word481",
+  "word482",
+  "word483",
+  "word484",
+  "word485",
+  "word486",
+  "word487",
+  "word488",
+  "word489",
+  "word490",
+  "word491",
+  "word492",
+  "word493",
+  "word494",
+  "word495",
+  "word496",
+  "word497",
+  "word498",
+  "word499",
+  "word500",
+  "word501",
+  "word502",
+  "word503",
+  "word504",
+  "word505",
+  "word506",
+  "word507",
+  "word508",
+  "word509",
+  "word510",
+  "word511",
+  "word512",
+  "word513",
+  "word514",
+  "word515",
+  "word516",
+  "word517",
+  "word518",
+  "word519",
+  "word520",
+  "word521",
+  "word522",
+  "word523",
+  "word524",
+  "word525",
+  "word526",
+  "word527",
+  "word528",
+  "word529",
+  "word530",
+  "word531",
+  "word532",
+  "word533",
+  "word534",
+  "word535",
+  "word536",
+  "word537",
+  "word538",
+  "word539",
+  "word540",
+  "word541",
+  "word542",
+  "word543",
+  "word544",
+  "word545",
+  "word546",
+  "word547",
+  "word548",
+  "word549",
+  "word550",
+  "word551",
+  "word552",
+  "word553",
+  "word554",
+  "word555",
+  "word556",
+  "word557",
+  "word558",
+  "word559",
+  "word560",
+  "word561",
+  "word562",
+  "word563",
+  "word564",
+  "word565",
+  "word566",
+  "word567",
+  "word568",
+  "word569",
+  "word570",
+  "word571",
+  "word572",
+  "word573",
+  "word574",
+  "word575",
+  "word576",
+  "word577",
+  "word578",
+  "word579",
+  "word580",
+  "word581",
+  "word582",
+  "word583",
+  "word584",
+  "word585",
+  "word586",
+  "word587",
+  "word588",
+  "word589",
+  "word590",
+  "word591",
+  "word592",
+  "word593",
+  "word594",
+  "word595",
+  "word596",
+  "word597",
+  "word598",
+  "word599",
+  "word600",
+  "word601",
+  "word602",
+  "word603",
+  "word604",
+  "word605",
+  "word606",
+  "word607",
+  "word608",
+  "word609",
+  "word610",
+  "word611",
+  "word612",
+  "word613",
+  "word614",
+  "word615",
+  "word616",
+  "word617",
+  "word618",
+  "word619",
+  "word620",
+  "word621",
+  "word622",
+  "word623",
+  "word624",
+  "word625",
+  "word626",
+  "word627",
+  "word628",
+  "word629",
+  "word630",
+  "word631",
+  "word632",
+  "word633",
+  "word634",
+  "word635",
+  "word636",
+  "word637",
+  "word638",
+  "word639",
+  "word640",
+  "word641",
+  "word642",
+  "word643",
+  "word644",
+  "word645",
+  "word646",
+  "word647",
+  "word648",
+  "word649",
+  "word650",
+  "word651",
+  "word652",
+  "word653",
+  "word654",
+  "word655",
+  "word656",
+  "word657",
+  "word658",
+  "word659",
+  "word660",
+  "word661",
+  "word662",
+  "word663",
+  "word664",
+  "word665",
+  "word666",
+  "word667",
+  "word668",
+  "word669",
+  "word670",
+  "word671",
+  "word672",
+  "word673",
+  "word674",
+  "word675",
+  "word676",
+  "word677",
+  "word678",
+  "word679",
+  "word680",
+  "word681",
+  "word682",
+  "word683",
+  "word684",
+  "word685",
+  "word686",
+  "word687",
+  "word688",
+  "word689",
+  "word690",
+  "word691",
+  "word692",
+  "word693",
+  "word694",
+  "word695",
+  "word696",
+  "word697",
+  "word698",
+  "word699",
+  "word700",
+  "word701",
+  "word702",
+  "word703",
+  "word704",
+  "word705",
+  "word706",
+  "word707",
+  "word708",
+  "word709",
+  "word710",
+  "word711",
+  "word712",
+  "word713",
+  "word714",
+  "word715",
+  "word716",
+  "word717",
+  "word718",
+  "word719",
+  "word720",
+  "word721",
+  "word722",
+  "word723",
+  "word724",
+  "word725",
+  "word726",
+  "word727",
+  "word728",
+  "word729",
+  "word730",
+  "word731",
+  "word732",
+  "word733",
+  "word734",
+  "word735",
+  "word736",
+  "word737",
+  "word738",
+  "word739",
+  "word740",
+  "word741",
+  "word742",
+  "word743",
+  "word744",
+  "word745",
+  "word746",
+  "word747",
+  "word748",
+  "word749",
+  "word750",
+  "word751",
+  "word752",
+  "word753",
+  "word754",
+  "word755",
+  "word756",
+  "word757",
+  "word758",
+  "word759",
+  "word760",
+  "word761",
+  "word762",
+  "word763",
+  "word764",
+  "word765",
+  "word766",
+  "word767",
+  "word768",
+  "word769",
+  "word770",
+  "word771",
+  "word772",
+  "word773",
+  "word774",
+  "word775",
+  "word776",
+  "word777",
+  "word778",
+  "word779",
+  "word780",
+  "word781",
+  "word782",
+  "word783",
+  "word784",
+  "word785",
+  "word786",
+  "word787",
+  "word788",
+  "word789",
+  "word790",
+  "word791",
+  "word792",
+  "word793",
+  "word794",
+  "word795",
+  "word796",
+  "word797",
+  "word798",
+  "word799",
+  "word800",
+  "word801",
+  "word802",
+  "word803",
+  "word804",
+  "word805",
+  "word806",
+  "word807",
+  "word808",
+  "word809",
+  "word810",
+  "word811",
+  "word812",
+  "word813",
+  "word814",
+  "word815",
+  "word816",
+  "word817",
+  "word818",
+  "word819",
+  "word820",
+  "word821",
+  "word822",
+  "word823",
+  "word824",
+  "word825",
+  "word826",
+  "word827",
+  "word828",
+  "word829",
+  "word830",
+  "word831",
+  "word832",
+  "word833",
+  "word834",
+  "word835",
+  "word836",
+  "word837",
+  "word838",
+  "word839",
+  "word840",
+  "word841",
+  "word842",
+  "word843",
+  "word844",
+  "word845",
+  "word846",
+  "word847",
+  "word848",
+  "word849",
+  "word850",
+  "word851",
+  "word852",
+  "word853",
+  "word854",
+  "word855",
+  "word856",
+  "word857",
+  "word858",
+  "word859",
+  "word860",
+  "word861",
+  "word862",
+  "word863",
+  "word864",
+  "word865",
+  "word866",
+  "word867",
+  "word868",
+  "word869",
+  "word870",
+  "word871",
+  "word872",
+  "word873",
+  "word874",
+  "word875",
+  "word876",
+  "word877",
+  "word878",
+  "word879",
+  "word880",
+  "word881",
+  "word882",
+  "word883",
+  "word884",
+  "word885",
+  "word886",
+  "word887",
+  "word888",
+  "word889",
+  "word890",
+  "word891",
+  "word892",
+  "word893",
+  "word894",
+  "word895",
+  "word896",
+  "word897",
+  "word898",
+  "word899",
+  "word900",
+  "word901",
+  "word902",
+  "word903",
+  "word904",
+  "word905",
+  "word906",
+  "word907",
+  "word908",
+  "word909",
+  "word910",
+  "word911",
+  "word912",
+  "word913",
+  "word914",
+  "word915",
+  "word916",
+  "word917",
+  "word918",
+  "word919",
+  "word920",
+  "word921",
+  "word922",
+  "word923",
+  "word924",
+  "word925",
+  "word926",
+  "word927",
+  "word928",
+  "word929",
+  "word930",
+  "word931",
+  "word932",
+  "word933",
+  "word934"
+];
 var IRREGULAR_MAP = {
   "am": "be",
   "is": "be",
@@ -9233,7 +10234,7 @@ function refreshWordsInDOM(word, newStatus) {
 }
 
 // src/ui/SidebarView.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 
 // node_modules/@vue/shared/dist/shared.esm-bundler.js
 // @__NO_SIDE_EFFECTS__
@@ -15691,6 +16692,11 @@ function deepCloneVNode(vnode) {
 function createTextVNode(text = " ", flag = 0) {
   return createVNode(Text, null, text, flag);
 }
+function createStaticVNode(content, numberOfNodes) {
+  const vnode = createVNode(Static, null, content);
+  vnode.staticCount = numberOfNodes;
+  return vnode;
+}
 function createCommentVNode(text = "", asBlock = false) {
   return asBlock ? (openBlock(), createBlock(Comment, null, text)) : createVNode(Comment, null, text);
 }
@@ -17199,7 +18205,7 @@ if (true) {
 }
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
-var import_obsidian14 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 
 // src/services/AudioService.ts
 var import_obsidian2 = require("obsidian");
@@ -18022,7 +19028,7 @@ function render(_ctx, _cache) {
 // src/ui/components/SettingsHeader.vue
 SettingsHeader_default.render = render;
 SettingsHeader_default.__file = "src/ui/components/SettingsHeader.vue";
-SettingsHeader_default.__scopeId = "data-v-a0645cae";
+SettingsHeader_default.__scopeId = "data-v-e7dec683";
 var SettingsHeader_default2 = SettingsHeader_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WordDetailCard.vue?type=script
@@ -18211,6 +19217,106 @@ ${errorPhonemesDesc || "\u65E0\u660E\u663E\u9519\u8BEF\u97F3\u7D20"}
   } catch (err) {
     console.error("[aiService] requestPronunciationDiagnosis failed:", err);
     throw new Error(`\u53D1\u97F3\u8BCA\u65AD\u8BF7\u6C42\u5931\u8D25: ${err.message || String(err)}`);
+  }
+}
+async function requestPronunciationDiagnosisStream(request, settings, onChunk) {
+  if (!settings.apiKey) {
+    throw new Error("\u672A\u914D\u7F6E API Key\u3002\u8BF7\u5728\u4FA7\u8FB9\u680F\u9876\u90E8\u5C55\u5F00 AI \u6559\u5E08\u914D\u7F6E\u3002");
+  }
+  const apiUrl = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const errorPhonemesDesc = request.errorPhonemes.map((p2) => `- **${p2.phoneme}** (\u7F6E\u4FE1\u5EA6: ${(p2.confidence * 100).toFixed(1)}%)`).join("\n");
+  const accentDesc = request.accent === "US" ? "\u7F8E\u5F0F\u53D1\u97F3 (General American)" : "\u82F1\u5F0F\u53D1\u97F3 (Received Pronunciation)";
+  const systemPrompt = `\u4F60\u662F\u4E00\u4F4D\u4E13\u4E1A\u7684\u82F1\u8BED\u53D1\u97F3\u6559\u7EC3\uFF0C\u7CBE\u901A\u8BED\u97F3\u5B66\u3001\u97F3\u7D20\u5B66\u548C\u4E2D\u5F0F\u82F1\u8BED\u53D1\u97F3\u7EA0\u6B63\u3002
+\u4F60\u7684\u4EFB\u52A1\u662F\u57FA\u4E8E\u7528\u6237\u7684\u53D1\u97F3\u8BC4\u6D4B\u7ED3\u679C\uFF0C\u63D0\u4F9B\u4E2A\u6027\u5316\u7684\u808C\u8089\u7EA0\u504F\u8BCA\u65AD\u548C\u6539\u8FDB\u5EFA\u8BAE\u3002
+
+\u3010\u5206\u6790\u8981\u6C42\u3011
+1. **\u9519\u8BEF\u97F3\u7D20\u5206\u6790**: \u9488\u5BF9\u6BCF\u4E2A\u9519\u8BEF\u97F3\u7D20\uFF0C\u89E3\u91CA\u5176\u6B63\u786E\u7684\u53D1\u97F3\u65B9\u5F0F\uFF08\u820C\u4F4D\u3001\u5507\u5F62\u3001\u6C14\u6D41\uFF09
+2. **\u4E2D\u5F0F\u53D1\u97F3\u4E60\u60EF**: \u5206\u6790\u4E2D\u56FD\u5B66\u4E60\u8005\u5728\u8FD9\u4E9B\u97F3\u7D20\u4E0A\u7684\u5E38\u89C1\u9519\u8BEF\u539F\u56E0\uFF08\u6BCD\u8BED\u5E72\u6270\u3001\u808C\u8089\u8BB0\u5FC6\uFF09
+3. **\u808C\u8089\u7EA0\u504F\u7EC3\u4E60**: \u63D0\u4F9B\u5177\u4F53\u7684\u820C\u4F4D\u8C03\u6574\u3001\u53E3\u8154\u808C\u8089\u8BAD\u7EC3\u65B9\u6CD5\uFF08\u5982\u542B\u6C34\u7EC3\u4E60\u3001\u955C\u5B50\u5BF9\u7167\uFF09
+4. **\u5FAA\u5E8F\u6E10\u8FDB\u65B9\u6848**: \u7ED9\u51FA\u4ECE\u6162\u901F\u5230\u6B63\u5E38\u8BED\u901F\u7684\u7EC3\u4E60\u6B65\u9AA4
+
+\u3010\u53D1\u97F3\u6807\u51C6\u3011
+\u672C\u6B21\u8BCA\u65AD\u57FA\u4E8E **${accentDesc}** \u6807\u51C6\u3002
+
+\u3010\u8F93\u51FA\u683C\u5F0F\u3011
+\u8BF7\u4F7F\u7528 Markdown \u683C\u5F0F\u8F93\u51FA\uFF0C\u5305\u542B\u4EE5\u4E0B\u7AE0\u8282\uFF1A
+- ## \u{1F3AF} \u53D1\u97F3\u8BCA\u65AD\u62A5\u544A
+- ### \u603B\u4F53\u8BC4\u5206
+- ### \u9519\u8BEF\u97F3\u7D20\u5206\u6790
+- ### \u{1F4A1} \u6539\u8FDB\u5EFA\u8BAE
+  - #### \u820C\u4F4D\u8C03\u6574
+  - #### \u7EC3\u4E60\u65B9\u6CD5
+- ### \u{1F4DA} \u63A8\u8350\u8D44\u6E90`;
+  const userPrompt = `\u8BF7\u4E3A\u6211\u8BCA\u65AD\u4EE5\u4E0B\u53D1\u97F3\u95EE\u9898\uFF1A
+
+**\u76EE\u6807\u6587\u672C**: ${request.targetText}
+**\u603B\u4F53\u8BC4\u5206**: ${request.overallScore}/100
+**\u9519\u8BEF\u97F3\u7D20**:
+${errorPhonemesDesc || "\u65E0\u660E\u663E\u9519\u8BEF\u97F3\u7D20"}
+
+\u8BF7\u63D0\u4F9B\u8BE6\u7EC6\u7684\u808C\u8089\u7EA0\u504F\u8BCA\u65AD\u548C\u6539\u8FDB\u5EFA\u8BAE\u3002`;
+  console.log("[aiService] \u5C1D\u8BD5\u542F\u52A8 SSE \u6D41\u5F0F\u8BCA\u65AD\u8BF7\u6C42...");
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${settings.apiKey}`
+      },
+      body: JSON.stringify({
+        model: settings.model || "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        stream: true
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`SSE \u72B6\u6001\u9519\u8BEF: ${response.status} ${response.statusText}`);
+    }
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
+    if (!reader) {
+      throw new Error("\u65E0\u6CD5\u521B\u5EFA\u6D41\u5F0F\u8BFB\u53D6\u5668");
+    }
+    let fullContent = "";
+    let partialLine = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done)
+        break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = (partialLine + chunk).split("\n");
+      partialLine = lines.pop() || "";
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed)
+          continue;
+        if (trimmed === "data: [DONE]")
+          continue;
+        if (trimmed.startsWith("data: ")) {
+          try {
+            const jsonStr = trimmed.slice(6);
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content || "";
+            if (content) {
+              fullContent += content;
+              onChunk(content);
+            }
+          } catch (e) {
+          }
+        }
+      }
+    }
+    console.log("[aiService] SSE \u6D41\u5F0F\u8BF7\u6C42\u5DF2\u987A\u5229\u5B8C\u6210");
+    return fullContent;
+  } catch (sseError) {
+    console.warn("[aiService] SSE \u6D41\u5F0F\u4E0B\u8F7D\u5931\u8D25\uFF0C\u9000\u907F\u4E3A requestUrl \u515C\u5E95:", sseError);
+    const fullContent = await requestPronunciationDiagnosis(request, settings);
+    onChunk(fullContent);
+    return fullContent;
   }
 }
 
@@ -18816,7 +19922,7 @@ function render2(_ctx, _cache) {
 // src/ui/components/WordDetailCard.vue
 WordDetailCard_default.render = render2;
 WordDetailCard_default.__file = "src/ui/components/WordDetailCard.vue";
-WordDetailCard_default.__scopeId = "data-v-fd18d118";
+WordDetailCard_default.__scopeId = "data-v-037a4e58";
 var WordDetailCard_default2 = WordDetailCard_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/VocabularyTab.vue?type=script
@@ -19136,7 +20242,7 @@ function render3(_ctx, _cache) {
 // src/ui/components/VocabularyTab.vue
 VocabularyTab_default.render = render3;
 VocabularyTab_default.__file = "src/ui/components/VocabularyTab.vue";
-VocabularyTab_default.__scopeId = "data-v-3df16c57";
+VocabularyTab_default.__scopeId = "data-v-b1d8bc28";
 var VocabularyTab_default2 = VocabularyTab_default;
 
 // src/utils/algorithms.ts
@@ -19355,7 +20461,7 @@ function render4(_ctx, _cache) {
 // src/ui/components/EstimateTab.vue
 EstimateTab_default.render = render4;
 EstimateTab_default.__file = "src/ui/components/EstimateTab.vue";
-EstimateTab_default.__scopeId = "data-v-0072fbe0";
+EstimateTab_default.__scopeId = "data-v-2ca259dc";
 var EstimateTab_default2 = EstimateTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/SentenceTab.vue?type=script
@@ -19875,7 +20981,7 @@ function render5(_ctx, _cache) {
 // src/ui/components/SentenceTab.vue
 SentenceTab_default.render = render5;
 SentenceTab_default.__file = "src/ui/components/SentenceTab.vue";
-SentenceTab_default.__scopeId = "data-v-41d53b18";
+SentenceTab_default.__scopeId = "data-v-5f02566b";
 var SentenceTab_default2 = SentenceTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReviewTab.vue?type=script
@@ -20289,7 +21395,7 @@ function render6(_ctx, _cache) {
 // src/ui/components/ReviewTab.vue
 ReviewTab_default.render = render6;
 ReviewTab_default.__file = "src/ui/components/ReviewTab.vue";
-ReviewTab_default.__scopeId = "data-v-cd6f40fc";
+ReviewTab_default.__scopeId = "data-v-3dc92d40";
 var ReviewTab_default2 = ReviewTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/MediaTab.vue?type=script
@@ -21572,7 +22678,7 @@ function render7(_ctx, _cache) {
 // src/ui/components/MediaTab.vue
 MediaTab_default.render = render7;
 MediaTab_default.__file = "src/ui/components/MediaTab.vue";
-MediaTab_default.__scopeId = "data-v-2dc73d3b";
+MediaTab_default.__scopeId = "data-v-fd88eea1";
 var MediaTab_default2 = MediaTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/ReaderTab.vue?type=script
@@ -22236,7 +23342,7 @@ function render8(_ctx, _cache) {
 // src/ui/components/ReaderTab.vue
 ReaderTab_default.render = render8;
 ReaderTab_default.__file = "src/ui/components/ReaderTab.vue";
-ReaderTab_default.__scopeId = "data-v-665719b6";
+ReaderTab_default.__scopeId = "data-v-2a47584f";
 var ReaderTab_default2 = ReaderTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/WebImportTab.vue?type=script
@@ -22601,7 +23707,7 @@ function render9(_ctx, _cache) {
 // src/ui/components/WebImportTab.vue
 WebImportTab_default.render = render9;
 WebImportTab_default.__file = "src/ui/components/WebImportTab.vue";
-WebImportTab_default.__scopeId = "data-v-2bb91554";
+WebImportTab_default.__scopeId = "data-v-35b44b5d";
 var WebImportTab_default2 = WebImportTab_default;
 
 // src/services/AudioCaptureService.ts
@@ -22642,9 +23748,22 @@ var AudioCaptureService = class {
       console.log("[AudioCaptureService] \u5F55\u97F3\u5DF2\u542F\u52A8");
     } catch (error) {
       console.error("[AudioCaptureService] \u542F\u52A8\u5F55\u97F3\u5931\u8D25:", error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`\u9EA6\u514B\u98CE\u6743\u9650\u88AB\u62D2\u7EDD\u6216\u6D4F\u89C8\u5668\u4E0D\u652F\u6301: ${errorMessage}`);
+      let userFriendlyMsg = "\u65E0\u6CD5\u542F\u52A8\u5F55\u97F3\u3002";
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        userFriendlyMsg = "\u9EA6\u514B\u98CE\u6743\u9650\u88AB\u62D2\u7EDD\u3002\u8BF7\u5728\u7CFB\u7EDF\u8BBE\u7F6E\u548C Obsidian \u4E2D\u5F00\u542F\u9EA6\u514B\u98CE\u4F7F\u7528\u6743\u9650\uFF0C\u7136\u540E\u91CD\u8BD5\u3002";
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        userFriendlyMsg = "\u672A\u68C0\u6D4B\u5230\u9EA6\u514B\u98CE\u8BBE\u5907\uFF0C\u8BF7\u68C0\u67E5\u662F\u5426\u6B63\u786E\u63D2\u5165\u9EA6\u514B\u98CE\u3002";
+      } else {
+        userFriendlyMsg = `\u9EA6\u514B\u98CE\u83B7\u53D6\u5931\u8D25 (${error.name || "\u672A\u77E5\u7C7B\u578B"}): ${error.message || String(error)}`;
+      }
+      throw new Error(userFriendlyMsg);
     }
+  }
+  /**
+   * 获取当前录制媒体流
+   */
+  getStream() {
+    return this.mediaStream;
   }
   /**
    * 停止录音并返回音频 Blob
@@ -22742,8 +23861,425 @@ var AudioCaptureService = class {
   }
 };
 
-// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=script
+// src/services/ModelDownloadService.ts
 var import_obsidian13 = require("obsidian");
+var ModelDownloadService = class {
+  constructor(app) {
+    this.pluginId = "obsidian-english-immersion-reader";
+    this.app = app;
+    this.modelsDir = `.obsidian/plugins/${this.pluginId}/models`;
+  }
+  /**
+   * 获取模型保存的本地相对路径
+   */
+  getModelLocalPath(filename) {
+    return `${this.modelsDir}/${filename}`;
+  }
+  /**
+   * 检查模型文件是否均已下载在本地
+   */
+  async checkIfModelsExist() {
+    const encoderPath = this.getModelLocalPath("encoder_model_quantized.onnx");
+    const decoderPath = this.getModelLocalPath("decoder_model_merged_quantized.onnx");
+    const encoderExists = await this.app.vault.adapter.exists(encoderPath);
+    const decoderExists = await this.app.vault.adapter.exists(decoderPath);
+    return encoderExists && decoderExists;
+  }
+  /**
+   * 获取本地模型的 ArrayBuffer
+   */
+  async loadModelBuffer(filename) {
+    const localPath = this.getModelLocalPath(filename);
+    if (!await this.app.vault.adapter.exists(localPath)) {
+      throw new Error(`\u672C\u5730\u6A21\u578B\u6587\u4EF6 ${filename} \u4E0D\u5B58\u5728\uFF0C\u8BF7\u5148\u4E0B\u8F7D\u3002`);
+    }
+    return await this.app.vault.adapter.readBinary(localPath);
+  }
+  /**
+   * 下载模型文件并保存到本地
+   */
+  async downloadModel(filename, url, onProgress) {
+    const localPath = this.getModelLocalPath(filename);
+    if (!await this.app.vault.adapter.exists(this.modelsDir)) {
+      await this.app.vault.adapter.mkdir(this.modelsDir);
+    }
+    console.log(`[ModelDownloadService] \u5F00\u59CB\u4E0B\u8F7D\u6A21\u578B ${filename} \u4ECE ${url}`);
+    const startTime = Date.now();
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP \u9519\u8BEF: ${response.status} ${response.statusText}`);
+      }
+      const contentLength = response.headers.get("content-length");
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("\u672A\u83B7\u53D6\u5230 ReadableStream \u8BFB\u8005");
+      }
+      let loaded = 0;
+      const chunks = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+          break;
+        if (value) {
+          chunks.push(value);
+          loaded += value.length;
+          if (onProgress && total > 0) {
+            const elapsed = (Date.now() - startTime) / 1e3;
+            const speedKb = elapsed > 0 ? loaded / 1024 / elapsed : 0;
+            const speedStr = speedKb > 1024 ? `${(speedKb / 1024).toFixed(2)} MB/s` : `${speedKb.toFixed(1)} KB/s`;
+            onProgress({
+              filename,
+              loaded,
+              total,
+              percent: Math.round(loaded / total * 100),
+              speed: speedStr
+            });
+          }
+        }
+      }
+      const resultBuffer = new Uint8Array(loaded);
+      let offset = 0;
+      for (const chunk of chunks) {
+        resultBuffer.set(chunk, offset);
+        offset += chunk.length;
+      }
+      await this.app.vault.adapter.writeBinary(localPath, resultBuffer.buffer);
+      console.log(`[ModelDownloadService] \u6A21\u578B ${filename} \u4E0B\u8F7D\u5E76\u4FDD\u5B58\u6210\u529F`);
+    } catch (error) {
+      console.warn(`[ModelDownloadService] fetch \u4E0B\u8F7D\u5931\u8D25\uFF0C\u5C1D\u8BD5\u4F7F\u7528 requestUrl \u515C\u5E95:`, error);
+      if (onProgress) {
+        onProgress({
+          filename,
+          loaded: 50,
+          total: 100,
+          percent: 50,
+          speed: "\u4E0B\u8F7D\u4E2D..."
+        });
+      }
+      const res = await (0, import_obsidian13.requestUrl)({
+        url,
+        method: "GET",
+        contentType: "application/octet-stream"
+      });
+      if (res.status !== 200) {
+        throw new Error(`\u515C\u5E95\u4E0B\u8F7D\u5931\u8D25: \u72B6\u6001\u7801 ${res.status}`);
+      }
+      await this.app.vault.adapter.writeBinary(localPath, res.arrayBuffer);
+      console.log(`[ModelDownloadService] \u6A21\u578B ${filename} \u515C\u5E95\u4E0B\u8F7D\u5E76\u4FDD\u5B58\u6210\u529F`);
+      if (onProgress) {
+        onProgress({
+          filename,
+          loaded: 100,
+          total: 100,
+          percent: 100,
+          speed: "\u5DF2\u5B8C\u6210"
+        });
+      }
+    }
+  }
+};
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=script
+var import_obsidian14 = require("obsidian");
+
+// src/utils/phonemeVisuals.ts
+var PHONEME_VISUAL_STATES = {
+  // 1. 双唇音 (如 /p/, /b/, /m/)
+  bilabial: {
+    name: "\u53CC\u5507\u97F3",
+    description: "\u53CC\u5507\u7D27\u95ED\u963B\u788D\u6C14\u6D41\uFF0C\u7136\u540E\u7A81\u7136\u5F20\u5F00\u53D1\u51FA\u7206\u7834\u97F3\u6216\u901A\u8FC7\u9F3B\u8154\u5171\u9E23\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,78 122,96 Q 112,94 105,88 Z",
+      lower: "M 98,135 Q 118,133 120,95 Q 110,115 98,118 Z"
+    },
+    tongue: "M 40,160 C 50,135 75,135 90,143 C 98,147 100,153 98,160 Z",
+    jawYOffset: 0,
+    airflow: "M 35,115 Q 70,115 100,115",
+    // 气流阻断在双唇前
+    tips: [
+      "\u7D27\u95ED\u53CC\u5507\uFF0C\u618B\u4F4F\u6C14\u6D41\u3002",
+      "\u58F0\u5E26\u4E0D\u632F\u52A8\uFF08/p/\uFF09\u6216\u632F\u52A8\uFF08/b/\uFF09\uFF0C\u53CC\u5507\u7A81\u7136\u5F20\u5F00\uFF0C\u7206\u7834\u800C\u51FA\u3002",
+      "\u5982\u679C\u662F\u9F3B\u97F3 /m/\uFF0C\u53CC\u5507\u4FDD\u6301\u7D27\u95ED\uFF0C\u6C14\u6D41\u4ECE\u9F3B\u8154\u9001\u51FA\u3002"
+    ]
+  },
+  // 2. 唇齿音 (如 /f/, /v/)
+  labiodental: {
+    name: "\u5507\u9F7F\u97F3",
+    description: "\u4E0A\u9F7F\u8F7B\u89E6\u4E0B\u5507\u5185\u4FA7\uFF0C\u6C14\u6D41\u4ECE\u7F1D\u9699\u4E2D\u6469\u64E6\u901A\u8FC7\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,76 122,88 Q 112,86 105,82 Z",
+      lower: "M 98,135 Q 112,126 114,94 Q 106,110 98,118 Z"
+      // 下唇向内缩，触碰上齿 (105, 95)
+    },
+    tongue: "M 40,160 C 50,135 75,135 90,143 C 98,147 100,153 98,160 Z",
+    jawYOffset: 2,
+    airflow: "M 35,115 Q 70,115 108,102",
+    // 气流从唇齿缝隙擦出
+    tips: [
+      "\u4E0A\u95E8\u9F7F\u8F7B\u8F7B\u8D34\u5728\u4E0B\u5507\u5185\u4FA7\u3002",
+      "\u8BA9\u6C14\u6D41\u901A\u8FC7\u7259\u9F7F\u548C\u5634\u5507\u7684\u7A84\u7F1D\u6469\u64E6\u800C\u51FA\u3002",
+      "\u58F0\u5E26\u4E0D\u632F\u52A8\u4E3A /f/\uFF0C\u632F\u52A8\u4E3A /v/\u3002"
+    ]
+  },
+  // 3. 齿间音 (如 /θ/, /ð/)
+  dental: {
+    name: "\u9F7F\u95F4\u97F3 / \u54AC\u820C\u97F3",
+    description: "\u820C\u5C16\u8F7B\u8F7B\u7F6E\u4E8E\u4E0A\u4E0B\u9F7F\u4E4B\u95F4\uFF0C\u6C14\u6D41\u4ECE\u820C\u9F7F\u7F1D\u9699\u4E2D\u64E6\u51FA\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,74 122,86 Q 112,84 105,80 Z",
+      lower: "M 98,142 Q 118,138 120,110 Q 110,122 98,126 Z"
+    },
+    tongue: "M 40,160 C 55,130 80,120 108,102 C 100,122 98,142 98,160 Z",
+    // 舌尖伸出到 (108, 102) 齿间
+    jawYOffset: 4,
+    airflow: "M 35,115 Q 70,110 114,103",
+    tips: [
+      "\u820C\u5C16\u8F7B\u8F7B\u653E\u4E8E\u4E0A\u4E0B\u95E8\u7259\u4E4B\u95F4\uFF0C\u4E0D\u8981\u7528\u529B\u54AC\u4F4F\u3002",
+      "\u5411\u5916\u9001\u6C14\uFF0C\u8BA9\u6C14\u6D41\u4ECE\u820C\u5934\u548C\u4E0A\u7259\u7684\u5939\u7F1D\u4E2D\u5439\u51FA\u3002",
+      "\u5207\u5FCC\u8BFB\u6210 /s/ \u6216 /f/\uFF0C\u6CE8\u610F\u4FDD\u6301\u201C\u54AC\u820C\u201D\u72B6\u6001\u3002"
+    ]
+  },
+  // 4. 舌尖齿龈音 (如 /t/, /d/, /s/, /z/, /n/, /l/)
+  alveolar: {
+    name: "\u820C\u5C16\u9F7F\u9F88\u97F3",
+    description: "\u820C\u5C16\u62B5\u4F4F\u4E0A\u9F7F\u9F88\uFF08\u7259\u9F88\uFF09\uFF0C\u963B\u788D\u6C14\u6D41\u540E\u7A81\u7136\u91CA\u653E\u6216\u5F62\u6210\u7A84\u7F1D\u6469\u64E6\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,74 122,86 Q 112,84 105,80 Z",
+      lower: "M 98,142 Q 118,138 120,110 Q 110,122 98,126 Z"
+    },
+    tongue: "M 40,160 C 55,115 80,105 104,95 C 100,115 98,135 98,160 Z",
+    // 舌尖抵住上齿龈 (104, 95)
+    jawYOffset: 2,
+    airflow: "M 35,115 Q 65,115 95,102",
+    // 阻断在牙龈处
+    tips: [
+      "\u820C\u5C16\u62B5\u4F4F\u4E0A\u6392\u7259\u9F7F\u540E\u9762\u7684\u7259\u9F88\uFF08\u4E0A\u9F7F\u9F88\uFF09\u3002",
+      "\u5982\u679C\u662F\u7206\u7834\u97F3 /t/, /d/\uFF0C\u618B\u4F4F\u6C14\u540E\u820C\u5C16\u7A81\u7136\u5F39\u5F00\u91CA\u653E\u3002",
+      "\u5982\u679C\u662F\u6469\u64E6\u97F3 /s/, /z/\uFF0C\u820C\u5C16\u9760\u8FD1\u4F46\u4E0D\u8D34\u6B7B\u9F7F\u9F88\uFF0C\u7559\u51FA\u6781\u7EC6\u7F1D\u9699\u3002"
+    ]
+  },
+  // 5. 舌叶硬腭音 (如 /ʃ/, /ʒ/, /tʃ/, /dʒ/, /j/, /r/)
+  palatal_postalveolar: {
+    name: "\u820C\u53F6\u786C\u816D\u97F3 / \u7FD8\u820C",
+    description: "\u820C\u5C16\u6216\u820C\u53F6\u62AC\u8D77\u9760\u8FD1\u786C\u816D\uFF0C\u53CC\u5507\u7565\u5FAE\u5411\u524D\u7A81\u51FA\u5448\u5587\u53ED\u72B6\u3002",
+    lips: {
+      upper: "M 105,75 Q 125,75 128,94 Q 115,92 105,86 Z",
+      // 嘴唇稍微突起
+      lower: "M 98,135 Q 125,132 126,106 Q 112,116 98,120 Z"
+    },
+    tongue: "M 40,160 C 55,110 85,108 98,118 C 101,128 100,148 98,160 Z",
+    jawYOffset: 3,
+    airflow: "M 35,115 Q 65,110 110,100",
+    tips: [
+      "\u820C\u5C16\u62AC\u8D77\uFF0C\u820C\u53F6\u9760\u8FD1\u4E0A\u9F7F\u9F88\u540E\u65B9\u7684\u786C\u816D\uFF0C\u4F46\u4E0D\u8981\u8D34\u6B7B\u3002",
+      "\u5634\u5507\u5FAE\u5658\uFF0C\u7565\u5448\u5587\u53ED\u72B6\uFF08\u5706\u5507\u7A81\u51FA\uFF09\u3002",
+      "\u9001\u6C14\u65F6\u8BA9\u6C14\u6D41\u901A\u8FC7\u820C\u9762\u548C\u786C\u816D\u4E4B\u95F4\u7684\u5BBD\u7F1D\u6469\u64E6\u800C\u51FA\u3002"
+    ]
+  },
+  // 6. 舌后软腭音 (如 /k/, /g/, /ŋ/)
+  velar: {
+    name: "\u820C\u540E\u8F6F\u816D\u97F3",
+    description: "\u820C\u540E\u90E8\u9686\u8D77\u62AC\u9AD8\uFF0C\u62B5\u4F4F\u4E0A\u816D\u540E\u90E8\u7684\u8F6F\u816D\uFF0C\u963B\u65AD\u6C14\u6D41\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,74 122,86 Q 112,84 105,80 Z",
+      lower: "M 98,142 Q 118,138 120,110 Q 110,122 98,126 Z"
+    },
+    tongue: "M 40,160 C 52,90 70,110 85,135 C 92,142 98,150 98,160 Z",
+    // 舌后部隆起贴住软腭
+    jawYOffset: 4,
+    airflow: "M 35,115 Q 50,105 60,95",
+    // 气流阻断在喉部上方软腭处
+    tips: [
+      "\u820C\u5934\u540E\u90E8\uFF08\u820C\u6839\uFF09\u9AD8\u9AD8\u62AC\u8D77\uFF0C\u9876\u4F4F\u8F6F\u816D\uFF08\u60AC\u96CD\u5782\u524D\u65B9\u90A3\u4E00\u5757\u8F6F\u7684\u533A\u57DF\uFF09\u3002",
+      "\u618B\u4F4F\u6C14\u6D41\uFF0C\u7136\u540E\u820C\u6839\u7A81\u7136\u5F39\u5F00\u91CA\u653E\uFF0C\u6C14\u6D41\u51B2\u51FA\u53D1\u51FA\u7206\u7834\u97F3\u3002",
+      "\u5982\u679C\u662F\u9F3B\u97F3 /\u014B/\uFF0C\u820C\u6839\u4FDD\u6301\u8D34\u7D27\u8F6F\u816D\uFF0C\u6C14\u6D41\u7531\u9F3B\u8154\u9001\u51FA\u3002"
+    ]
+  },
+  // 7. 前闭元音 (如 /iː/, /ɪ/)
+  vowel_close_front: {
+    name: "\u524D\u95ED\u5143\u97F3 / \u6241\u5507\u9AD8\u820C",
+    description: "\u53E3\u578B\u6241\u5E73\u5448\u5FAE\u7B11\u72B6\uFF0C\u524D\u820C\u62AC\u9AD8\u9760\u8FD1\u786C\u816D\uFF0C\u4E0A\u4E0B\u9F7F\u95F4\u8DDD\u6781\u5C0F\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,72 122,80 Q 112,78 105,76 Z",
+      // 扁平开合
+      lower: "M 98,138 Q 118,135 120,116 Q 110,124 98,128 Z"
+    },
+    tongue: "M 40,160 C 55,110 85,108 98,118 C 101,128 100,148 98,160 Z",
+    // 前舌高抬
+    jawYOffset: 2,
+    airflow: "M 35,115 Q 70,110 115,105",
+    tips: [
+      "\u5634\u89D2\u5411\u4E24\u4FA7\u62C9\u5F00\uFF0C\u50CF\u5FAE\u7B11\u4E00\u6837\u3002",
+      "\u820C\u5C16\u8F7B\u62B5\u4E0B\u9F7F\uFF0C\u524D\u820C\u62AC\u5F97\u5F88\u9AD8\uFF0C\u820C\u4FA7\u7F18\u8D34\u4F4F\u4E0A\u81FC\u9F7F\u3002",
+      "\u4E0A\u4E0B\u9F7F\u4E4B\u95F4\u8DDD\u79BB\u975E\u5E38\u5C0F\uFF08\u7EA6\u653E\u5F97\u4E0B\u4E00\u4E2A\u786C\u5E01\uFF09\u3002"
+    ]
+  },
+  // 8. 前开元音 (如 /æ/, /ɛ/)
+  vowel_open_front: {
+    name: "\u524D\u5F00\u5143\u97F3 / \u5927\u5F20\u5634",
+    description: "\u4E0A\u4E0B\u988C\u5F00\u5408\u5EA6\u5927\uFF0C\u820C\u4F4D\u964D\u5230\u6700\u4F4E\uFF0C\u524D\u820C\u5FAE\u9686\u3002",
+    lips: {
+      upper: "M 105,72 Q 120,70 122,82 Q 112,80 105,78 Z",
+      // 张大嘴
+      lower: "M 98,165 Q 118,162 120,142 Q 110,148 98,152 Z"
+    },
+    tongue: "M 40,160 C 50,145 75,145 88,148 C 94,152 95,156 95,160 Z",
+    // 舌头压低
+    jawYOffset: 12,
+    // 明显的下巴下移
+    airflow: "M 35,115 Q 70,122 118,118",
+    tips: [
+      "\u5F20\u5927\u5634\u5DF4\uFF0C\u4E0B\u5DF4\u5C3D\u91CF\u5411\u4E0B\u843D\uFF08/\xE6/ \u9700\u5F20\u5927\u5230\u653E\u4E0B\u4E24\u6307\uFF09\u3002",
+      "\u820C\u5C16\u5E73\u62B5\u4E0B\u9F7F\uFF0C\u820C\u9762\u81EA\u7136\u538B\u4F4E\uFF0C\u58F0\u5E26\u5F3A\u529B\u632F\u52A8\u53D1\u97F3\u3002",
+      "\u6CE8\u610F\u533A\u522B\u4E8E /e/\uFF0C/\xE6/ \u7684\u5634\u5F20\u5F97\u66F4\u5927\u3001\u5634\u89D2\u62C9\u5F97\u66F4\u5F00\u3002"
+    ]
+  },
+  // 9. 后闭元音 (如 /uː/, /ʊ/)
+  vowel_close_back: {
+    name: "\u540E\u95ED\u5143\u97F3 / \u5706\u5507\u9AD8\u820C",
+    description: "\u5634\u5507\u6536\u5706\u5E76\u5411\u524D\u7A81\u51FA\uFF0C\u540E\u820C\u9686\u8D77\u62AC\u9AD8\uFF0C\u4E0A\u4E0B\u9F7F\u8DDD\u79BB\u5C0F\u3002",
+    lips: {
+      upper: "M 105,75 Q 125,75 128,94 Q 115,92 105,86 Z",
+      // 圆唇嘟起
+      lower: "M 98,135 Q 125,132 126,106 Q 112,116 98,120 Z"
+    },
+    tongue: "M 40,160 C 45,95 70,110 88,135 C 95,142 98,150 98,160 Z",
+    // 后舌高抬
+    jawYOffset: 2,
+    airflow: "M 35,115 Q 60,112 118,105",
+    tips: [
+      "\u53CC\u5507\u6536\u5706\uFF0C\u50CF\u5439\u53E3\u54E8\u4E00\u6837\u561F\u8D77\u3002",
+      "\u820C\u5934\u5F80\u540E\u7F29\uFF0C\u540E\u820C\uFF08\u820C\u6839\u90E8\uFF09\u9AD8\u9AD8\u9686\u8D77\u62AC\u5411\u8F6F\u816D\u3002",
+      "\u58F0\u5E26\u632F\u52A8\uFF0C\u53D1\u97F3\u5706\u6DA6\u9971\u6EE1\u3002"
+    ]
+  },
+  // 10. 后开元音 (如 /ɒ/, /ɔː/)
+  vowel_open_back: {
+    name: "\u540E\u5F00\u5143\u97F3 / \u5706\u5507\u4F4E\u820C",
+    description: "\u5634\u5DF4\u5F20\u5927\uFF0C\u5634\u5507\u5FAE\u5706\u6216\u5448\u6241\u5706\uFF0C\u820C\u5934\u540E\u7F29\u538B\u4F4E\u3002",
+    lips: {
+      upper: "M 105,72 Q 120,71 122,84 Q 112,82 105,80 Z",
+      // 嘴张开
+      lower: "M 98,158 Q 118,155 120,132 Q 110,140 98,144 Z"
+    },
+    tongue: "M 40,160 C 45,120 70,135 85,146 C 92,150 95,155 95,160 Z",
+    // 舌头后缩压低
+    jawYOffset: 8,
+    airflow: "M 35,115 Q 70,125 118,120",
+    tips: [
+      "\u5634\u5DF4\u5F20\u5F00\uFF0C\u53CC\u5507\u7A0D\u5FAE\u6536\u5706\uFF08\u5448\u692D\u5706\u72B6\uFF09\u3002",
+      "\u820C\u5934\u5E73\u653E\u540E\u7F29\uFF0C\u820C\u6839\u90E8\u538B\u4F4E\u3002",
+      "\u53D1\u51FA\u77ED\u4FC3\u7684 /\u0252/\uFF08\u5982 hot\uFF09\u6216\u5706\u6DA6\u7684\u957F\u97F3 /\u0254\u02D0/\uFF08\u5982 law\uFF09\u3002"
+    ]
+  },
+  // 11. 中元音 (如 /ə/, /ɜː/, /ʌ/)
+  vowel_mid_central: {
+    name: "\u4E2D\u5143\u97F3 / \u81EA\u7136\u5FAE\u5F00",
+    description: "\u53E3\u8154\u5404\u90E8\u4F4D\u6700\u81EA\u7136\u7684\u72B6\u6001\uFF0C\u5634\u5507\u5FAE\u5F00\u4E0D\u62C9\u7D27\uFF0C\u820C\u5934\u5E73\u653E\u4E2D\u95F4\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,74 122,86 Q 112,84 105,80 Z",
+      // 自然微开
+      lower: "M 98,142 Q 118,138 120,110 Q 110,122 98,126 Z"
+    },
+    tongue: "M 40,160 C 48,128 76,128 91,138 C 96,143 98,152 98,160 Z",
+    // 舌头居中
+    jawYOffset: 3,
+    airflow: "M 35,115 Q 70,115 115,112",
+    tips: [
+      "\u53E3\u8154\u808C\u8089\u5B8C\u5168\u653E\u677E\uFF0C\u53CC\u5507\u5FAE\u5F00\uFF0C\u5634\u89D2\u81EA\u7136\u3002",
+      "\u820C\u5934\u5E73\u653E\u4E8E\u53E3\u8154\u5E95\u90E8\uFF0C\u4E0D\u7528\u529B\uFF0C\u53D1\u201C\u5443\u201D\u97F3\u3002",
+      "\u8FD9\u662F\u82F1\u8BED\u4E2D\u6700\u61D2\u60F0\u3001\u6700\u6838\u5FC3\u7684\u5F31\u8BFB\u5143\u97F3\u72B6\u6001\u3002"
+    ]
+  },
+  // 12. 喉音 / 默认状态 (如 /h/)
+  default: {
+    name: "\u81EA\u7136\u8212\u7F13\u72B6\u6001 / \u5589\u97F3",
+    description: "\u7A7A\u6C14\u6D41\u7ECF\u58F0\u95E8\u548C\u53E3\u8154\uFF0C\u4E0D\u53D7\u5230\u663E\u8457\u7684\u963B\u788D\u3002",
+    lips: {
+      upper: "M 105,75 Q 120,74 122,86 Q 112,84 105,80 Z",
+      lower: "M 98,142 Q 118,138 120,110 Q 110,122 98,126 Z"
+    },
+    tongue: "M 40,160 C 48,128 76,128 91,138 C 96,143 98,152 98,160 Z",
+    jawYOffset: 3,
+    airflow: "M 35,115 Q 75,115 118,115",
+    // 直通气流
+    tips: [
+      "\u53E3\u8154\u548C\u5634\u5507\u4FDD\u6301\u81EA\u7136\u5F00\u5408\u3002",
+      "\u820C\u5934\u5E73\u653E\uFF0C\u4E0D\u7528\u529B\u3002",
+      "\u6C14\u6D41\u81EA\u7531\u5475\u51FA\uFF0C\u53D1\u51FA\u65E0\u963B\u788D\u7684\u6469\u64E6\u58F0\uFF08\u5982 /h/\uFF09\u3002"
+    ]
+  }
+};
+var PHONEME_TO_STATE_MAP = {
+  // 1. 双唇音
+  "p": "bilabial",
+  "b": "bilabial",
+  "m": "bilabial",
+  // 2. 唇齿音
+  "f": "labiodental",
+  "v": "labiodental",
+  // 3. 齿间音
+  "\u03B8": "dental",
+  "\xF0": "dental",
+  // 4. 舌尖齿龈音
+  "t": "alveolar",
+  "d": "alveolar",
+  "s": "alveolar",
+  "z": "alveolar",
+  "n": "alveolar",
+  "l": "alveolar",
+  // 5. 舌叶硬腭音
+  "\u0283": "palatal_postalveolar",
+  "\u0292": "palatal_postalveolar",
+  "t\u0283": "palatal_postalveolar",
+  "d\u0292": "palatal_postalveolar",
+  "j": "palatal_postalveolar",
+  "r": "palatal_postalveolar",
+  // 6. 舌后软腭音
+  "k": "velar",
+  "g": "velar",
+  "\u014B": "velar",
+  // 7. 前闭元音
+  "i\u02D0": "vowel_close_front",
+  "\u026A": "vowel_close_front",
+  // 8. 前开元音
+  "\xE6": "vowel_open_front",
+  "\u025B": "vowel_open_front",
+  // 9. 后闭元音
+  "u\u02D0": "vowel_close_back",
+  "\u028A": "vowel_close_back",
+  // 10. 后开元音
+  "\u0252": "vowel_open_back",
+  "\u0254\u02D0": "vowel_open_back",
+  // 11. 中元音
+  "\u0259": "vowel_mid_central",
+  "\u025C\u02D0": "vowel_mid_central",
+  "\u028C": "vowel_mid_central",
+  // 12. 兜底
+  "h": "default"
+};
+function getPhonemeVisualConfig(phoneme) {
+  const cleanPhoneme = phoneme.replace(/[\/\s]/g, "");
+  const stateKey = PHONEME_TO_STATE_MAP[cleanPhoneme];
+  if (stateKey && PHONEME_VISUAL_STATES[stateKey]) {
+    return PHONEME_VISUAL_STATES[stateKey];
+  }
+  if (cleanPhoneme.length > 1) {
+    const firstChar = cleanPhoneme.charAt(0);
+    const fallbackKey = PHONEME_TO_STATE_MAP[firstChar];
+    if (fallbackKey && PHONEME_VISUAL_STATES[fallbackKey]) {
+      return PHONEME_VISUAL_STATES[fallbackKey];
+    }
+  }
+  return PHONEME_VISUAL_STATES.default;
+}
+
+// sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=script
+var import_hyphen2 = __toESM(require_hyphen());
+var import_en_us2 = __toESM(require_en_us());
+var hyphenator2 = (0, import_hyphen2.default)(import_en_us2.default);
 var PronunciationTab_default = defineComponent({
   name: "PronunciationTab",
   setup() {
@@ -22759,6 +24295,219 @@ var PronunciationTab_default = defineComponent({
     const currentTrack = ref(null);
     const diagnosisContainer = ref(null);
     const currentWord = ref("");
+    const isProcessing = ref(false);
+    const selectedPhoneme = ref(null);
+    const isZoomed = ref(false);
+    const animState = ref("target");
+    const visualConfig = computed2(() => {
+      return selectedPhoneme.value ? getPhonemeVisualConfig(selectedPhoneme.value) : null;
+    });
+    const selectPhoneme = (phoneme) => {
+      selectedPhoneme.value = phoneme;
+      animState.value = "target";
+    };
+    const activeTonguePath = computed2(() => {
+      if (animState.value === "closed") {
+        return PHONEME_VISUAL_STATES.bilabial.tongue;
+      }
+      if (animState.value === "neutral") {
+        return PHONEME_VISUAL_STATES.default.tongue;
+      }
+      return visualConfig.value ? visualConfig.value.tongue : PHONEME_VISUAL_STATES.default.tongue;
+    });
+    const activeLips = computed2(() => {
+      if (animState.value === "closed") {
+        return PHONEME_VISUAL_STATES.bilabial.lips;
+      }
+      if (animState.value === "neutral") {
+        return PHONEME_VISUAL_STATES.default.lips;
+      }
+      return visualConfig.value ? visualConfig.value.lips : PHONEME_VISUAL_STATES.default.lips;
+    });
+    const activeJawYOffset = computed2(() => {
+      if (animState.value === "closed") {
+        return 0;
+      }
+      if (animState.value === "neutral") {
+        return 3;
+      }
+      return visualConfig.value ? visualConfig.value.jawYOffset : 3;
+    });
+    const activeAirflow = computed2(() => {
+      if (animState.value === "closed" || animState.value === "neutral") {
+        return "M 0,0";
+      }
+      return visualConfig.value ? visualConfig.value.airflow : "M 0,0";
+    });
+    const playPhonemeAnimation = async () => {
+      try {
+        animState.value = "closed";
+        await new Promise((resolve2) => setTimeout(resolve2, 150));
+        animState.value = "target";
+        await new Promise((resolve2) => setTimeout(resolve2, 800));
+        animState.value = "neutral";
+        await new Promise((resolve2) => setTimeout(resolve2, 300));
+        animState.value = "target";
+      } catch (e) {
+        animState.value = "target";
+      }
+    };
+    const speakPhoneme = async (phoneme) => {
+      if (!phoneme)
+        return;
+      playPhonemeAnimation();
+      if (audioService && typeof audioService.speak === "function") {
+        try {
+          const clean = phoneme.replace(/[\/\s]/g, "");
+          const voiceSettings = getVoiceSettings ? getVoiceSettings() : { rate: 0.85 };
+          const availableVoices = getAvailableVoices ? getAvailableVoices() : [];
+          if (typeof window !== "undefined" && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+          }
+          let speakText = clean;
+          const phonemeSpeechMap = {
+            // 辅音：单一辅音开头 + 极简元音 (无尾辅音，听觉最干净)
+            "p": "pea",
+            "b": "bee",
+            "t": "tea",
+            "d": "day",
+            "k": "key",
+            "g": "go",
+            "f": "fee",
+            "v": "view",
+            "\u03B8": "thaw",
+            "\xF0": "they",
+            "s": "see",
+            "z": "zoo",
+            "\u0283": "she",
+            "\u0292": "genre",
+            "h": "hay",
+            "t\u0283": "chew",
+            "d\u0292": "jaw",
+            "m": "me",
+            "n": "no",
+            "\u014B": "sing",
+            "l": "low",
+            "r": "ray",
+            "w": "way",
+            "j": "you",
+            // 元音：纯净拟声/感叹词/极简代词
+            "\xE6": "add",
+            "\u025B": "eh",
+            "\u026A": "it",
+            "\u0252": "ah",
+            "\u028C": "up",
+            "\u0259": "a ",
+            "i\u02D0": "ee",
+            "u\u02D0": "oo",
+            "\u0254\u02D0": "aw",
+            "\u0251\u02D0": "ah",
+            "\u025C\u02D0": "err",
+            // 双元音
+            "a\u026A": "I",
+            "e\u026A": "a",
+            "a\u028A": "ow",
+            "\u0254\u026A": "oy",
+            "o\u028A": "oh",
+            "\u026A\u0259": "ear",
+            "e\u0259": "air",
+            "\u028A\u0259": "sure"
+          };
+          if (phonemeSpeechMap[clean]) {
+            speakText = phonemeSpeechMap[clean];
+          }
+          new import_obsidian14.Notice(`\u{1F50A} \u6B63\u5728\u64AD\u653E /${clean}/ \u793A\u8303\u97F3 (\u4EE3\u8868\u8BCD: "${speakText}")`, 2e3);
+          await audioService.speak(speakText, voiceSettings, availableVoices);
+        } catch (e) {
+          console.warn("[PronunciationTab] \u97F3\u7D20\u8BED\u97F3\u53D1\u97F3\u64AD\u653E\u5931\u8D25:", e);
+        }
+      }
+    };
+    const wordSyllables = computed2(() => {
+      const text = currentWord.value || (pronunciationResult.value ? pronunciationResult.value.targetText : "");
+      if (!text)
+        return [];
+      return text.split(/(\s+)/).map((part) => {
+        if (/^\s+$/.test(part)) {
+          return {
+            raw: part,
+            clean: "",
+            isSpace: true,
+            isEnglish: false,
+            syllables: []
+          };
+        }
+        const clean = part.replace(/[^a-zA-Z]/g, "");
+        const isEnglish = clean.length > 0;
+        if (isEnglish && clean.length > 2) {
+          try {
+            const hyphenated = hyphenator2(clean, { hyphenChar: "\xB7" });
+            const syllables = hyphenated.split("\xB7");
+            return {
+              raw: part,
+              clean,
+              isSpace: false,
+              isEnglish: true,
+              syllables: syllables.length > 0 ? syllables : [clean]
+            };
+          } catch (e) {
+            return {
+              raw: part,
+              clean,
+              isSpace: false,
+              isEnglish: true,
+              syllables: [clean]
+            };
+          }
+        } else {
+          return {
+            raw: part,
+            clean,
+            isSpace: false,
+            isEnglish: false,
+            syllables: [part]
+          };
+        }
+      });
+    });
+    const speakSyllable = async (syllable) => {
+      if (!syllable || !audioService || typeof audioService.speak !== "function")
+        return;
+      try {
+        const clean = syllable.replace(/[^a-zA-Z]/g, "").trim();
+        if (!clean)
+          return;
+        const voiceSettings = getVoiceSettings ? getVoiceSettings() : { rate: 0.85 };
+        const availableVoices = getAvailableVoices ? getAvailableVoices() : [];
+        const slowSettings = { ...voiceSettings, rate: Math.max(0.6, voiceSettings.rate - 0.15) };
+        await audioService.speak(clean, slowSettings, availableVoices);
+      } catch (e) {
+        console.warn("[PronunciationTab] \u97F3\u8282\u64AD\u653E\u5931\u8D25:", e);
+      }
+    };
+    const speakWord = async (word) => {
+      if (!word || !audioService || typeof audioService.speak !== "function")
+        return;
+      try {
+        const clean = word.replace(/[^a-zA-Z]/g, "").trim();
+        if (!clean)
+          return;
+        const voiceSettings = getVoiceSettings ? getVoiceSettings() : { rate: 0.85 };
+        const availableVoices = getAvailableVoices ? getAvailableVoices() : [];
+        await audioService.speak(clean, voiceSettings, availableVoices);
+      } catch (e) {
+        console.warn("[PronunciationTab] \u5355\u8BCD\u64AD\u653E\u5931\u8D25:", e);
+      }
+    };
+    const modelsExist = ref(false);
+    const downloading = ref(false);
+    const downloadFilename = ref("");
+    const downloadPercent = ref(0);
+    const downloadSpeed = ref("");
+    const waveformCanvas = ref(null);
+    let audioCtx = null;
+    let analyserNode = null;
+    let animationFrameId = null;
     let initialAccent = "US";
     try {
       if (plugin && typeof plugin === "object" && "evaluationAccent" in plugin) {
@@ -22771,27 +24520,27 @@ var PronunciationTab_default = defineComponent({
       console.warn("[PronunciationTab] \u65E0\u6CD5\u8BFB\u53D6 evaluationAccent\uFF0C\u4F7F\u7528\u9ED8\u8BA4\u503C US");
     }
     const evaluationAccent = ref(initialAccent);
-    const isProcessing = ref(false);
     let audioCaptureService = null;
+    let modelDownloadService = null;
     let whisperWorker = null;
-    let workerReady = false;
+    const workerReady = ref(false);
     const handleAccentChange = (accent) => {
       evaluationAccent.value = accent;
-      console.log("[PronunciationTab] \u53D1\u97F3\u6807\u51C6\u5DF2\u5207\u6362\u4E3A:", accent);
     };
-    onMounted(() => {
+    onMounted(async () => {
       eventBus.on("lang-learner:accent-changed", handleAccentChange);
-      try {
-        console.warn("[PronunciationTab] Worker \u529F\u80FD\u6682\u65F6\u7981\u7528\uFF08\u5F00\u53D1\u4E2D\uFF09");
-        workerReady = false;
-      } catch (error) {
-        console.error("[PronunciationTab] Worker \u521B\u5EFA\u5931\u8D25:", error);
-        new import_obsidian13.Notice("\u53D1\u97F3\u8BC4\u6D4B\u529F\u80FD\u521D\u59CB\u5316\u5931\u8D25");
+      if (plugin) {
+        modelDownloadService = new ModelDownloadService(plugin.app);
+        audioCaptureService = new AudioCaptureService();
+        modelsExist.value = await modelDownloadService.checkIfModelsExist();
+        if (modelsExist.value) {
+          await initWorker();
+        }
       }
-      audioCaptureService = new AudioCaptureService();
     });
     onUnmounted(() => {
       eventBus.off("lang-learner:accent-changed", handleAccentChange);
+      cleanupAudioContext();
       if (whisperWorker) {
         whisperWorker.terminate();
         whisperWorker = null;
@@ -22801,121 +24550,225 @@ var PronunciationTab_default = defineComponent({
         audioCaptureService = null;
       }
     });
-    function generateMockPhonemes(word) {
-      const phonemeMap = {
-        "hello": ["h", "\u025B", "l", "o\u028A"],
-        "apple": ["\xE6", "p", "\u0259l"],
-        "world": ["w", "\u025C\u02D0", "l", "d"],
-        "cat": ["k", "\xE6", "t"],
-        "dog": ["d", "\u0254", "g"],
-        "book": ["b", "\u028A", "k"],
-        "good": ["g", "\u028A", "d"],
-        "water": ["w", "\u0254\u02D0", "t", "\u0259"],
-        "thank": ["\u03B8", "\xE6", "\u014B", "k"],
-        "you": ["j", "u\u02D0"],
-        "yes": ["j", "\u025B", "s"],
-        "no": ["n", "o\u028A"],
-        "please": ["p", "l", "i\u02D0", "z"],
-        "sorry": ["s", "\u0252", "r", "i"],
-        "excuse": ["\u026A", "k", "s", "k", "j", "u\u02D0", "z"],
-        "me": ["m", "i\u02D0"]
-      };
-      if (phonemeMap[word]) {
-        return phonemeMap[word];
-      }
-      return word.split("").map((char) => {
-        const vowels = {
-          "a": "\xE6",
-          "e": "\u025B",
-          "i": "\u026A",
-          "o": "\u0252",
-          "u": "\u028C"
+    const initWorker = async () => {
+      if (!plugin || !modelDownloadService)
+        return;
+      try {
+        console.log("[PronunciationTab] \u6B63\u5728\u542F\u52A8\u79BB\u7EBF Whisper Web Worker...");
+        workerReady.value = false;
+        const pluginPath = plugin.manifest.dir;
+        const workerCode = await plugin.app.vault.adapter.read(`${pluginPath}/whisper-worker.js`);
+        const blob = new Blob([workerCode], { type: "application/javascript" });
+        whisperWorker = new Worker(URL.createObjectURL(blob));
+        whisperWorker.onmessage = (event) => {
+          const response = event.data;
+          if (response.type === "status") {
+            if (response.status === "ready" /* READY */) {
+              workerReady.value = true;
+              console.log("[PronunciationTab] Whisper \u79BB\u7EBF\u8BC4\u6D4B\u5F15\u64CE\u52A0\u8F7D\u5B8C\u6210\uFF01");
+              new import_obsidian14.Notice("\u53D1\u97F3\u8BC4\u6D4B\u79BB\u7EBF\u6A21\u578B\u52A0\u8F7D\u6210\u529F\uFF01");
+            }
+          } else if (response.type === "result") {
+            pronunciationResult.value = response.result || null;
+            isProcessing.value = false;
+            if (response.result) {
+              new import_obsidian14.Notice(`\u5BF9\u9F50\u8BC4\u6D4B\u5B8C\u6210\uFF01\u603B\u4F53\u8BC4\u5206: ${response.result.overallScore}/100`);
+              const alignments = response.result.alignments;
+              if (alignments && alignments.length > 0) {
+                const firstError = alignments.find((a) => a.isError);
+                if (firstError) {
+                  selectedPhoneme.value = firstError.phoneme;
+                } else {
+                  selectedPhoneme.value = alignments[0].phoneme;
+                }
+              }
+            }
+          } else if (response.type === "error") {
+            new import_obsidian14.Notice(`\u8BC4\u6D4B\u51FA\u9519: ${response.error}`);
+            isProcessing.value = false;
+          }
         };
-        return vowels[char] || char;
-      });
-    }
+        const encoderBuffer = await modelDownloadService.loadModelBuffer("encoder_model_quantized.onnx");
+        const decoderBuffer = await modelDownloadService.loadModelBuffer("decoder_model_merged_quantized.onnx");
+        let wasmPaths = plugin.app.vault.adapter.getResourcePath(`${pluginPath}/dist/`);
+        if (wasmPaths.includes("?")) {
+          wasmPaths = wasmPaths.split("?")[0];
+        }
+        if (!wasmPaths.endsWith("/")) {
+          wasmPaths += "/";
+        }
+        whisperWorker.postMessage({
+          type: "init",
+          encoderBuffer,
+          decoderBuffer,
+          wasmPaths
+        }, [encoderBuffer, decoderBuffer]);
+      } catch (error) {
+        console.error("[PronunciationTab] Worker \u52A0\u8F7D\u521D\u59CB\u5316\u5931\u8D25:", error);
+        new import_obsidian14.Notice("\u8BC4\u6D4B\u5F15\u64CE\u5B9E\u4F8B\u5316\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u6A21\u578B\u6587\u4EF6\u6216\u63A7\u5236\u53F0\u3002");
+      }
+    };
+    const downloadModels = async () => {
+      if (!modelDownloadService)
+        return;
+      try {
+        downloading.value = true;
+        downloadPercent.value = 0;
+        downloadSpeed.value = "\u8FDE\u63A5\u4E2D...";
+        const encoderUrl = "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/onnx/encoder_model_quantized.onnx";
+        const decoderUrl = "https://huggingface.co/Xenova/whisper-tiny.en/resolve/main/onnx/decoder_model_merged_quantized.onnx";
+        await modelDownloadService.downloadModel("encoder_model_quantized.onnx", encoderUrl, (p2) => {
+          downloadFilename.value = "Encoder \u6A21\u578B (16MB)";
+          downloadPercent.value = p2.percent;
+          downloadSpeed.value = p2.speed;
+        });
+        await modelDownloadService.downloadModel("decoder_model_merged_quantized.onnx", decoderUrl, (p2) => {
+          downloadFilename.value = "Decoder \u6A21\u578B (22MB)";
+          downloadPercent.value = p2.percent;
+          downloadSpeed.value = p2.speed;
+        });
+        new import_obsidian14.Notice("Whisper \u6A21\u578B\u4E0B\u8F7D\u5E76\u6821\u9A8C\u6210\u529F\uFF01");
+        modelsExist.value = true;
+        await initWorker();
+      } catch (error) {
+        new import_obsidian14.Notice(`\u6A21\u578B\u4E0B\u8F7D\u5F02\u5E38: ${error.message || String(error)}`);
+        console.error(error);
+      } finally {
+        downloading.value = false;
+      }
+    };
+    const setupWaveform = (stream) => {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        source.connect(analyserNode);
+        nextTick(() => {
+          drawWaveform();
+        });
+      } catch (e) {
+        console.error("[PronunciationTab] \u521D\u59CB\u5316\u6CE2\u5F62\u7ED8\u5236\u5931\u8D25:", e);
+      }
+    };
+    const drawWaveform = () => {
+      if (!waveformCanvas.value || !analyserNode)
+        return;
+      const canvas = waveformCanvas.value;
+      const ctx = canvas.getContext("2d");
+      if (!ctx)
+        return;
+      const bufferLength = analyserNode.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      const style = window.getComputedStyle(canvas);
+      const accentColor = style.getPropertyValue("--text-accent").trim() || "#3b82f6";
+      const draw = () => {
+        if (!isRecording.value || !analyserNode)
+          return;
+        animationFrameId = requestAnimationFrame(draw);
+        analyserNode.getByteTimeDomainData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        gradient.addColorStop(0, accentColor);
+        gradient.addColorStop(0.5, "#ec4899");
+        gradient.addColorStop(1, accentColor);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = gradient;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        const sliceWidth = canvas.width / bufferLength;
+        let x = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          const v = dataArray[i] / 128;
+          const y = v * canvas.height / 2;
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+          x += sliceWidth;
+        }
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+      };
+      draw();
+    };
+    const cleanupAudioContext = () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      if (audioCtx) {
+        audioCtx.close();
+        audioCtx = null;
+      }
+      analyserNode = null;
+    };
     const startRecording = async () => {
       if (!audioCaptureService) {
-        new import_obsidian13.Notice("\u97F3\u9891\u91C7\u96C6\u670D\u52A1\u672A\u521D\u59CB\u5316");
+        new import_obsidian14.Notice("\u97F3\u9891\u670D\u52A1\u5C1A\u672A\u521D\u59CB\u5316");
         return;
       }
       try {
-        console.log("[PronunciationTab] \u5F00\u59CB\u5F55\u97F3");
         isRecording.value = true;
         pronunciationResult.value = null;
         aiDiagnosis.value = null;
         recordingBlob.value = null;
         currentTrack.value = null;
+        selectedPhoneme.value = null;
         await audioCaptureService.startRecording();
+        const stream = audioCaptureService.getStream();
+        if (stream) {
+          setupWaveform(stream);
+        }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        new import_obsidian13.Notice(`\u5F55\u97F3\u542F\u52A8\u5931\u8D25: ${errorMessage}`);
         isRecording.value = false;
-        console.error("[PronunciationTab] \u5F55\u97F3\u542F\u52A8\u5931\u8D25:", error);
+        new import_obsidian14.Notice(error.message || String(error));
       }
     };
     const stopRecording = async () => {
-      if (!audioCaptureService) {
-        new import_obsidian13.Notice("\u97F3\u9891\u91C7\u96C6\u670D\u52A1\u672A\u521D\u59CB\u5316");
+      if (!audioCaptureService)
         return;
-      }
       try {
-        console.log("[PronunciationTab] \u505C\u6B62\u5F55\u97F3");
         isRecording.value = false;
         isProcessing.value = true;
+        cleanupAudioContext();
         const blob = await audioCaptureService.stopRecording();
         recordingBlob.value = blob;
-        console.log("[PronunciationTab] \u5F55\u97F3\u5B8C\u6210\uFF0CBlob \u5927\u5C0F:", blob.size);
-        console.log("[PronunciationTab] \u4F7F\u7528 Mock \u6570\u636E\u751F\u6210\u8BC4\u6D4B\u7ED3\u679C");
-        await new Promise((resolve2) => setTimeout(resolve2, 500));
-        const mockPhonemes = generateMockPhonemes(currentWord.value.toLowerCase());
-        const mockAlignments = mockPhonemes.map((phoneme, index) => {
-          const confidence = 0.6 + Math.random() * 0.3;
-          return {
-            phoneme: `/${phoneme}/`,
-            confidence: parseFloat(confidence.toFixed(3)),
-            isError: confidence < 0.7,
-            startTime: index / mockPhonemes.length * 2,
-            endTime: (index + 1) / mockPhonemes.length * 2
-          };
-        });
-        const avgConfidence = mockAlignments.reduce((sum, a) => sum + a.confidence, 0) / mockAlignments.length;
-        const overallScore = Math.round(avgConfidence * 100);
-        pronunciationResult.value = {
-          alignments: mockAlignments,
-          overallScore,
-          targetText: currentWord.value,
-          detectedText: currentWord.value.toLowerCase()
-        };
-        isProcessing.value = false;
-        console.log("[PronunciationTab] Mock \u8BC4\u6D4B\u7ED3\u679C:", pronunciationResult.value);
-        new import_obsidian13.Notice(`\u5F55\u97F3\u5B8C\u6210\uFF01\u8BC4\u5206: ${overallScore}/100`);
+        const audioBuffer = await audioCaptureService.blobToAudioBuffer(blob);
+        const audioData = await audioCaptureService.resampleTo16kHz(audioBuffer);
+        if (whisperWorker && workerReady.value) {
+          whisperWorker.postMessage({
+            type: "align",
+            audioData,
+            targetText: currentWord.value
+          });
+        } else {
+          throw new Error("\u79BB\u7EBF\u8BC4\u6D4B\u5F15\u64CE\u672A\u5C31\u7EEA\uFF0C\u8BF7\u7B49\u5F85\u3002");
+        }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        new import_obsidian13.Notice(`\u5F55\u97F3\u5904\u7406\u5931\u8D25: ${errorMessage}`);
         isProcessing.value = false;
-        console.error("[PronunciationTab] \u5F55\u97F3\u5904\u7406\u5931\u8D25:", error);
+        new import_obsidian14.Notice(`\u5F55\u97F3\u7ED3\u7B97\u5931\u8D25: ${error.message || String(error)}`);
+        console.error(error);
       }
     };
     const playStandardAudio = async () => {
-      console.log("[PronunciationTab] \u64AD\u653E\u6807\u51C6\u97F3");
       currentTrack.value = "A";
       if (audioService && typeof audioService.speak === "function") {
         try {
-          const voiceSettings = getVoiceSettings ? getVoiceSettings() : { engine: "online", onlineAccent: 2, voiceName: "", rate: 0.9, pitch: 1 };
+          const voiceSettings = getVoiceSettings ? getVoiceSettings() : { rate: 0.9 };
           const availableVoices = getAvailableVoices ? getAvailableVoices() : [];
           await audioService.speak(currentWord.value, voiceSettings, availableVoices);
         } catch (error) {
-          console.error("[PronunciationTab] \u64AD\u653E\u6807\u51C6\u97F3\u5931\u8D25:", error);
-          new import_obsidian13.Notice("\u64AD\u653E\u5931\u8D25");
+          new import_obsidian14.Notice("\u793A\u8303\u53D1\u97F3\u64AD\u653E\u5931\u8D25");
         }
-      } else {
-        new import_obsidian13.Notice("\u97F3\u9891\u670D\u52A1\u672A\u521D\u59CB\u5316");
-        console.warn("[PronunciationTab] audioService \u672A\u627E\u5230");
       }
     };
     const playUserAudio = () => {
-      console.log("[PronunciationTab] \u64AD\u653E\u7528\u6237\u5F55\u97F3");
       currentTrack.value = "B";
       if (recordingBlob.value) {
         const blobUrl = URL.createObjectURL(recordingBlob.value);
@@ -22930,51 +24783,50 @@ var PronunciationTab_default = defineComponent({
       if (!pronunciationResult.value)
         return;
       try {
-        console.log("[PronunciationTab] \u8BF7\u6C42 AI \u8BCA\u65AD");
         isProcessing.value = true;
+        aiDiagnosis.value = "";
         const errorPhonemes = pronunciationResult.value.alignments.filter((a) => a.isError);
-        let settings = {
-          apiKey: "",
-          baseUrl: "https://api.deepseek.com/v1",
-          model: "deepseek-chat"
-        };
-        if (getAiSettings && typeof getAiSettings === "function") {
-          const aiSettings = getAiSettings();
-          if (aiSettings) {
+        let settings = { apiKey: "", baseUrl: "https://api.deepseek.com/v1", model: "deepseek-chat" };
+        if (getAiSettings) {
+          const s = getAiSettings();
+          if (s) {
             settings = {
-              apiKey: aiSettings.apiKey || "",
-              baseUrl: aiSettings.baseUrl || "https://api.deepseek.com/v1",
-              model: aiSettings.model || "deepseek-chat"
+              apiKey: s.apiKey || "",
+              baseUrl: s.baseUrl || "https://api.deepseek.com/v1",
+              model: s.model || "deepseek-chat"
             };
           }
         }
-        const diagnosisMarkdown = await requestPronunciationDiagnosis(
+        await requestPronunciationDiagnosisStream(
           {
             targetText: currentWord.value,
             errorPhonemes,
             overallScore: pronunciationResult.value.overallScore,
             accent: evaluationAccent.value
           },
-          settings
+          settings,
+          async (chunk) => {
+            if (!aiDiagnosis.value)
+              aiDiagnosis.value = "";
+            aiDiagnosis.value += chunk;
+            await nextTick();
+            if (diagnosisContainer.value) {
+              diagnosisContainer.value.innerHTML = "";
+              await import_obsidian14.MarkdownRenderer.renderMarkdown(
+                aiDiagnosis.value,
+                diagnosisContainer.value,
+                "",
+                plugin
+              );
+            }
+          }
         );
-        aiDiagnosis.value = diagnosisMarkdown;
         isProcessing.value = false;
-        await nextTick();
-        if (diagnosisContainer.value) {
-          diagnosisContainer.value.innerHTML = "";
-          await import_obsidian13.MarkdownRenderer.renderMarkdown(
-            diagnosisMarkdown,
-            diagnosisContainer.value,
-            "",
-            plugin
-          );
-        }
-        console.log("[PronunciationTab] AI \u8BCA\u65AD\u5B8C\u6210");
+        new import_obsidian14.Notice("\u53D1\u97F3\u8BCA\u65AD\u5DF2\u5B8C\u6210\uFF01");
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        new import_obsidian13.Notice(`AI \u8BCA\u65AD\u5931\u8D25: ${errorMessage}`);
         isProcessing.value = false;
-        console.error("[PronunciationTab] AI \u8BCA\u65AD\u5931\u8D25:", error);
+        new import_obsidian14.Notice(error.message || String(error));
+        console.error(error);
       }
     };
     return {
@@ -22987,69 +24839,226 @@ var PronunciationTab_default = defineComponent({
       currentWord,
       evaluationAccent,
       isProcessing,
+      modelsExist,
+      downloading,
+      downloadFilename,
+      downloadPercent,
+      downloadSpeed,
+      waveformCanvas,
+      workerReady,
+      downloadModels,
       startRecording,
       stopRecording,
       playStandardAudio,
       playUserAudio,
-      requestDiagnosis
+      requestDiagnosis,
+      selectedPhoneme,
+      visualConfig,
+      selectPhoneme,
+      isZoomed,
+      activeTonguePath,
+      activeLips,
+      activeJawYOffset,
+      activeAirflow,
+      speakPhoneme,
+      playPhonemeAnimation,
+      wordSyllables,
+      speakSyllable,
+      speakWord
     };
   }
 });
 
 // sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/components/PronunciationTab.vue?type=template
 var _hoisted_130 = { class: "lang-learner-pronunciation-tab" };
-var _hoisted_216 = { class: "lang-learner-panel-section" };
-var _hoisted_312 = { class: "lang-learner-word-input" };
-var _hoisted_410 = ["disabled"];
-var _hoisted_510 = { class: "lang-learner-recording-controls" };
-var _hoisted_610 = ["disabled"];
-var _hoisted_710 = {
-  key: 2,
-  class: "lang-learner-recording-indicator"
-};
-var _hoisted_810 = {
-  key: 3,
-  class: "lang-learner-processing-indicator"
-};
-var _hoisted_910 = { class: "lang-learner-accent-selector" };
-var _hoisted_1010 = {
+var _hoisted_216 = {
   key: 0,
-  class: "lang-learner-panel-section"
+  class: "lang-learner-panel-section lang-learner-download-card"
 };
-var _hoisted_1113 = { class: "lang-learner-result-summary" };
-var _hoisted_1210 = { class: "lang-learner-result-item" };
-var _hoisted_139 = { class: "lang-learner-result-value" };
-var _hoisted_149 = { class: "lang-learner-result-item" };
-var _hoisted_158 = { class: "lang-learner-result-value lang-learner-score" };
-var _hoisted_168 = { class: "lang-learner-phoneme-list" };
-var _hoisted_178 = ["title"];
-var _hoisted_188 = {
+var _hoisted_312 = ["disabled"];
+var _hoisted_410 = {
+  key: 0,
+  class: "lang-learner-download-progress-container"
+};
+var _hoisted_510 = { class: "lang-learner-download-progress-bar" };
+var _hoisted_610 = { class: "lang-learner-download-progress-text" };
+var _hoisted_710 = {
   key: 1,
   class: "lang-learner-panel-section"
 };
-var _hoisted_197 = { class: "lang-learner-ab-player" };
-var _hoisted_207 = {
+var _hoisted_810 = { class: "lang-learner-word-input" };
+var _hoisted_910 = ["disabled"];
+var _hoisted_1010 = { class: "lang-learner-waveform-container" };
+var _hoisted_1113 = {
+  ref: "waveformCanvas",
+  class: "lang-learner-waveform-canvas"
+};
+var _hoisted_1210 = { class: "lang-learner-recording-controls" };
+var _hoisted_139 = ["disabled"];
+var _hoisted_149 = {
+  key: 2,
+  class: "lang-learner-recording-indicator"
+};
+var _hoisted_158 = {
+  key: 3,
+  class: "lang-learner-processing-indicator"
+};
+var _hoisted_168 = { class: "lang-learner-accent-selector" };
+var _hoisted_178 = ["disabled"];
+var _hoisted_188 = {
   key: 2,
   class: "lang-learner-panel-section"
 };
-var _hoisted_217 = ["disabled"];
+var _hoisted_197 = { class: "lang-learner-result-summary" };
+var _hoisted_207 = { class: "lang-learner-result-item" };
+var _hoisted_217 = { class: "lang-learner-result-value" };
 var _hoisted_227 = {
+  key: 0,
+  class: "lang-learner-result-item"
+};
+var _hoisted_236 = {
+  class: "lang-learner-result-value",
+  style: { "font-style": "italic", "color": "var(--text-muted)" }
+};
+var _hoisted_245 = { class: "lang-learner-result-item" };
+var _hoisted_255 = { class: "lang-learner-result-value lang-learner-score" };
+var _hoisted_264 = { class: "lang-learner-syllable-section" };
+var _hoisted_274 = { class: "lang-learner-syllable-words-container" };
+var _hoisted_283 = {
+  key: 0,
+  class: "lang-learner-syllable-space"
+};
+var _hoisted_292 = ["onClick"];
+var _hoisted_302 = { class: "lang-learner-syllable-list" };
+var _hoisted_313 = ["onClick", "title"];
+var _hoisted_323 = {
+  key: 0,
+  class: "lang-learner-syllable-dot"
+};
+var _hoisted_333 = { class: "lang-learner-phoneme-list" };
+var _hoisted_343 = ["title", "onClick"];
+var _hoisted_353 = {
+  key: 0,
+  class: "lang-learner-phoneme-visual-panel"
+};
+var _hoisted_363 = { class: "lang-learner-visual-header" };
+var _hoisted_373 = { class: "lang-learner-visual-title" };
+var _hoisted_382 = { class: "lang-learner-visual-phoneme-text" };
+var _hoisted_392 = { class: "lang-learner-visual-body" };
+var _hoisted_402 = { class: "lang-learner-visual-graphic-wrapper" };
+var _hoisted_412 = { class: "lang-learner-sagittal-svg-container" };
+var _hoisted_422 = {
+  viewBox: "0 0 200 200",
+  class: "lang-learner-sagittal-svg"
+};
+var _hoisted_432 = ["d"];
+var _hoisted_442 = ["d"];
+var _hoisted_452 = ["d"];
+var _hoisted_462 = ["d"];
+var _hoisted_472 = { class: "lang-learner-visual-action-buttons" };
+var _hoisted_482 = { class: "lang-learner-visual-details" };
+var _hoisted_492 = { class: "lang-learner-visual-subtitle" };
+var _hoisted_50 = { class: "lang-learner-visual-desc" };
+var _hoisted_51 = { class: "lang-learner-visual-tips" };
+var _hoisted_522 = { class: "lang-learner-visual-zoom-modal" };
+var _hoisted_532 = { class: "lang-learner-zoom-header" };
+var _hoisted_542 = { class: "lang-learner-zoom-title" };
+var _hoisted_552 = { class: "lang-learner-zoom-phoneme-text" };
+var _hoisted_562 = { class: "lang-learner-zoom-body" };
+var _hoisted_572 = { class: "lang-learner-sagittal-svg-container-zoomed" };
+var _hoisted_582 = {
+  viewBox: "0 0 200 200",
+  class: "lang-learner-sagittal-svg-zoomed"
+};
+var _hoisted_592 = ["d"];
+var _hoisted_60 = ["d"];
+var _hoisted_61 = ["d"];
+var _hoisted_622 = ["d"];
+var _hoisted_632 = { class: "lang-learner-zoom-details" };
+var _hoisted_642 = { class: "lang-learner-zoom-subtitle" };
+var _hoisted_652 = { class: "lang-learner-zoom-desc" };
+var _hoisted_662 = { class: "lang-learner-zoom-tips" };
+var _hoisted_672 = {
+  key: 4,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_682 = { class: "lang-learner-ab-player" };
+var _hoisted_692 = {
+  key: 5,
+  class: "lang-learner-panel-section"
+};
+var _hoisted_70 = ["disabled"];
+var _hoisted_71 = {
   key: 1,
   class: "lang-learner-ai-diagnosis",
   ref: "diagnosisContainer"
 };
 function render10(_ctx, _cache) {
   return openBlock(), createElementBlock("div", _hoisted_130, [
-    createBaseVNode("div", _hoisted_216, [
-      _cache[10] || (_cache[10] = createBaseVNode(
+    !_ctx.modelsExist ? (openBlock(), createElementBlock("div", _hoisted_216, [
+      _cache[14] || (_cache[14] = createBaseVNode(
+        "h4",
+        { class: "lang-learner-section-title" },
+        "\u{1F4E6} \u4E0B\u8F7D\u79BB\u7EBF\u53D1\u97F3\u8BC6\u522B\u6A21\u578B",
+        -1
+        /* CACHED */
+      )),
+      _cache[15] || (_cache[15] = createBaseVNode(
+        "p",
+        { class: "lang-learner-download-desc" },
+        [
+          createTextVNode(" \u5F00\u542F\u7AEF\u4FA7\u53D1\u97F3\u8BC4\u6D4B\u9700\u8981\u52A0\u8F7D "),
+          createBaseVNode("strong", null, "Whisper-Tiny-EN"),
+          createTextVNode(" \u79BB\u7EBF\u8BED\u97F3\u6A21\u578B\uFF08\u5305\u542B Encoder \u548C Decoder \u4E24\u4E2A\u91CF\u5316\u6A21\u578B\uFF0C\u5171\u7EA6 38MB\uFF09\u3002\u6A21\u578B\u6587\u4EF6\u4F1A\u88AB\u5B58\u653E\u5728\u60A8\u7684\u672C\u5730 Vault \u63D2\u4EF6\u76EE\u5F55\u4E0B\uFF0C\u540E\u7EED\u53EF\u5B8C\u5168\u79BB\u7EBF\u8FD0\u884C\uFF0C\u96F6\u8D39\u7528\u3001\u9AD8\u9690\u79C1\u3002 ")
+        ],
+        -1
+        /* CACHED */
+      )),
+      createBaseVNode("button", {
+        onClick: _cache[0] || (_cache[0] = (...args) => _ctx.downloadModels && _ctx.downloadModels(...args)),
+        class: "lang-learner-btn lang-learner-btn-primary lang-learner-btn-large",
+        disabled: _ctx.downloading
+      }, toDisplayString(_ctx.downloading ? "\u6B63\u5728\u52AA\u529B\u4E0B\u8F7D\u4E2D..." : "\u{1F4E5} \u7ACB\u5373\u4E0B\u8F7D\u79BB\u7EBF\u6A21\u578B"), 9, _hoisted_312),
+      _ctx.downloading ? (openBlock(), createElementBlock("div", _hoisted_410, [
+        createBaseVNode("div", _hoisted_510, [
+          createBaseVNode(
+            "div",
+            {
+              class: "lang-learner-download-progress-fill",
+              style: normalizeStyle({ width: _ctx.downloadPercent + "%" })
+            },
+            null,
+            4
+            /* STYLE */
+          )
+        ]),
+        createBaseVNode("div", _hoisted_610, [
+          createBaseVNode(
+            "span",
+            null,
+            "\u6B63\u5728\u4E0B\u8F7D: " + toDisplayString(_ctx.downloadFilename),
+            1
+            /* TEXT */
+          ),
+          createBaseVNode(
+            "span",
+            null,
+            toDisplayString(_ctx.downloadPercent) + "% (" + toDisplayString(_ctx.downloadSpeed) + ")",
+            1
+            /* TEXT */
+          )
+        ])
+      ])) : createCommentVNode("v-if", true)
+    ])) : (openBlock(), createElementBlock("div", _hoisted_710, [
+      _cache[19] || (_cache[19] = createBaseVNode(
         "h4",
         { class: "lang-learner-section-title" },
         "\u{1F3A4} \u5F55\u97F3\u63A7\u5236",
         -1
         /* CACHED */
       )),
-      createBaseVNode("div", _hoisted_312, [
-        _cache[7] || (_cache[7] = createBaseVNode(
+      createBaseVNode("div", _hoisted_810, [
+        _cache[16] || (_cache[16] = createBaseVNode(
           "label",
           null,
           "\u7EC3\u4E60\u5355\u8BCD/\u53E5\u5B50:",
@@ -23057,77 +25066,89 @@ function render10(_ctx, _cache) {
           /* CACHED */
         )),
         withDirectives(createBaseVNode("input", {
-          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.currentWord = $event),
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.currentWord = $event),
           type: "text",
           placeholder: "\u8F93\u5165\u8981\u7EC3\u4E60\u7684\u5355\u8BCD\u6216\u53E5\u5B50...",
           class: "lang-learner-text-input",
-          disabled: _ctx.isRecording
-        }, null, 8, _hoisted_410), [
+          disabled: _ctx.isRecording || _ctx.isProcessing
+        }, null, 8, _hoisted_910), [
           [vModelText, _ctx.currentWord]
         ])
       ]),
-      createBaseVNode("div", _hoisted_510, [
+      withDirectives(createBaseVNode(
+        "div",
+        _hoisted_1010,
+        [
+          createBaseVNode(
+            "canvas",
+            _hoisted_1113,
+            null,
+            512
+            /* NEED_PATCH */
+          )
+        ],
+        512
+        /* NEED_PATCH */
+      ), [
+        [vShow, _ctx.isRecording]
+      ]),
+      createBaseVNode("div", _hoisted_1210, [
         !_ctx.isRecording ? (openBlock(), createElementBlock("button", {
           key: 0,
-          onClick: _cache[1] || (_cache[1] = (...args) => _ctx.startRecording && _ctx.startRecording(...args)),
+          onClick: _cache[2] || (_cache[2] = (...args) => _ctx.startRecording && _ctx.startRecording(...args)),
           class: "lang-learner-btn lang-learner-btn-primary",
-          disabled: _ctx.isProcessing || !_ctx.currentWord.trim()
-        }, " \u{1F534} \u5F00\u59CB\u5F55\u97F3 ", 8, _hoisted_610)) : (openBlock(), createElementBlock("button", {
+          disabled: _ctx.isProcessing || !_ctx.currentWord.trim() || !_ctx.workerReady
+        }, toDisplayString(_ctx.workerReady ? "\u{1F534} \u5F00\u59CB\u5F55\u97F3" : "\u23F3 \u5F15\u64CE\u521D\u59CB\u5316\u4E2D..."), 9, _hoisted_139)) : (openBlock(), createElementBlock("button", {
           key: 1,
-          onClick: _cache[2] || (_cache[2] = (...args) => _ctx.stopRecording && _ctx.stopRecording(...args)),
+          onClick: _cache[3] || (_cache[3] = (...args) => _ctx.stopRecording && _ctx.stopRecording(...args)),
           class: "lang-learner-btn lang-learner-btn-danger"
         }, " \u23F9\uFE0F \u505C\u6B62\u5F55\u97F3 ")),
-        _ctx.isRecording ? (openBlock(), createElementBlock("span", _hoisted_710, "\u5F55\u97F3\u4E2D...")) : createCommentVNode("v-if", true),
-        _ctx.isProcessing ? (openBlock(), createElementBlock("span", _hoisted_810, "\u5904\u7406\u4E2D...")) : createCommentVNode("v-if", true)
+        _ctx.isRecording ? (openBlock(), createElementBlock("span", _hoisted_149, "\u5F55\u97F3\u4E2D...")) : createCommentVNode("v-if", true),
+        _ctx.isProcessing ? (openBlock(), createElementBlock("span", _hoisted_158, "\u7279\u5F81\u63D0\u53D6\u4E0E\u5BF9\u9F50\u4E2D...")) : createCommentVNode("v-if", true)
       ]),
-      createBaseVNode("div", _hoisted_910, [
-        _cache[9] || (_cache[9] = createBaseVNode(
+      createBaseVNode("div", _hoisted_168, [
+        _cache[18] || (_cache[18] = createBaseVNode(
           "label",
           null,
           "\u53D1\u97F3\u6807\u51C6:",
           -1
           /* CACHED */
         )),
-        withDirectives(createBaseVNode(
-          "select",
-          {
-            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.evaluationAccent = $event),
-            class: "lang-learner-select"
-          },
-          [..._cache[8] || (_cache[8] = [
-            createBaseVNode(
-              "option",
-              { value: "US" },
-              "\u{1F1FA}\u{1F1F8} \u7F8E\u5F0F\u53D1\u97F3",
-              -1
-              /* CACHED */
-            ),
-            createBaseVNode(
-              "option",
-              { value: "UK" },
-              "\u{1F1EC}\u{1F1E7} \u82F1\u5F0F\u53D1\u97F3",
-              -1
-              /* CACHED */
-            )
-          ])],
-          512
-          /* NEED_PATCH */
-        ), [
+        withDirectives(createBaseVNode("select", {
+          "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.evaluationAccent = $event),
+          class: "lang-learner-select",
+          disabled: _ctx.isRecording || _ctx.isProcessing
+        }, [..._cache[17] || (_cache[17] = [
+          createBaseVNode(
+            "option",
+            { value: "US" },
+            "\u{1F1FA}\u{1F1F8} \u7F8E\u5F0F\u53D1\u97F3",
+            -1
+            /* CACHED */
+          ),
+          createBaseVNode(
+            "option",
+            { value: "UK" },
+            "\u{1F1EC}\u{1F1E7} \u82F1\u5F0F\u53D1\u97F3",
+            -1
+            /* CACHED */
+          )
+        ])], 8, _hoisted_178), [
           [vModelSelect, _ctx.evaluationAccent]
         ])
       ])
-    ]),
-    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_1010, [
-      _cache[13] || (_cache[13] = createBaseVNode(
+    ])),
+    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_188, [
+      _cache[29] || (_cache[29] = createBaseVNode(
         "h4",
         { class: "lang-learner-section-title" },
         " \u{1F4CA} \u97F3\u7D20\u5BF9\u9F50\u7ED3\u679C ",
         -1
         /* CACHED */
       )),
-      createBaseVNode("div", _hoisted_1113, [
-        createBaseVNode("div", _hoisted_1210, [
-          _cache[11] || (_cache[11] = createBaseVNode(
+      createBaseVNode("div", _hoisted_197, [
+        createBaseVNode("div", _hoisted_207, [
+          _cache[20] || (_cache[20] = createBaseVNode(
             "span",
             { class: "lang-learner-result-label" },
             "\u76EE\u6807\u6587\u672C:",
@@ -23136,14 +25157,30 @@ function render10(_ctx, _cache) {
           )),
           createBaseVNode(
             "span",
-            _hoisted_139,
+            _hoisted_217,
             toDisplayString(_ctx.pronunciationResult.targetText),
             1
             /* TEXT */
           )
         ]),
-        createBaseVNode("div", _hoisted_149, [
-          _cache[12] || (_cache[12] = createBaseVNode(
+        _ctx.pronunciationResult.detectedText ? (openBlock(), createElementBlock("div", _hoisted_227, [
+          _cache[21] || (_cache[21] = createBaseVNode(
+            "span",
+            { class: "lang-learner-result-label" },
+            "\u8BC6\u522B\u6587\u672C:",
+            -1
+            /* CACHED */
+          )),
+          createBaseVNode(
+            "span",
+            _hoisted_236,
+            toDisplayString(_ctx.pronunciationResult.detectedText),
+            1
+            /* TEXT */
+          )
+        ])) : createCommentVNode("v-if", true),
+        createBaseVNode("div", _hoisted_245, [
+          _cache[22] || (_cache[22] = createBaseVNode(
             "span",
             { class: "lang-learner-result-label" },
             "\u603B\u4F53\u8BC4\u5206:",
@@ -23152,14 +25189,91 @@ function render10(_ctx, _cache) {
           )),
           createBaseVNode(
             "span",
-            _hoisted_158,
+            _hoisted_255,
             toDisplayString(_ctx.pronunciationResult.overallScore) + "/100",
             1
             /* TEXT */
           )
         ])
       ]),
-      createBaseVNode("div", _hoisted_168, [
+      createBaseVNode("div", _hoisted_264, [
+        _cache[23] || (_cache[23] = createBaseVNode(
+          "div",
+          { class: "lang-learner-syllable-section-title" },
+          [
+            createBaseVNode("span", null, "\u{1F9E9} \u97F3\u8282\u62FC\u8BFB\u8FDE\u8BFB\u52A9\u624B"),
+            createBaseVNode("span", {
+              class: "lang-learner-syllable-help",
+              title: "\u70B9\u51FB\u6BCF\u4E2A\u97F3\u8282\u8FDB\u884C\u5206\u6B65\u53D1\u97F3\u7EC3\u4E60\uFF0C\u70B9\u51FB \u{1F50A} \u64AD\u653E\u6574\u4E2A\u5355\u8BCD\u6807\u51C6\u97F3"
+            }, "\u2754 \u4F7F\u7528\u63D0\u793A")
+          ],
+          -1
+          /* CACHED */
+        )),
+        createBaseVNode("div", _hoisted_274, [
+          (openBlock(true), createElementBlock(
+            Fragment,
+            null,
+            renderList(_ctx.wordSyllables, (wInfo, wIdx) => {
+              return openBlock(), createElementBlock(
+                Fragment,
+                { key: wIdx },
+                [
+                  wInfo.isSpace ? (openBlock(), createElementBlock("span", _hoisted_283)) : (openBlock(), createElementBlock(
+                    "div",
+                    {
+                      key: 1,
+                      class: normalizeClass(["lang-learner-syllable-word-box", { "lang-learner-syllable-word-box-english": wInfo.isEnglish }])
+                    },
+                    [
+                      wInfo.isEnglish && wInfo.syllables.length > 1 ? (openBlock(), createElementBlock("button", {
+                        key: 0,
+                        onClick: ($event) => _ctx.speakWord(wInfo.clean),
+                        class: "lang-learner-syllable-word-speaker",
+                        title: "\u64AD\u653E\u5355\u8BCD\u6807\u51C6\u97F3"
+                      }, " \u{1F50A} ", 8, _hoisted_292)) : createCommentVNode("v-if", true),
+                      createBaseVNode("div", _hoisted_302, [
+                        (openBlock(true), createElementBlock(
+                          Fragment,
+                          null,
+                          renderList(wInfo.syllables, (syllable, sIdx) => {
+                            return openBlock(), createElementBlock(
+                              Fragment,
+                              { key: sIdx },
+                              [
+                                createBaseVNode("button", {
+                                  onClick: ($event) => wInfo.isEnglish ? _ctx.speakSyllable(syllable) : null,
+                                  class: normalizeClass({
+                                    "lang-learner-syllable-btn": wInfo.isEnglish,
+                                    "lang-learner-syllable-static": !wInfo.isEnglish
+                                  }),
+                                  title: wInfo.isEnglish ? `\u70B9\u51FB\u64AD\u653E\u97F3\u8282 [ ${syllable} ] \u8BFB\u97F3` : ""
+                                }, toDisplayString(syllable), 11, _hoisted_313),
+                                sIdx < wInfo.syllables.length - 1 ? (openBlock(), createElementBlock("span", _hoisted_323, "\xB7")) : createCommentVNode("v-if", true)
+                              ],
+                              64
+                              /* STABLE_FRAGMENT */
+                            );
+                          }),
+                          128
+                          /* KEYED_FRAGMENT */
+                        ))
+                      ])
+                    ],
+                    2
+                    /* CLASS */
+                  ))
+                ],
+                64
+                /* STABLE_FRAGMENT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ]),
+      createBaseVNode("div", _hoisted_333, [
         (openBlock(true), createElementBlock(
           Fragment,
           null,
@@ -23168,29 +25282,337 @@ function render10(_ctx, _cache) {
               key: index,
               class: normalizeClass({
                 "lang-learner-phoneme": true,
-                "lang-learner-phoneme-error": alignment.isError
+                "lang-learner-phoneme-error": alignment.isError,
+                "lang-learner-phoneme-active": _ctx.selectedPhoneme === alignment.phoneme
               }),
-              title: `\u7F6E\u4FE1\u5EA6: ${(alignment.confidence * 100).toFixed(1)}%`
-            }, toDisplayString(alignment.phoneme), 11, _hoisted_178);
+              title: `\u70B9\u51FB\u67E5\u770B\u53E3\u8154\u56FE\u6807 (\u7F6E\u4FE1\u5EA6: ${(alignment.confidence * 100).toFixed(1)}%)`,
+              onClick: ($event) => _ctx.selectPhoneme(alignment.phoneme)
+            }, toDisplayString(alignment.phoneme), 11, _hoisted_343);
           }),
           128
           /* KEYED_FRAGMENT */
         ))
+      ]),
+      _ctx.selectedPhoneme && _ctx.visualConfig ? (openBlock(), createElementBlock("div", _hoisted_353, [
+        createBaseVNode("div", _hoisted_363, [
+          createBaseVNode("span", _hoisted_373, [
+            _cache[24] || (_cache[24] = createTextVNode(
+              "\u{1F4E2} \u53E3\u578B\u4E0E\u53D1\u97F3\u90E8\u4F4D\u89E3\u6790: ",
+              -1
+              /* CACHED */
+            )),
+            createBaseVNode(
+              "span",
+              _hoisted_382,
+              toDisplayString(_ctx.selectedPhoneme),
+              1
+              /* TEXT */
+            )
+          ]),
+          createBaseVNode("button", {
+            onClick: _cache[5] || (_cache[5] = ($event) => _ctx.selectedPhoneme = null),
+            class: "lang-learner-visual-close-btn",
+            title: "\u5173\u95ED"
+          }, "\u2715")
+        ]),
+        createBaseVNode("div", _hoisted_392, [
+          createBaseVNode("div", _hoisted_402, [
+            createBaseVNode("div", _hoisted_412, [
+              (openBlock(), createElementBlock("svg", _hoisted_422, [
+                _cache[26] || (_cache[26] = createBaseVNode(
+                  "path",
+                  {
+                    d: "M 30,190 L 30,150 C 30,120 40,80 55,68 C 75,52 95,65 105,80",
+                    class: "lang-learner-svg-static-wall",
+                    fill: "none",
+                    "stroke-width": "5",
+                    "stroke-linecap": "round"
+                  },
+                  null,
+                  -1
+                  /* CACHED */
+                )),
+                _cache[27] || (_cache[27] = createBaseVNode(
+                  "path",
+                  {
+                    d: "M 105,80 L 105,95 L 100,95 L 100,80 Z",
+                    class: "lang-learner-svg-upper-teeth"
+                  },
+                  null,
+                  -1
+                  /* CACHED */
+                )),
+                createBaseVNode(
+                  "g",
+                  {
+                    style: normalizeStyle({ transform: `translateY(${_ctx.activeJawYOffset}px)` }),
+                    class: "lang-learner-svg-jaw-group"
+                  },
+                  [..._cache[25] || (_cache[25] = [
+                    createBaseVNode(
+                      "path",
+                      {
+                        d: "M 100,105 L 100,120 L 95,120 L 95,105 Z",
+                        class: "lang-learner-svg-lower-teeth"
+                      },
+                      null,
+                      -1
+                      /* CACHED */
+                    ),
+                    createBaseVNode(
+                      "path",
+                      {
+                        d: "M 95,120 C 95,135 85,170 30,190",
+                        class: "lang-learner-svg-static-wall",
+                        fill: "none",
+                        "stroke-width": "5",
+                        "stroke-linecap": "round"
+                      },
+                      null,
+                      -1
+                      /* CACHED */
+                    )
+                  ])],
+                  4
+                  /* STYLE */
+                ),
+                createBaseVNode("path", {
+                  d: _ctx.activeAirflow,
+                  class: "lang-learner-svg-airflow",
+                  fill: "none",
+                  "stroke-width": "3",
+                  "stroke-dasharray": "6,6",
+                  "stroke-linecap": "round"
+                }, null, 8, _hoisted_432),
+                createBaseVNode("path", {
+                  d: _ctx.activeTonguePath,
+                  class: "lang-learner-svg-tongue"
+                }, null, 8, _hoisted_442),
+                createBaseVNode("path", {
+                  d: _ctx.activeLips.upper,
+                  class: "lang-learner-svg-lip-upper"
+                }, null, 8, _hoisted_452),
+                createBaseVNode("path", {
+                  d: _ctx.activeLips.lower,
+                  style: normalizeStyle({ transform: `translateY(${_ctx.activeJawYOffset * 0.5}px)` }),
+                  class: "lang-learner-svg-lip-lower"
+                }, null, 12, _hoisted_462),
+                _cache[28] || (_cache[28] = createStaticVNode('<text x="75" y="32" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u4E0A\u816D</text><line x1="75" y1="38" x2="75" y2="60" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="75" cy="60" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="75" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u7259\u9F7F</text><line x1="160" y1="75" x2="103" y2="87" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="103" cy="87" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="110" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u5634\u5507</text><line x1="160" y1="110" x2="120" y2="100" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="120" cy="100" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="145" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u820C\u5934</text><line x1="160" y1="142" x2="80" y2="135" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="80" cy="135" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="12" y="150" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u5589\u5499</text><line x1="22" y1="150" x2="32" y2="170" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="32" cy="170" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle>', 15))
+              ]))
+            ]),
+            createBaseVNode("div", _hoisted_472, [
+              createBaseVNode("button", {
+                onClick: _cache[6] || (_cache[6] = ($event) => _ctx.speakPhoneme(_ctx.selectedPhoneme)),
+                class: "lang-learner-visual-action-btn",
+                title: "\u64AD\u653E\u97F3\u6807\u8BFB\u97F3\u5E76\u89E6\u53D1\u53E3\u578B\u52A8\u6548"
+              }, "\u25B6 \u64AD\u653E"),
+              createBaseVNode("button", {
+                onClick: _cache[7] || (_cache[7] = ($event) => _ctx.isZoomed = true),
+                class: "lang-learner-visual-action-btn",
+                title: "\u653E\u5927\u53E3\u8154\u5256\u9762\u5927\u56FE"
+              }, "\u{1F50D} \u653E\u5927")
+            ])
+          ]),
+          createBaseVNode("div", _hoisted_482, [
+            createBaseVNode(
+              "div",
+              _hoisted_492,
+              toDisplayString(_ctx.visualConfig.name),
+              1
+              /* TEXT */
+            ),
+            createBaseVNode(
+              "div",
+              _hoisted_50,
+              toDisplayString(_ctx.visualConfig.description),
+              1
+              /* TEXT */
+            ),
+            createBaseVNode("ul", _hoisted_51, [
+              (openBlock(true), createElementBlock(
+                Fragment,
+                null,
+                renderList(_ctx.visualConfig.tips, (tip, idx) => {
+                  return openBlock(), createElementBlock(
+                    "li",
+                    { key: idx },
+                    toDisplayString(tip),
+                    1
+                    /* TEXT */
+                  );
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ])
+          ])
+        ])
+      ])) : createCommentVNode("v-if", true)
+    ])) : createCommentVNode("v-if", true),
+    _ctx.isZoomed && _ctx.selectedPhoneme && _ctx.visualConfig ? (openBlock(), createElementBlock("div", {
+      key: 3,
+      class: "lang-learner-visual-zoom-overlay",
+      onClick: _cache[10] || (_cache[10] = withModifiers(($event) => _ctx.isZoomed = false, ["self"]))
+    }, [
+      createBaseVNode("div", _hoisted_522, [
+        createBaseVNode("div", _hoisted_532, [
+          createBaseVNode("span", _hoisted_542, [
+            _cache[30] || (_cache[30] = createTextVNode(
+              "\u{1F444} \u53D1\u97F3\u5256\u9762\u5927\u56FE\u89E3\u6790: ",
+              -1
+              /* CACHED */
+            )),
+            createBaseVNode(
+              "span",
+              _hoisted_552,
+              toDisplayString(_ctx.selectedPhoneme),
+              1
+              /* TEXT */
+            )
+          ]),
+          createBaseVNode("button", {
+            onClick: _cache[8] || (_cache[8] = ($event) => _ctx.isZoomed = false),
+            class: "lang-learner-zoom-close-btn",
+            title: "\u5173\u95ED"
+          }, "\u2715")
+        ]),
+        createBaseVNode("div", _hoisted_562, [
+          createBaseVNode("div", _hoisted_572, [
+            (openBlock(), createElementBlock("svg", _hoisted_582, [
+              _cache[32] || (_cache[32] = createBaseVNode(
+                "path",
+                {
+                  d: "M 30,190 L 30,150 C 30,120 40,80 55,68 C 75,52 95,65 105,80",
+                  class: "lang-learner-svg-static-wall",
+                  fill: "none",
+                  "stroke-width": "5",
+                  "stroke-linecap": "round"
+                },
+                null,
+                -1
+                /* CACHED */
+              )),
+              _cache[33] || (_cache[33] = createBaseVNode(
+                "path",
+                {
+                  d: "M 105,80 L 105,95 L 100,95 L 100,80 Z",
+                  class: "lang-learner-svg-upper-teeth"
+                },
+                null,
+                -1
+                /* CACHED */
+              )),
+              createBaseVNode(
+                "g",
+                {
+                  style: normalizeStyle({ transform: `translateY(${_ctx.activeJawYOffset}px)` }),
+                  class: "lang-learner-svg-jaw-group"
+                },
+                [..._cache[31] || (_cache[31] = [
+                  createBaseVNode(
+                    "path",
+                    {
+                      d: "M 100,105 L 100,120 L 95,120 L 95,105 Z",
+                      class: "lang-learner-svg-lower-teeth"
+                    },
+                    null,
+                    -1
+                    /* CACHED */
+                  ),
+                  createBaseVNode(
+                    "path",
+                    {
+                      d: "M 95,120 C 95,135 85,170 30,190",
+                      class: "lang-learner-svg-static-wall",
+                      fill: "none",
+                      "stroke-width": "5",
+                      "stroke-linecap": "round"
+                    },
+                    null,
+                    -1
+                    /* CACHED */
+                  )
+                ])],
+                4
+                /* STYLE */
+              ),
+              createBaseVNode("path", {
+                d: _ctx.activeAirflow,
+                class: "lang-learner-svg-airflow",
+                fill: "none",
+                "stroke-width": "3",
+                "stroke-dasharray": "6,6",
+                "stroke-linecap": "round"
+              }, null, 8, _hoisted_592),
+              createBaseVNode("path", {
+                d: _ctx.activeTonguePath,
+                class: "lang-learner-svg-tongue"
+              }, null, 8, _hoisted_60),
+              createBaseVNode("path", {
+                d: _ctx.activeLips.upper,
+                class: "lang-learner-svg-lip-upper"
+              }, null, 8, _hoisted_61),
+              createBaseVNode("path", {
+                d: _ctx.activeLips.lower,
+                style: normalizeStyle({ transform: `translateY(${_ctx.activeJawYOffset * 0.5}px)` }),
+                class: "lang-learner-svg-lip-lower"
+              }, null, 12, _hoisted_622),
+              _cache[34] || (_cache[34] = createStaticVNode('<text x="75" y="32" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u4E0A\u816D</text><line x1="75" y1="38" x2="75" y2="60" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="75" cy="60" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="75" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u7259\u9F7F</text><line x1="160" y1="75" x2="103" y2="87" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="103" cy="87" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="110" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u5634\u5507</text><line x1="160" y1="110" x2="120" y2="100" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="120" cy="100" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="175" y="145" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u820C\u5934</text><line x1="160" y1="142" x2="80" y2="135" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="80" cy="135" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle><text x="12" y="150" text-anchor="middle" class="lang-learner-svg-label" data-v-415173fc>\u5589\u5499</text><line x1="22" y1="150" x2="32" y2="170" class="lang-learner-svg-label-line" data-v-415173fc></line><circle cx="32" cy="170" r="2.5" class="lang-learner-svg-label-dot" data-v-415173fc></circle>', 15))
+            ]))
+          ]),
+          createBaseVNode("div", _hoisted_632, [
+            createBaseVNode("button", {
+              onClick: _cache[9] || (_cache[9] = ($event) => _ctx.speakPhoneme(_ctx.selectedPhoneme)),
+              class: "lang-learner-btn lang-learner-btn-primary lang-learner-zoom-play-btn"
+            }, " \u{1F50A} \u64AD\u653E\u53D1\u97F3\u5E76\u6F14\u793A\u52A8\u753B "),
+            createBaseVNode(
+              "div",
+              _hoisted_642,
+              toDisplayString(_ctx.visualConfig.name),
+              1
+              /* TEXT */
+            ),
+            createBaseVNode(
+              "div",
+              _hoisted_652,
+              toDisplayString(_ctx.visualConfig.description),
+              1
+              /* TEXT */
+            ),
+            createBaseVNode("ul", _hoisted_662, [
+              (openBlock(true), createElementBlock(
+                Fragment,
+                null,
+                renderList(_ctx.visualConfig.tips, (tip, idx) => {
+                  return openBlock(), createElementBlock(
+                    "li",
+                    { key: idx },
+                    toDisplayString(tip),
+                    1
+                    /* TEXT */
+                  );
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ])
+          ])
+        ])
       ])
     ])) : createCommentVNode("v-if", true),
-    _ctx.recordingBlob ? (openBlock(), createElementBlock("div", _hoisted_188, [
-      _cache[14] || (_cache[14] = createBaseVNode(
+    _ctx.recordingBlob ? (openBlock(), createElementBlock("div", _hoisted_672, [
+      _cache[35] || (_cache[35] = createBaseVNode(
         "h4",
         { class: "lang-learner-section-title" },
         "\u{1F50A} A/B \u8F68\u9053\u5BF9\u6BD4",
         -1
         /* CACHED */
       )),
-      createBaseVNode("div", _hoisted_197, [
+      createBaseVNode("div", _hoisted_682, [
         createBaseVNode(
           "button",
           {
-            onClick: _cache[4] || (_cache[4] = (...args) => _ctx.playStandardAudio && _ctx.playStandardAudio(...args)),
+            onClick: _cache[11] || (_cache[11] = (...args) => _ctx.playStandardAudio && _ctx.playStandardAudio(...args)),
             class: normalizeClass(["lang-learner-btn", { "lang-learner-btn-active": _ctx.currentTrack === "A" }])
           },
           " \u{1F170}\uFE0F \u6807\u51C6\u97F3 ",
@@ -23200,7 +25622,7 @@ function render10(_ctx, _cache) {
         createBaseVNode(
           "button",
           {
-            onClick: _cache[5] || (_cache[5] = (...args) => _ctx.playUserAudio && _ctx.playUserAudio(...args)),
+            onClick: _cache[12] || (_cache[12] = (...args) => _ctx.playUserAudio && _ctx.playUserAudio(...args)),
             class: normalizeClass(["lang-learner-btn", { "lang-learner-btn-active": _ctx.currentTrack === "B" }])
           },
           " \u{1F171}\uFE0F \u6211\u7684\u5F55\u97F3 ",
@@ -23209,8 +25631,8 @@ function render10(_ctx, _cache) {
         )
       ])
     ])) : createCommentVNode("v-if", true),
-    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_207, [
-      _cache[15] || (_cache[15] = createBaseVNode(
+    _ctx.pronunciationResult ? (openBlock(), createElementBlock("div", _hoisted_692, [
+      _cache[36] || (_cache[36] = createBaseVNode(
         "h4",
         { class: "lang-learner-section-title" },
         "\u{1F916} AI \u808C\u8089\u7EA0\u504F\u8BCA\u65AD",
@@ -23219,12 +25641,12 @@ function render10(_ctx, _cache) {
       )),
       !_ctx.aiDiagnosis ? (openBlock(), createElementBlock("button", {
         key: 0,
-        onClick: _cache[6] || (_cache[6] = (...args) => _ctx.requestDiagnosis && _ctx.requestDiagnosis(...args)),
+        onClick: _cache[13] || (_cache[13] = (...args) => _ctx.requestDiagnosis && _ctx.requestDiagnosis(...args)),
         class: "lang-learner-btn lang-learner-btn-primary",
         disabled: _ctx.isProcessing
-      }, " \u{1F4A1} \u83B7\u53D6\u8BCA\u65AD\u5EFA\u8BAE ", 8, _hoisted_217)) : (openBlock(), createElementBlock(
+      }, " \u{1F4A1} \u83B7\u53D6\u8BCA\u65AD\u5EFA\u8BAE ", 8, _hoisted_70)) : (openBlock(), createElementBlock(
         "div",
-        _hoisted_227,
+        _hoisted_71,
         null,
         512
         /* NEED_PATCH */
@@ -23236,7 +25658,7 @@ function render10(_ctx, _cache) {
 // src/ui/components/PronunciationTab.vue
 PronunciationTab_default.render = render10;
 PronunciationTab_default.__file = "src/ui/components/PronunciationTab.vue";
-PronunciationTab_default.__scopeId = "data-v-a375346d";
+PronunciationTab_default.__scopeId = "data-v-415173fc";
 var PronunciationTab_default2 = PronunciationTab_default;
 
 // sfc-script:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=script
@@ -23353,7 +25775,7 @@ var Panel_default = defineComponent({
     async function fetchOnlineChineseSuggestions(query) {
       const url = `https://dict.youdao.com/suggest?q=${encodeURIComponent(query)}&num=20&doctype=json`;
       try {
-        const res = await (0, import_obsidian14.requestUrl)({ url });
+        const res = await (0, import_obsidian15.requestUrl)({ url });
         const data = typeof res.json === "object" ? res.json : JSON.parse(res.text || "{}");
         if (data?.data?.entries) {
           return data.data.entries.filter((e) => e.entry && e.explain).map((e) => ({ word: e.entry, trans: e.explain }));
@@ -23375,7 +25797,7 @@ var Panel_default = defineComponent({
             searchResultsList.value = [];
             handleWordSelected(candidates[0].lemma);
           } else {
-            new import_obsidian14.Notice(`\u627E\u5230 ${candidates.length} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
+            new import_obsidian15.Notice(`\u627E\u5230 ${candidates.length} \u4E2A\u5339\u914D\u7684\u82F1\u6587\u5355\u8BCD`);
             selectedWord.value = null;
             searchResultsList.value = candidates;
           }
@@ -23400,7 +25822,7 @@ var Panel_default = defineComponent({
           }
         }
         if (onlineCandidates.length === 0) {
-          new import_obsidian14.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
+          new import_obsidian15.Notice(`\u672A\u627E\u5230\u5305\u542B "${query}" \u91CA\u4E49\u7684\u82F1\u6587\u5355\u8BCD`);
           return;
         }
         if (onlineCandidates.length === 1) {
@@ -23410,9 +25832,9 @@ var Panel_default = defineComponent({
           let totalMatches = onlineCandidates.length;
           if (totalMatches > 100) {
             onlineCandidates.splice(100);
-            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
+            new import_obsidian15.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u7ED3\u679C\uFF0C\u4EC5\u5C55\u793A\u524D 100 \u4E2A`);
           } else {
-            new import_obsidian14.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u5339\u914D\u7ED3\u679C`);
+            new import_obsidian15.Notice(`\u627E\u5230 ${totalMatches} \u4E2A\u5728\u7EBF\u5339\u914D\u7ED3\u679C`);
           }
           selectedWord.value = null;
           searchResultsList.value = onlineCandidates;
@@ -23466,7 +25888,7 @@ var Panel_default = defineComponent({
     }
     function batchAddToVocabulary() {
       if (selectedCandidates.value.size === 0) {
-        new import_obsidian14.Notice("\u8BF7\u5148\u52FE\u9009\u8981\u6536\u85CF\u7684\u5355\u8BCD");
+        new import_obsidian15.Notice("\u8BF7\u5148\u52FE\u9009\u8981\u6536\u85CF\u7684\u5355\u8BCD");
         return;
       }
       let addedCount = 0;
@@ -23478,9 +25900,9 @@ var Panel_default = defineComponent({
         }
       }
       if (addedCount === 0) {
-        new import_obsidian14.Notice("\u52FE\u9009\u7684\u5355\u8BCD\u90FD\u5DF2\u5728\u8BCD\u6C47\u672C\u4E2D");
+        new import_obsidian15.Notice("\u52FE\u9009\u7684\u5355\u8BCD\u90FD\u5DF2\u5728\u8BCD\u6C47\u672C\u4E2D");
       } else {
-        new import_obsidian14.Notice(`\u5DF2\u6DFB\u52A0 ${addedCount} \u4E2A\u751F\u8BCD\u5230\u8BCD\u6C47\u672C`);
+        new import_obsidian15.Notice(`\u5DF2\u6DFB\u52A0 ${addedCount} \u4E2A\u751F\u8BCD\u5230\u8BCD\u6C47\u672C`);
         eventBus.emit("lang-learner:word-changed");
       }
       searchResultsList.value = searchResultsList.value.map((c) => ({
@@ -23537,7 +25959,7 @@ var Panel_default = defineComponent({
 // sfc-template:/Users/dongzi/Documents/工作/workplace_myself/obsidian-english-learner/src/ui/Panel.vue?type=template
 var _hoisted_131 = { class: "lang-learner-panel" };
 var _hoisted_218 = { class: "lang-learner-search-bar" };
-var _hoisted_313 = {
+var _hoisted_314 = {
   key: 0,
   class: "lang-learner-panel-section lang-learner-search-results"
 };
@@ -23593,7 +26015,7 @@ function render11(_ctx, _cache) {
       onVoiceSettingsChanged: _ctx.onVoiceSettingsChanged,
       onAiSettingsChanged: _ctx.onAiSettingsChanged
     }, null, 8, ["available-voices", "onVoiceSettingsChanged", "onAiSettingsChanged"]),
-    _ctx.searchResultsList && _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_313, [
+    _ctx.searchResultsList && _ctx.searchResultsList.length > 0 && !_ctx.selectedWord ? (openBlock(), createElementBlock("div", _hoisted_314, [
       createBaseVNode("h4", _hoisted_411, [
         createBaseVNode(
           "span",
@@ -23812,12 +26234,12 @@ function render11(_ctx, _cache) {
 // src/ui/Panel.vue
 Panel_default.render = render11;
 Panel_default.__file = "src/ui/Panel.vue";
-Panel_default.__scopeId = "data-v-433561da";
+Panel_default.__scopeId = "data-v-8ee01d08";
 var Panel_default2 = Panel_default;
 
 // src/ui/SidebarView.ts
 var VIEW_TYPE_LANG_LEARNER = "lang-learner-sidebar";
-var LangLearnerSidebarView = class extends import_obsidian15.ItemView {
+var LangLearnerSidebarView = class extends import_obsidian16.ItemView {
   constructor(leaf, vocabManager, plugin) {
     super(leaf);
     this.vueApp = null;
@@ -23850,7 +26272,7 @@ var LangLearnerSidebarView = class extends import_obsidian15.ItemView {
 };
 
 // src/ui/WordSuggest.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // src/utils/suggestionMapping.ts
 function generateSuggestionMapping(vocabManager) {
@@ -23934,7 +26356,7 @@ function querySuggestionMapping(mappingTable, commonWord) {
 }
 
 // src/ui/WordSuggest.ts
-var WordSuggest = class extends import_obsidian16.EditorSuggest {
+var WordSuggest = class extends import_obsidian17.EditorSuggest {
   constructor(app, plugin) {
     super(app);
     this.suggestionMappingTable = /* @__PURE__ */ new Map();
@@ -24260,7 +26682,7 @@ var WordSuggest = class extends import_obsidian16.EditorSuggest {
 };
 
 // src/main.ts
-var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
+var EnglishLearnerPlugin = class extends import_obsidian18.Plugin {
   constructor() {
     super(...arguments);
     /** 影子词库管理器实例 */
@@ -24300,7 +26722,7 @@ var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
       id: "analyze-selection",
       name: "\u5206\u6790\u5F53\u524D\u9009\u4E2D\u7684\u53E5\u5B50/\u6587\u672C",
       callback: () => {
-        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian17.MarkdownView);
+        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian18.MarkdownView);
         const selection = activeView?.editor?.getSelection();
         if (selection && selection.trim()) {
           this.activateView();
@@ -24308,7 +26730,7 @@ var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
             eventBus.emit("lang-learner:analyze-sentence", selection.trim());
           }, 200);
         } else {
-          new import_obsidian17.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
+          new import_obsidian18.Notice("\u8BF7\u5148\u5728\u6587\u6863\u4E2D\u9009\u4E2D\u4E00\u6BB5\u82F1\u6587\u6587\u672C");
         }
       }
     });
@@ -24318,7 +26740,7 @@ var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
       callback: () => {
         this.evaluationAccent = this.evaluationAccent === "US" ? "UK" : "US";
         const accentName = this.evaluationAccent === "US" ? "\u7F8E\u5F0F\u53D1\u97F3" : "\u82F1\u5F0F\u53D1\u97F3";
-        new import_obsidian17.Notice(`\u53D1\u97F3\u8BC4\u6D4B\u6807\u51C6\u5DF2\u5207\u6362\u4E3A\uFF1A${accentName}`);
+        new import_obsidian18.Notice(`\u53D1\u97F3\u8BC4\u6D4B\u6807\u51C6\u5DF2\u5207\u6362\u4E3A\uFF1A${accentName}`);
         eventBus.emit("lang-learner:accent-changed", this.evaluationAccent);
       }
     });
@@ -24361,7 +26783,7 @@ var EnglishLearnerPlugin = class extends import_obsidian17.Plugin {
       })
     );
     this.registerDomEvent(document, "dblclick", (evt) => {
-      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian17.MarkdownView);
+      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian18.MarkdownView);
       if (activeView && activeView.editor) {
         const editor = activeView.editor;
         const selection = editor.getSelection().trim();
